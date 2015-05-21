@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical" 
+    android:paddingTop="4dp"
+    android:paddingLeft="2dp"
+    android:paddingRight="2dp" >
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_gravity="center"
+        android:gravity="center" >
+        <Button
+            android:id="@+id/btn_contacts_company"
+            android:layout_width="100dip"
+            android:layout_height="wrap_content"
+            android:text="企业" 
+            android:background="@drawable/btn_left_header_contacts"/>
+        <Button           android:id="@+id/btn_contacts_personal"
+            android:layout_width="100dip"
+            android:layout_height="wrap_content"
+            android:text="个人"
+            android:background="@drawable/btn_right_header_contacts"/>
+    </LinearLayout>
+
+    <ExpandableListView
+        android:id="@+id/expandablelistview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        >
+    </ExpandableListView>
+</LinearLayout>
