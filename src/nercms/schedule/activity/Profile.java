@@ -30,13 +30,13 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
-public class Profile extends SherlockActivity{
+public class Profile extends SherlockActivity {
 
 	private WebRequestManager webRequestManager;
-	
+
 	private static DAOFactory daoFactory = DAOFactory.getInstance();
 	private PersonDao personDao = null;
-	
+
 	private TextView name;
 	private TextView id;
 	private TextView orgDesc;// 机构节点名称
@@ -46,21 +46,19 @@ public class Profile extends SherlockActivity{
 	private TextView mobile;// 手机
 	private TextView email;// 邮箱
 	private TextView address;// 地址
-	
+
 	private String userID;// 本人ID
 	private StructuredStaffModel mySSM;// 登陆用户本人的SSM模型
-	private ArrayList<ContactModel> myContactList ;
+	private ArrayList<ContactModel> myContactList;
 	public static final String TAG = "Profile";
-	
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.profile);
-		
-		userID = MySharedPreference.get(Profile.this,
-				MySharedPreference.USER_ID, null);
-		
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				this);
+
+		userID = MySharedPreference.get(Profile.this, MySharedPreference.USER_ID, null);
+
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), this);
 
 		// 初始化控件
 		initView();
@@ -68,13 +66,11 @@ public class Profile extends SherlockActivity{
 		initActionBar();
 		// 初始化部分数据
 		initData();
-		
+
 		initHandler();
-		
-		
+
 	}
 
-	
 	private void initView() {
 		name = (TextView) findViewById(R.id.my_name);
 		id = (TextView) findViewById(R.id.my_id);
@@ -83,7 +79,7 @@ public class Profile extends SherlockActivity{
 		rank = (TextView) findViewById(R.id.my_rank);
 		mobile = (TextView) findViewById(R.id.my_phone);
 		email = (TextView) findViewById(R.id.my_mail);
-		address = (TextView) findViewById(R.id.my_address);		
+		address = (TextView) findViewById(R.id.my_address);
 	}
 
 	private void initActionBar() {
@@ -93,6 +89,7 @@ public class Profile extends SherlockActivity{
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		getSupportActionBar().setTitle("我的资料");
 	}
+
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuItem modify = menu.add(0, 1, 0, "修改密码");
 		modify.setIcon(R.drawable.ic_action_modify);
@@ -100,7 +97,7 @@ public class Profile extends SherlockActivity{
 
 		return super.onCreateOptionsMenu(menu);
 	}
-	
+
 	public boolean onOptionsItemSelected(MenuItem item) {
 
 		switch (item.getItemId()) {
@@ -117,34 +114,37 @@ public class Profile extends SherlockActivity{
 
 		return super.onOptionsItemSelected(item);
 	}
+
 	private void showModifyDialog() {
 		LayoutInflater layoutInflater = LayoutInflater.from(this);
-		  View modifyView = layoutInflater.inflate(R.layout.modify_pwd, null);
-		  final EditText old_pwd =(EditText) modifyView.findViewById(R.id.edit_old_pwd);
-		  final EditText new_pwd =(EditText) modifyView.findViewById(R.id.edit_new_pwd);
-		 new AlertDialog.Builder(Profile.this).setTitle("修改密码")
-		 .setView(modifyView)
-		 .setPositiveButton("确定",new DialogInterface.OnClickListener() { 
-	            public void onClick(DialogInterface dialog, int i) { 
-	            	String _oldPwd = old_pwd.getText().toString();
-	            	String _newPwd = new_pwd.getText().toString();
-	                Log.i("TAG", "旧密码"+_oldPwd+"新密码"+_newPwd); 
-	                webRequestManager.changePassword(userID, _oldPwd, _newPwd);
-	            } 
-	        })
+		View modifyView = layoutInflater.inflate(R.layout.modify_pwd, null);
+		final EditText old_pwd = (EditText) modifyView.findViewById(R.id.edit_old_pwd);
+		final EditText new_pwd = (EditText) modifyView.findViewById(R.id.edit_new_pwd);
+		new AlertDialog.Builder(Profile.this).setTitle("修改密码").setView(modifyView)
+				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int i) {
+						String _oldPwd = old_pwd.getText().toString();
+						String _newPwd = new_pwd.getText().toString();
+						Log.i("TAG", "旧密码" + _oldPwd + "新密码" + _newPwd);
+						// webRequestManager.changePassword(userID, _oldPwd,
+						// _newPwd);
+						// jerry 15.5.22
+						webRequestManager.changePassword(_oldPwd, _newPwd);
+					}
+				})
 
-		 .setNegativeButton("取消", null).create().show();
+				.setNegativeButton("取消", null).create().show();
 	}
 
 	private void initData() {
-		personDao = daoFactory.getPersonDao(Profile.this);	
+		personDao = daoFactory.getPersonDao(Profile.this);
 		mySSM = personDao.getSSMByID(userID);
 		id.setText(userID);
 		name.setText(mySSM.getName());
 		orgDesc.setText(mySSM.getOrgDescription());
 		position.setText(mySSM.getPosition());
 		rank.setText(mySSM.getRank());
-		
+
 		myContactList = personDao.getContactListByID(userID);
 		if (myContactList != null) {
 			for (int i = 0; i < myContactList.size(); i++) {
@@ -169,7 +169,7 @@ public class Profile extends SherlockActivity{
 			}
 		}
 	}
-	
+
 	private void initHandler() {
 		// TODO Auto-generated method stub
 		Handler handler = new Handler() {
@@ -177,7 +177,7 @@ public class Profile extends SherlockActivity{
 			public void handleMessage(Message msg) {
 
 				switch (msg.what) {
-				
+
 				case Constant.CHANGE_PASSWORD_REQUEST_SUCCESS:
 					Utils.showShortToast(Profile.this, "修改密码成功");
 					Profile.this.finish();
@@ -185,12 +185,12 @@ public class Profile extends SherlockActivity{
 				case Constant.CHANGE_PASSWORD_REQUEST_FAIL:
 					Utils.showShortToast(Profile.this, "修改密码失败");
 					break;
-							}
-						}
-				};
-				MessageHandlerManager.getInstance().register(handler,
-						Constant.CHANGE_PASSWORD_REQUEST_SUCCESS, "Profile");
-				MessageHandlerManager.getInstance().register(handler,
-						Constant.CHANGE_PASSWORD_REQUEST_FAIL, "Profile");
+				}
 			}
+		};
+		MessageHandlerManager.getInstance().register(handler, Constant.CHANGE_PASSWORD_REQUEST_SUCCESS,
+				"Profile");
+		MessageHandlerManager.getInstance().register(handler, Constant.CHANGE_PASSWORD_REQUEST_FAIL,
+				"Profile");
+	}
 }
