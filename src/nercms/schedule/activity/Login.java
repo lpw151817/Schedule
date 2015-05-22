@@ -29,6 +29,8 @@ import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.normal.NormalServerResponse;
+import android.wxapp.service.jerry.model.person.LoginResponse;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.Constant;
@@ -150,7 +152,7 @@ public class Login extends SherlockActivity {
 				case Constant.LOGIN_REQUEST_SUCCESS:
 
 					// ½ÓÊÕÓÃ»§ID
-					String userID = (String) msg.obj;
+					String userID = ((LoginResponse) msg.obj).getUid();
 
 					MySharedPreference.save(Login.this, MySharedPreference.USER_ID, userID);
 
@@ -188,7 +190,7 @@ public class Login extends SherlockActivity {
 				case Constant.LOGIN_REQUEST_FAIL:
 					MyLog.i(TAG, "µÇÂ¼Ê§°Ü");
 					progressDialog.dismiss();
-					String errorCode = (String) msg.obj;
+					String errorCode = ((NormalServerResponse) msg.obj).getEc();
 					new AlertDialog.Builder(Login.this)
 							.setIcon(getResources().getDrawable(R.drawable.login_error_icon))
 							.setTitle("µÇÂ¼Ê§°Ü").setMessage(Utils.getErrorMsg(errorCode)).create().show();
