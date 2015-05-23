@@ -120,19 +120,16 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		entranceType = getIntent().getExtras().getInt("entrance_type");
 
 		// 启动activity时不自动弹出软键盘
-		getWindow().setSoftInputMode(
-				WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 		initActionBar();
 		initView();
 		initHandler();
 
 		// 2014-5-27 WeiHao
 
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				ChatDetail.this);
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), ChatDetail.this);
 
-		userID = MySharedPreference.get(ChatDetail.this,
-				MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(ChatDetail.this, MySharedPreference.USER_ID, "");
 
 		if (entranceType == 2) { // 判断为反馈
 			taskID = getIntent().getExtras().getString("task_id");
@@ -191,7 +188,7 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		case 1:
 			if (entranceType == 1) {
 				Intent intent = new Intent(ChatDetail.this, ContactDetail.class);
-				
+
 				// 2014-7-30 WeiHao 修改
 				intent.putExtra("IS_GROUP", isGroup);
 				intent.putExtra("CONTACT_ID", String.valueOf(personID));
@@ -239,12 +236,10 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			attachDao = daoFactory.getAttachmentDao(ChatDetail.this);
 			fbList = fbDao.getFeedbackByAffairID(taskID);
 			// 查询附件
-			ArrayList<FeedbackAttachModel> fbAttachList = new ArrayList<FeedbackAttachModel>(
-					0);
+			ArrayList<FeedbackAttachModel> fbAttachList = new ArrayList<FeedbackAttachModel>(0);
 			for (int i = 0; i < fbList.size(); i++) {
 				FeedbackModel tempFb = fbList.get(i);
-				fbAttachList = attachDao.getAttachByFeedbackID(tempFb
-						.getFeedbackID());
+				fbAttachList = attachDao.getAttachByFeedbackID(tempFb.getFeedbackID());
 				if (fbAttachList.size() > 0) {
 					for (int j = 0; j < fbAttachList.size(); j++) {
 						tempFb.setAttachment(fbAttachList.get(j));
@@ -258,8 +253,7 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		} else { // 消息
 			getSupportActionBar().setTitle(personName);
 			msgDao = daoFactory.getMessageDao(ChatDetail.this);
-			msgList = msgDao.getMessageListByID(userID,
-					String.valueOf(personID));
+			msgList = msgDao.getMessageListByID(userID, String.valueOf(personID));
 			msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
 			mListView.setAdapter(msgAdapter);
 			mListView.setSelection(mListView.getCount() - 1);
@@ -297,15 +291,12 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 
 			if (entranceType == 1) {
 				msgID = Utils.produceMessageID(userID);
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE,
-						msgID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, msgID, ChatDetail.this);
 			} else {
 				feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE,
-						feedbackID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, feedbackID, ChatDetail.this);
 			}
-			startActivityForResult(getAlbum,
-					LocalConstant.SELECT_IMAGE_REQUEST_CODE);
+			startActivityForResult(getAlbum, LocalConstant.SELECT_IMAGE_REQUEST_CODE);
 
 			break;
 
@@ -315,19 +306,16 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			Intent imageIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 			if (entranceType == 1) {
 				msgID = Utils.produceMessageID(userID);
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE,
-						msgID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, msgID, ChatDetail.this);
 			} else {
 				feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE,
-						feedbackID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, feedbackID, ChatDetail.this);
 			}
 
 			Uri imageUri = Uri.fromFile(new File(imagePath));
 			// 指定照片储存路径
 			imageIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-			startActivityForResult(imageIntent,
-					LocalConstant.CAPTURE_IMAGE_REQUEST_CODE);
+			startActivityForResult(imageIntent, LocalConstant.CAPTURE_IMAGE_REQUEST_CODE);
 
 			break;
 
@@ -338,12 +326,10 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			Intent videoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 			if (entranceType == 1) {
 				msgID = Utils.produceMessageID(userID);
-				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO,
-						msgID, ChatDetail.this);
+				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO, msgID, ChatDetail.this);
 			} else {
 				feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO,
-						feedbackID, ChatDetail.this);
+				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO, feedbackID, ChatDetail.this);
 			}
 
 			Uri videoUri = Uri.fromFile(new File(videoPath));
@@ -351,8 +337,7 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			videoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoUri);
 			// 指定视频的时长限制（30s）
 			videoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30000);
-			startActivityForResult(videoIntent,
-					LocalConstant.CAPTURE_VIDEO_REQUEST_CODE);
+			startActivityForResult(videoIntent, LocalConstant.CAPTURE_VIDEO_REQUEST_CODE);
 			break;
 
 		}
@@ -386,27 +371,20 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 				// 以下对全局变量进行赋值
 				// 收到附件上传成功的handler通知后再在Handler中处理，再发送消息或者反馈内容到服务器，以及保存到本地
 				if (entranceType == 1) { // 消息（附件）
-					String sendTime = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss").format(new Date(System
+					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
 							.currentTimeMillis()));
-					String imageName = originalUri.substring(originalUri
-							.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID),
-							personID, sendTime, null, LocalConstant.IAMGE_TYPE,
-							imageName, isGroup, Constant.READ);
+					String imageName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
+					msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, null,
+							LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
 
 				} else { // 反馈（附件）
-					String feedbackTime = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss").format(new Date(System
-							.currentTimeMillis()));
+					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
+							System.currentTimeMillis()));
 
-					fb = new FeedbackModel(feedbackID, taskID,
-							Integer.parseInt(userID), feedbackTime, "",
-							Constant.READ);
-					String imageName = originalUri.substring(originalUri
-							.lastIndexOf("/") + 1);
-					fbAttach = new FeedbackAttachModel(feedbackID,
-							LocalConstant.IAMGE_TYPE, imageName);
+					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID), feedbackTime,
+							"", Constant.READ);
+					String imageName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
+					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.IAMGE_TYPE, imageName);
 					fb.setAttachment(fbAttach);
 				}
 
@@ -429,27 +407,19 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 				// 收到附件上传成功message后再在Handler中处理，再发送消息或者反馈内容到服务器，以及保存到本地
 
 				if (entranceType == 1) { // 消息（附件）
-					String sendTime1 = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss").format(new Date(System
-							.currentTimeMillis()));
-					String videoName = originalUri.substring(originalUri
-							.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID),
-							personID, sendTime1, null,
-							LocalConstant.VIDEO_TYPE, videoName, isGroup,
-							Constant.READ);
+					String sendTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
+							System.currentTimeMillis()));
+					String videoName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
+					msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime1, null,
+							LocalConstant.VIDEO_TYPE, videoName, isGroup, Constant.READ);
 				} else {
-					String feedbackTime1 = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss").format(new Date(System
-							.currentTimeMillis()));
+					String feedbackTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
+							System.currentTimeMillis()));
 
-					fb = new FeedbackModel(feedbackID, taskID,
-							Integer.parseInt(userID), feedbackTime1, null,
-							Constant.READ);
-					String videoName = originalUri.substring(originalUri
-							.lastIndexOf("/") + 1);
-					fbAttach = new FeedbackAttachModel(feedbackID,
-							LocalConstant.VIDEO_TYPE, videoName);
+					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID), feedbackTime1,
+							null, Constant.READ);
+					String videoName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
+					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.VIDEO_TYPE, videoName);
 					fb.setAttachment(fbAttach);
 				}
 				// 开启上传
@@ -468,27 +438,21 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 				selectedPath = selectedUri.getPath();
 
 				String[] proj = { MediaStore.Images.Media.DATA };
-				Cursor cursor = getContentResolver().query(selectedUri, proj,
-						null, null, null);
+				Cursor cursor = getContentResolver().query(selectedUri, proj, null, null, null);
 				// 获得用户选择的图片的索引值
-				int columnIndex = cursor
-						.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+				int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 				cursor.moveToFirst();
 				// 最后根据索引值获取图片路径
 				selectedPath = cursor.getString(columnIndex);
 				cursor.close();
 
-				if (!(selectedPath.endsWith("jpg")
-						|| selectedPath.endsWith("gif")
-						|| selectedPath.endsWith("bmp") || selectedPath
-							.endsWith("png"))) {
+				if (!(selectedPath.endsWith("jpg") || selectedPath.endsWith("gif")
+						|| selectedPath.endsWith("bmp") || selectedPath.endsWith("png"))) {
 					originalUri = "";
-					Toast.makeText(ChatDetail.this, "不是图片", Toast.LENGTH_SHORT)
-							.show();
+					Toast.makeText(ChatDetail.this, "不是图片", Toast.LENGTH_SHORT).show();
 					return;
 				}
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE,
-						taskID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, taskID, ChatDetail.this);
 
 				// 将图片拷贝到附件目录下
 				File fromFile = new File(selectedPath);
@@ -499,26 +463,19 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 				// 收到附件上传成功message后再在Handler中处理，再发送消息或者反馈内容到服务器，以及保存到本地
 
 				if (entranceType == 1) { // 消息（附件）
-					String sendTime = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss").format(new Date(System
+					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
 							.currentTimeMillis()));
-					String imageName = imagePath.substring(imagePath
-							.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID),
-							personID, sendTime, null, LocalConstant.IAMGE_TYPE,
-							imageName, isGroup, Constant.READ);
+					String imageName = imagePath.substring(imagePath.lastIndexOf("/") + 1);
+					msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, null,
+							LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
 				} else {
-					String feedbackTime = new SimpleDateFormat(
-							"yyyy-MM-dd HH:mm:ss").format(new Date(System
-							.currentTimeMillis()));
+					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
+							System.currentTimeMillis()));
 
-					fb = new FeedbackModel(feedbackID, taskID,
-							Integer.parseInt(userID), feedbackTime, "",
-							Constant.UNREAD);
-					String imageName = imagePath.substring(imagePath
-							.lastIndexOf("/") + 1);
-					fbAttach = new FeedbackAttachModel(feedbackID,
-							LocalConstant.IAMGE_TYPE, imageName);
+					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID), feedbackTime,
+							"", Constant.UNREAD);
+					String imageName = imagePath.substring(imagePath.lastIndexOf("/") + 1);
+					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.IAMGE_TYPE, imageName);
 					fb.setAttachment(fbAttach);
 				}
 				// 开启上传
@@ -537,14 +494,14 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		String contString = mEditTextContent.getText().toString();
 		if (!contString.isEmpty()) { // 文本反馈
 			feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-			String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-					.format(new Date(System.currentTimeMillis()));
-			FeedbackModel fbModel = new FeedbackModel(feedbackID, taskID,
-					Integer.valueOf(userID), feedbackTime, contString,
-					Constant.READ);
+			String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
+					.currentTimeMillis()));
+			FeedbackModel fbModel = new FeedbackModel(feedbackID, taskID, Integer.valueOf(userID),
+					feedbackTime, contString, Constant.READ);
 
 			// 发送到服务器
-			webRequestManager.sendFeedback(fbModel);
+			// webRequestManager.sendFeedback(fbModel);
+			sendFb(fbModel);
 			// 保存本地
 			fbModel.save(ChatDetail.this);
 
@@ -557,9 +514,17 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			mListView.setSelection(mListView.getCount() - 1);
 
 		} else { // 空消息发送提示
-			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白反馈")
-					.setPositiveButton("确定", null).create().show();
+			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白反馈").setPositiveButton("确定", null)
+					.create().show();
 		}
+	}
+
+	// TODO 传入参数需要更改！！！！
+	private void sendFb(FeedbackModel fdM) {
+		webRequestManager.sendFeedback(ChatDetail.this, "", fdM.getPersonID() + "",
+				System.currentTimeMillis() + "", fdM.getContent(), fdM.getAttachment()
+						.getAttachmentType() + "", fdM.getAttachment().getAttachmentURL(),
+				System.currentTimeMillis() + "", new String[] {});
 	}
 
 	// 发送消息
@@ -567,10 +532,10 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		String contString = mEditTextContent.getText().toString();
 		if (!contString.isEmpty()) { // 文本反馈
 			msgID = Utils.produceMessageID(userID);
-			String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-					.format(new Date(System.currentTimeMillis()));
-			msg = new MessageModel(msgID, Integer.parseInt(userID), personID,
-					sendTime, contString, 0, "", isGroup, Constant.READ);
+			String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
+					.currentTimeMillis()));
+			msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, contString, 0,
+					"", isGroup, Constant.READ);
 			// 发送消息到服务器
 			webRequestManager.sendMessage(msg);
 			// 保存本地数据库
@@ -583,8 +548,8 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			mEditTextContent.setText("");
 			mListView.setSelection(mListView.getCount() - 1);
 		} else { // 空消息发送提示
-			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白消息")
-					.setPositiveButton("确定", null).create().show();
+			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白消息").setPositiveButton("确定", null)
+					.create().show();
 		}
 	}
 
@@ -598,14 +563,12 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 				switch (handlerMsg.what) {
 				case Constant.SEND_FEEDBACK_REQUEST_SUCCESS:
 					mEditTextContent.setText("");
-					Toast.makeText(ChatDetail.this, "发送反馈成功",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(ChatDetail.this, "发送反馈成功", Toast.LENGTH_SHORT).show();
 					break;
 				case Constant.FILE_UPLOAD_SUCCESS:
 					if (entranceType == 1) {
 						if (msg == null) {
-							Toast.makeText(ChatDetail.this, "msg为空,不保存此反馈",
-									Toast.LENGTH_SHORT).show();
+							Toast.makeText(ChatDetail.this, "msg为空,不保存此反馈", Toast.LENGTH_SHORT).show();
 						} else {
 							webRequestManager.sendMessage(msg);
 							msg.save(ChatDetail.this);
@@ -617,10 +580,10 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 					} else {
 						// 发送服务器
 						if (fb == null) {
-							Toast.makeText(ChatDetail.this, "fb为空,不保存此反馈",
-									Toast.LENGTH_SHORT).show();
+							Toast.makeText(ChatDetail.this, "fb为空,不保存此反馈", Toast.LENGTH_SHORT).show();
 						} else {
-							webRequestManager.sendFeedback(fb);
+							// webRequestManager.sendFeedback(fb);
+							sendFb(fb);
 							// 保存本地
 							if (fb.getAttachment() != null) {
 								fb.getAttachment().save(ChatDetail.this);
@@ -666,14 +629,14 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SEND_FEEDBACK_REQUEST_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SAVE_MESSAGE_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SAVE_FEEDBACK_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.SEND_FEEDBACK_REQUEST_SUCCESS,
+				"ChatDetail");
+		MessageHandlerManager.getInstance()
+				.register(handler, Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS,
+				"ChatDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_FEEDBACK_SUCCESS,
+				"ChatDetail");
 	}
 
 	private String getDate() {
@@ -686,8 +649,7 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		String mins = String.valueOf(c.get(Calendar.MINUTE));
 
 		StringBuffer sbBuffer = new StringBuffer();
-		sbBuffer.append(year + "-" + month + "-" + day + " " + hour + ":"
-				+ mins);
+		sbBuffer.append(year + "-" + month + "-" + day + " " + hour + ":" + mins);
 
 		return sbBuffer.toString();
 	}
@@ -702,21 +664,17 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 		mEditTextContent.clearFocus();
 		// 隐藏软键盘
 		InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-		mInputMethodManager.hideSoftInputFromWindow(
-				mEditTextContent.getWindowToken(), 0);
+		mInputMethodManager.hideSoftInputFromWindow(mEditTextContent.getWindowToken(), 0);
 	}
 
 	@Override
 	protected void onDestroy() {
 		// 注销handler
-		MessageHandlerManager.getInstance().unregister(
-				Constant.SEND_FEEDBACK_REQUEST_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().unregister(
-				Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().unregister(
-				Constant.SAVE_MESSAGE_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().unregister(
-				Constant.SAVE_FEEDBACK_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.SEND_FEEDBACK_REQUEST_SUCCESS,
+				"ChatDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_MESSAGE_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_FEEDBACK_SUCCESS, "ChatDetail");
 
 		System.out.println("ChatDetail onDestroy");
 		// 回收图片内存

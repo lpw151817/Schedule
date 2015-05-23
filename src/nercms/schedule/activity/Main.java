@@ -132,6 +132,7 @@ public class Main extends SherlockFragmentActivity {
 		// 2014-6-24 WeiHao 登录之后，获取新任务、反馈、消息等
 		// //////TODO 需要更改请求参数
 		webRequestManager.getAffairUpdate("", "");
+		// /////接口 未实现
 		webRequestManager.getFeedbackUpdate();
 		webRequestManager.getMessageUpdate();
 
