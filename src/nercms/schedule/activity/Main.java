@@ -73,6 +73,7 @@ public class Main extends SherlockFragmentActivity {
 	private PersonDao personDao;
 
 	private String userID;
+
 	// private QuerySuggestionsAdapter mSuggestionsAdapter;
 	// private static final String[] COLUMNS = { BaseColumns._ID,
 	// SearchManager.SUGGEST_COLUMN_TEXT_1, };
@@ -82,18 +83,16 @@ public class Main extends SherlockFragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		userID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID,
-				null);
+		userID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, null);
 
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				Main.this);
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Main.this);
 		daoFactory = DAOFactory.getInstance();
 		personDao = daoFactory.getPersonDao(Main.this);
 		DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        Utils.Constant.displayWidth = displayMetrics.widthPixels;
-        Utils.Constant.displayHeight = displayMetrics.heightPixels;
-        
+		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+		Utils.Constant.displayWidth = displayMetrics.widthPixels;
+		Utils.Constant.displayHeight = displayMetrics.heightPixels;
+
 		initActionBar();// 调用依赖库 初始化action bar
 		initView();
 		initHandler();
@@ -101,19 +100,16 @@ public class Main extends SherlockFragmentActivity {
 		// SD卡判断并提示
 		if (Utils.isExistSDCard()) {
 			if (Utils.getSDFreeSize() < 200) { // 存储空间小于200MB
-				Toast.makeText(Main.this, "您的SD卡存储空间不足，请及时清理，避免操作受限！",
-						Toast.LENGTH_SHORT).show();
+				Toast.makeText(Main.this, "您的SD卡存储空间不足，请及时清理，避免操作受限！", Toast.LENGTH_SHORT).show();
 				isRestricted = false;
 			} else { // SD卡挂载且空间足够，附件目录准备
 				// 创建一个文件夹对象，赋值为外部存储器的目录
 				File sdcardDir = Environment.getExternalStorageDirectory();
 				// 得到一个路径，内容是sdcard的附件路径
-				String path1 = sdcardDir.getPath()
-						+ "/nercms-Schedule/Attachments";
+				String path1 = sdcardDir.getPath() + "/nercms-Schedule/Attachments";
 				File filePath1 = new File(path1);
 				// 得到一个路径，内容是sdcard的附件缩略图路径
-				String path2 = sdcardDir.getPath()
-						+ "/nercms-Schedule/Thumbnail";
+				String path2 = sdcardDir.getPath() + "/nercms-Schedule/Thumbnail";
 				File filePath2 = new File(path2);
 
 				if (!filePath1.exists()) {
@@ -126,8 +122,7 @@ public class Main extends SherlockFragmentActivity {
 				}
 			}
 		} else {
-			Toast.makeText(Main.this, "未检测到SD卡，操作将受限！", Toast.LENGTH_SHORT)
-					.show();
+			Toast.makeText(Main.this, "未检测到SD卡，操作将受限！", Toast.LENGTH_SHORT).show();
 			isRestricted = false;
 		}
 
@@ -135,7 +130,8 @@ public class Main extends SherlockFragmentActivity {
 		startService(new Intent(Main.this, SDCardService.class));
 
 		// 2014-6-24 WeiHao 登录之后，获取新任务、反馈、消息等
-		webRequestManager.getAffairUpdate();
+		// //////TODO 需要更改请求参数
+		webRequestManager.getAffairUpdate("", "");
 		webRequestManager.getFeedbackUpdate();
 		webRequestManager.getMessageUpdate();
 
@@ -148,18 +144,15 @@ public class Main extends SherlockFragmentActivity {
 			public void handleMessage(Message msg) {
 				switch (msg.what) {
 				case LocalConstant.SD_MOUNTED:
-					Toast.makeText(Main.this, "SD卡已挂载，操作恢复！",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(Main.this, "SD卡已挂载，操作恢复！", Toast.LENGTH_SHORT).show();
 					isRestricted = false;
 					break;
 				case LocalConstant.SD_UNMOUNTED:
-					Toast.makeText(Main.this, "SD卡已移除，操作将受限！",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(Main.this, "SD卡已移除，操作将受限！", Toast.LENGTH_SHORT).show();
 					isRestricted = true;
 					break;
 				case LocalConstant.NET_AVAILABLE:
-					Toast.makeText(Main.this, "当前网络：" + msg.obj.toString(),
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(Main.this, "当前网络：" + msg.obj.toString(), Toast.LENGTH_SHORT).show();
 					// ping应用服务器
 					// if (Utils.serverPing()) {
 					// netStatusTv.setText("");
@@ -169,8 +162,7 @@ public class Main extends SherlockFragmentActivity {
 
 					break;
 				case LocalConstant.NET_UNAVAILABLE:
-					Toast.makeText(Main.this, "无可用网络", Toast.LENGTH_SHORT)
-							.show();
+					Toast.makeText(Main.this, "无可用网络", Toast.LENGTH_SHORT).show();
 					netStatusTv.setText("(未连接)");
 					break;
 
@@ -184,18 +176,16 @@ public class Main extends SherlockFragmentActivity {
 					String showName = "";
 					String objectID = "";
 					if (String.valueOf(message.getReceiverID()).length() != 6) {
-						showName = personDao.getOrgNodeByOrgID(
-								String.valueOf(message.getReceiverID()))
+						showName = personDao.getOrgNodeByOrgID(String.valueOf(message.getReceiverID()))
 								.getDescription();
 						objectID = String.valueOf(message.getReceiverID());
 					} else {
-						showName = personDao.getPersonNameByID(String
-								.valueOf(message.getSenderID()));
+						showName = personDao.getPersonNameByID(String.valueOf(message.getSenderID()));
 						objectID = String.valueOf(message.getSenderID());
 					}
 
-					MyNotification.showMessageNotification(showName, objectID,
-							Main.this, new Intent(Main.this, ChatDetail.class));
+					MyNotification.showMessageNotification(showName, objectID, Main.this, new Intent(
+							Main.this, ChatDetail.class));
 					break;
 				case Constant.MQTT_NEW_MESSAGE:
 					Log.i("Chat", "Chat收到新消息");
@@ -203,24 +193,21 @@ public class Main extends SherlockFragmentActivity {
 					break;
 				case Constant.SHOW_TASK_NOTIFICATION:
 					AffairModel affair = (AffairModel) msg.obj;
-					String sponsorName = personDao.getPersonNameByID(String
-							.valueOf(affair.getSponsorID()));
+					String sponsorName = personDao.getPersonNameByID(String.valueOf(affair
+							.getSponsorID()));
 					boolean isModify = false; // 是否为修改任务
 					if (affair.getLastOperateType() == 4) {
 						isModify = true;
 					}
-					MyNotification.showAffairNotification(2,
-							affair.getStatus(), isModify, affair.getAffairID(),
-							sponsorName, affair.getTitle(), Main.this,
-							new Intent(Main.this, TaskDetail.class));
+					MyNotification.showAffairNotification(2, affair.getStatus(), isModify, affair
+							.getAffairID(), sponsorName, affair.getTitle(), Main.this, new Intent(
+							Main.this, TaskDetail.class));
 					break;
 				case Constant.SHOW_FEEDBACK_NOTIFICATION:
 					FeedbackModel fb = (FeedbackModel) msg.obj;
-					String senderName = personDao.getPersonNameByID(String
-							.valueOf(fb.getPersonID()));
-					MyNotification.showFeedbackNotification(senderName, fb
-							.getAffairID(), Main.this, new Intent(Main.this,
-							ChatDetail.class));
+					String senderName = personDao.getPersonNameByID(String.valueOf(fb.getPersonID()));
+					MyNotification.showFeedbackNotification(senderName, fb.getAffairID(), Main.this,
+							new Intent(Main.this, ChatDetail.class));
 					break;
 
 				default:
@@ -230,23 +217,17 @@ public class Main extends SherlockFragmentActivity {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler,
-				LocalConstant.SD_MOUNTED, "Main");
-		MessageHandlerManager.getInstance().register(handler,
-				LocalConstant.SD_UNMOUNTED, "Main");
-		MessageHandlerManager.getInstance().register(handler,
-				LocalConstant.NET_AVAILABLE, "Main");
-		MessageHandlerManager.getInstance().register(handler,
-				LocalConstant.NET_UNAVAILABLE, "Main");
+		MessageHandlerManager.getInstance().register(handler, LocalConstant.SD_MOUNTED, "Main");
+		MessageHandlerManager.getInstance().register(handler, LocalConstant.SD_UNMOUNTED, "Main");
+		MessageHandlerManager.getInstance().register(handler, LocalConstant.NET_AVAILABLE, "Main");
+		MessageHandlerManager.getInstance().register(handler, LocalConstant.NET_UNAVAILABLE, "Main");
 
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SHOW_TASK_NOTIFICATION, "Main");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SHOW_MESSAGE_NOTIFICATION, "Main");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SHOW_FEEDBACK_NOTIFICATION, "Main");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.MQTT_NEW_MESSAGE, "Main");
+		MessageHandlerManager.getInstance().register(handler, Constant.SHOW_TASK_NOTIFICATION, "Main");
+		MessageHandlerManager.getInstance()
+				.register(handler, Constant.SHOW_MESSAGE_NOTIFICATION, "Main");
+		MessageHandlerManager.getInstance().register(handler, Constant.SHOW_FEEDBACK_NOTIFICATION,
+				"Main");
+		MessageHandlerManager.getInstance().register(handler, Constant.MQTT_NEW_MESSAGE, "Main");
 	}
 
 	/*
@@ -268,8 +249,7 @@ public class Main extends SherlockFragmentActivity {
 		getSupportActionBar().setDisplayShowTitleEnabled(false);
 		// 不在actionbar显示logo
 		getSupportActionBar().setDisplayShowHomeEnabled(false);
-		mainActionBarView = LayoutInflater.from(this).inflate(
-				R.layout.main_action_bar, null);
+		mainActionBarView = LayoutInflater.from(this).inflate(R.layout.main_action_bar, null);
 		getSupportActionBar().setCustomView(mainActionBarView);
 	}
 
@@ -311,8 +291,7 @@ public class Main extends SherlockFragmentActivity {
 
 		MenuItem menuItem = subMenu.getItem();
 		menuItem.setIcon(R.drawable.ic_action_overflow);
-		menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS
-				| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -357,12 +336,13 @@ public class Main extends SherlockFragmentActivity {
 				// 视频直播
 				break;
 			case 5:
-//				ComponentName comp = new ComponentName("com.nercms.schedule.External_Convene_Schedule","com.nercms.schedule.External_Start_Schedule");
-//				Intent police_schedule = new Intent();
-//				police_schedule.setComponent(comp);
-//				police_schedule.setAction("android.intent.action.MAIN");
-//		        startActivity(police_schedule);
-//		        return true;
+				// ComponentName comp = new
+				// ComponentName("com.nercms.schedule.External_Convene_Schedule","com.nercms.schedule.External_Start_Schedule");
+				// Intent police_schedule = new Intent();
+				// police_schedule.setComponent(comp);
+				// police_schedule.setAction("android.intent.action.MAIN");
+				// startActivity(police_schedule);
+				// return true;
 				break;
 			case 6:
 				// 添加客户
@@ -388,8 +368,7 @@ public class Main extends SherlockFragmentActivity {
 			case 9:
 				// 注销页面
 				// 注销mqtt
-				MQTT.CLIENT_ID = MySharedPreference.get(Main.this,
-						MySharedPreference.USER_ID, "");
+				MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, "");
 				MQTT.get_instance().close();
 				// 停止服务
 				stopService(new Intent(Main.this, SDCardService.class));
@@ -406,25 +385,24 @@ public class Main extends SherlockFragmentActivity {
 			case 11:
 				// 2014-8-5
 				// 2014-8-7
-				ArrayList<String> speakerIDList = new ArrayList<String>(
-						Arrays.asList("100011", "100013", "100015", "100016"));
-				ArrayList<String> speakerNameList = new ArrayList<String>(
-						Arrays.asList("自动一", "自动三", "自动五", "自动六"));
-				ArrayList<String> participatorIDList = new ArrayList<String>(
-						Arrays.asList("100012", "100014"));
-				ArrayList<String> participatorNameList = new ArrayList<String>(
-				 Arrays.asList("自动二", "自动四", "自动七", "自动八", "自动九", "自动十",
-								"自动11", "自动12", "自动13", "自动13", "自动13", "自动13",
-								"自动13", "自动13", "自动13", "自动13"));
-//				ArrayList<String> participatorNameList = new ArrayList<String>(
-//						Arrays.asList("自动懂"));
+				ArrayList<String> speakerIDList = new ArrayList<String>(Arrays.asList("100011",
+						"100013", "100015", "100016"));
+				ArrayList<String> speakerNameList = new ArrayList<String>(Arrays.asList("自动一", "自动三",
+						"自动五", "自动六"));
+				ArrayList<String> participatorIDList = new ArrayList<String>(Arrays.asList("100012",
+						"100014"));
+				ArrayList<String> participatorNameList = new ArrayList<String>(Arrays.asList("自动二",
+						"自动四", "自动七", "自动八", "自动九", "自动十", "自动11", "自动12", "自动13", "自动13", "自动13",
+						"自动13", "自动13", "自动13", "自动13", "自动13"));
+				// ArrayList<String> participatorNameList = new
+				// ArrayList<String>(
+				// Arrays.asList("自动懂"));
 				Intent intent11 = new Intent(Main.this, VoiceMeeting.class);
 				intent11.putExtra("call_type", 1);
 				intent11.putExtra("speaker_id_list", speakerIDList);
 				intent11.putExtra("speaker_name_list", speakerNameList);
 				intent11.putExtra("participator_id_list", participatorIDList);
-				intent11.putExtra("participator_name_list",
-						participatorNameList);
+				intent11.putExtra("participator_name_list", participatorNameList);
 				startActivity(intent11);
 				break;
 
@@ -452,9 +430,7 @@ public class Main extends SherlockFragmentActivity {
 	}
 
 	private void showExitSelection() {
-		new AlertDialog.Builder(Main.this)
-				.setTitle("退出程序")
-				.setMessage("退出程序后，是否继续接收新消息提醒？")
+		new AlertDialog.Builder(Main.this).setTitle("退出程序").setMessage("退出程序后，是否继续接收新消息提醒？")
 				.setPositiveButton("接收", new DialogInterface.OnClickListener() {
 
 					@Override
@@ -465,26 +441,21 @@ public class Main extends SherlockFragmentActivity {
 						intent.addCategory(Intent.CATEGORY_HOME);
 						Main.this.startActivity(intent);
 					}
-				})
-				.setNegativeButton("不接收",
-						new DialogInterface.OnClickListener() {
+				}).setNegativeButton("不接收", new DialogInterface.OnClickListener() {
 
-							@Override
-							public void onClick(DialogInterface arg0, int arg1) {
-								// 注销mqtt
-								MQTT.CLIENT_ID = MySharedPreference.get(
-										Main.this, MySharedPreference.USER_ID,
-										"");
-								MQTT.get_instance().close();
-								// 停止服务
-								stopService(new Intent(Main.this,
-										SDCardService.class));
-								// 杀死进程，程序退出
-								android.os.Process
-										.killProcess(android.os.Process.myPid()); // 获取PID
-								System.exit(0); // 常规java、c#的标准退出法，返回值为0代表正常退出
-							}
-						}).create().show();
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						// 注销mqtt
+						MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID,
+								"");
+						MQTT.get_instance().close();
+						// 停止服务
+						stopService(new Intent(Main.this, SDCardService.class));
+						// 杀死进程，程序退出
+						android.os.Process.killProcess(android.os.Process.myPid()); // 获取PID
+						System.exit(0); // 常规java、c#的标准退出法，返回值为0代表正常退出
+					}
+				}).create().show();
 	}
 
 	// public void show_task_list(View v) { // 点击任务页面：显示任务列表

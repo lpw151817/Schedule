@@ -156,8 +156,7 @@ public class TaskDetail extends SherlockActivity {
 
 		Log.v("", "onCreate");
 
-		options = new DisplayImageOptions.Builder()
-				.showImageOnLoading(R.drawable.no_picture) // 设置图片在下载期间显示的图片
+		options = new DisplayImageOptions.Builder().showImageOnLoading(R.drawable.no_picture) // 设置图片在下载期间显示的图片
 				.showImageForEmptyUri(R.drawable.no_picture)// 设置图片Uri为空或是错误的时候显示的图片
 				.showImageOnFail(R.drawable.no_picture) // 设置图片加载/解码过程中错误时候显示的图片
 				.cacheInMemory(true)// 设置下载的图片是否缓存在内存中
@@ -174,16 +173,14 @@ public class TaskDetail extends SherlockActivity {
 				.displayer(new FadeInBitmapDisplayer(100))// 是否图片加载好后渐入的动画时间
 				.build();// 构建完成
 
-		userID = MySharedPreference.get(TaskDetail.this,
-				MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(TaskDetail.this, MySharedPreference.USER_ID, "");
 
 		// 根据任务界面传来的任务类型和任务状态初始化入口变量，任务ID
 		entranceType = getIntent().getIntExtra("type", -1);
 		entranceStatus = getIntent().getIntExtra("status", -1);
 		taskID = getIntent().getExtras().getString("id");
 
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				TaskDetail.this);
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), TaskDetail.this);
 
 		// 准备数据
 		initData();
@@ -232,8 +229,7 @@ public class TaskDetail extends SherlockActivity {
 
 			menuItem = subMenu.getItem();
 			menuItem.setIcon(R.drawable.ic_action_overflow);
-			menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS
-					| MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+			menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 		}
 		// }
 		return super.onCreateOptionsMenu(menu);
@@ -259,21 +255,18 @@ public class TaskDetail extends SherlockActivity {
 			showDateTimePicker();
 			break;
 		case 3:
-			new AlertDialog.Builder(TaskDetail.this)
-					.setTitle("任务完成")
-					.setMessage("确定将该任务置为完成?")
-					.setPositiveButton("确定",
-							new DialogInterface.OnClickListener() {
+			new AlertDialog.Builder(TaskDetail.this).setTitle("任务完成").setMessage("确定将该任务置为完成?")
+					.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									// 发送网络请求
-									webRequestManager.endAffair(taskID);
-									// 修改本地数据库（已包含在网络请求接口的成功返回情况里）...
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// 发送网络请求
+							// ////TODO 参数需要更改
+							webRequestManager.endAffair("", taskID);
+							// 修改本地数据库（已包含在网络请求接口的成功返回情况里）...
 
-								}
-							}).setNegativeButton("取消", null).create().show();
+						}
+					}).setNegativeButton("取消", null).create().show();
 			break;
 
 		default:
@@ -294,10 +287,8 @@ public class TaskDetail extends SherlockActivity {
 		pod = podDao.getPersonByAffairID(taskID);
 
 		personDao = daoFactory.getPersonDao(TaskDetail.this);
-		podName = personDao.getSSMByID(Integer.toString(pod.getPersonID()))
-				.getName();
-		sponsorName = personDao.getSSMByID(
-				Integer.toString(task.getSponsorID())).getName();
+		podName = personDao.getSSMByID(Integer.toString(pod.getPersonID())).getName();
+		sponsorName = personDao.getSSMByID(Integer.toString(task.getSponsorID())).getName();
 
 		attachDao = daoFactory.getAttachmentDao(TaskDetail.this);
 		taskAttackList = attachDao.getAttachByAffairID(taskID);
@@ -350,12 +341,12 @@ public class TaskDetail extends SherlockActivity {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.FILE_DOWNLOAD_SUCCESS, "TaskDetail");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.END_TASK_REQUEST_SUCCESS, "TaskDetail");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.MODIFY_TASK_REQUEST_SUCCESS, "TaskDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.FILE_DOWNLOAD_SUCCESS,
+				"TaskDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.END_TASK_REQUEST_SUCCESS,
+				"TaskDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.MODIFY_TASK_REQUEST_SUCCESS,
+				"TaskDetail");
 	}
 
 	private void initView() {
@@ -437,15 +428,14 @@ public class TaskDetail extends SherlockActivity {
 						@Override
 						public void onClick(View arg0) {
 							Intent intent = new Intent(Intent.ACTION_VIEW);
-							intent.setDataAndType(
-									Uri.parse("file://" + mediaPath), "image/*");
+							intent.setDataAndType(Uri.parse("file://" + mediaPath), "image/*");
 							startActivity(intent);
 						}
 					});
 
 					if (!new File(mediaPath).exists()) {
-						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL
-								+ File.separator + mediaName;
+						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+								+ mediaName;
 						// 请求网络图片
 						ImageRequest imageRequest = new ImageRequest(downUrl,
 								new Response.Listener<Bitmap>() {
@@ -456,11 +446,9 @@ public class TaskDetail extends SherlockActivity {
 										Utils.saveBitmap(response, mediaPath);
 										addImage(imageView, mediaPath, true);
 									}
-								}, 0, 0, Config.RGB_565,
-								new Response.ErrorListener() {
+								}, 0, 0, Config.RGB_565, new Response.ErrorListener() {
 									@Override
-									public void onErrorResponse(
-											VolleyError error) {
+									public void onErrorResponse(VolleyError error) {
 									}
 								});
 						// 加入请求队列
@@ -474,27 +462,23 @@ public class TaskDetail extends SherlockActivity {
 						@Override
 						public void onClick(View arg0) {
 							Intent intent = new Intent(Intent.ACTION_VIEW);
-							intent.setDataAndType(
-									Uri.parse("file://" + mediaPath), "video/*");
+							intent.setDataAndType(Uri.parse("file://" + mediaPath), "video/*");
 							startActivity(intent);
 						}
 					});
 					if (!new File(mediaPath).exists()) {
-						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL
-								+ File.separator + mediaName;
+						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+								+ mediaName;
 						new HttpDownloadTask(TaskDetail.this).execute(downUrl,
 								"/nercms-Schedule/Attachments/", mediaName);
 					} else {
 
 						// 判断视频缩略图是否存在，不存在则生成缩略图
 						String thumbnailPath = videoThumbnailDir
-								+ mediaName
-										.substring(0, mediaName.indexOf("."))
-								+ ".jpg";
+								+ mediaName.substring(0, mediaName.indexOf(".")) + ".jpg";
 						if (!new File(thumbnailPath).exists()) {
-							Utils.saveBitmap(ThumbnailUtils
-									.createVideoThumbnail(mediaPath,
-											Thumbnails.MINI_KIND),
+							Utils.saveBitmap(
+									ThumbnailUtils.createVideoThumbnail(mediaPath, Thumbnails.MINI_KIND),
 									thumbnailPath);
 						}
 						addImage(imageView, thumbnailPath, true);
@@ -527,14 +511,12 @@ public class TaskDetail extends SherlockActivity {
 
 					// 判断视频缩略图是否存在，不存在则生成缩略图
 					String thumbnailPath = videoThumbnailDir
-							+ mediaName.substring(0, mediaName.indexOf("."))
-							+ ".jpg";
+							+ mediaName.substring(0, mediaName.indexOf(".")) + ".jpg";
 					Log.v("updateVideo", "生成视频缩略图");
-					Utils.saveBitmap(ThumbnailUtils.createVideoThumbnail(
-							Environment.getExternalStorageDirectory().getPath()
-									+ "/nercms-Schedule/Attachments/"
-									+ mediaName, Thumbnails.MINI_KIND),
-							thumbnailPath);
+					Utils.saveBitmap(ThumbnailUtils.createVideoThumbnail(Environment
+							.getExternalStorageDirectory().getPath()
+							+ "/nercms-Schedule/Attachments/"
+							+ mediaName, Thumbnails.MINI_KIND), thumbnailPath);
 
 					addImage(imageView, thumbnailPath, true);
 				}
@@ -542,8 +524,7 @@ public class TaskDetail extends SherlockActivity {
 		}
 	}
 
-	private void addImage(final ImageView imageView, final String path,
-			boolean isDone) {
+	private void addImage(final ImageView imageView, final String path, boolean isDone) {
 		// 加载图片的ImageView
 		// final ImageView imageView = new RoundAngleImageView(this);
 		imageView.setPadding(2, 2, 2, 2);
@@ -566,8 +547,8 @@ public class TaskDetail extends SherlockActivity {
 			// }
 			// });
 			// 异步加载本地图片
-			com.nostra13.universalimageloader.core.ImageLoader.getInstance()
-					.displayImage("file://" + path, imageView, options);
+			com.nostra13.universalimageloader.core.ImageLoader.getInstance().displayImage(
+					"file://" + path, imageView, options);
 		} else {
 			// 将图片添加入图片列表
 			mediaContainer.addView(imageView);
@@ -586,8 +567,7 @@ public class TaskDetail extends SherlockActivity {
 		imageDialog = new Dialog(this, R.style.imageDialog);
 		imageDialog.setContentView(view);
 		// 添加图片
-		ImageView dialogImageView = (ImageView) view
-				.findViewById(R.id.imageImageView);
+		ImageView dialogImageView = (ImageView) view.findViewById(R.id.imageImageView);
 		// 获取图片
 		try {
 			final Bitmap pic = BitmapFactory.decodeFile(path);
@@ -650,12 +630,10 @@ public class TaskDetail extends SherlockActivity {
 
 	@Override
 	protected void onDestroy() {
-		MessageHandlerManager.getInstance().unregister(
-				Constant.FILE_DOWNLOAD_SUCCESS, "TaskDetail");
-		MessageHandlerManager.getInstance().unregister(
-				Constant.END_TASK_REQUEST_SUCCESS, "TaskDetail");
-		MessageHandlerManager.getInstance().unregister(
-				Constant.MODIFY_TASK_REQUEST_SUCCESS, "TaskDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.FILE_DOWNLOAD_SUCCESS, "TaskDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS, "TaskDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.MODIFY_TASK_REQUEST_SUCCESS,
+				"TaskDetail");
 		freeBitmap();
 		super.onDestroy();
 	}
@@ -729,15 +707,12 @@ public class TaskDetail extends SherlockActivity {
 			public void onChanged(WheelView wheel, int oldValue, int newValue) {
 				int year_num = newValue + START_YEAR;
 				// 判断大小月及是否闰年,用来确定"日"的数据
-				if (list_big
-						.contains(String.valueOf(wv_month.getCurrentItem() + 1))) {
+				if (list_big.contains(String.valueOf(wv_month.getCurrentItem() + 1))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 31));
-				} else if (list_little.contains(String.valueOf(wv_month
-						.getCurrentItem() + 1))) {
+				} else if (list_little.contains(String.valueOf(wv_month.getCurrentItem() + 1))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if ((year_num % 4 == 0 && year_num % 100 != 0)
-							|| year_num % 400 == 0)
+					if ((year_num % 4 == 0 && year_num % 100 != 0) || year_num % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else
 						wv_day.setAdapter(new NumericWheelAdapter(1, 28));
@@ -754,8 +729,7 @@ public class TaskDetail extends SherlockActivity {
 				} else if (list_little.contains(String.valueOf(month_num))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year
-							.getCurrentItem() + START_YEAR) % 100 != 0)
+					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
 							|| (wv_year.getCurrentItem() + START_YEAR) % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else
@@ -777,8 +751,7 @@ public class TaskDetail extends SherlockActivity {
 		wv_year.TEXT_SIZE = textSize;
 
 		Button btn_sure = (Button) view.findViewById(R.id.btn_datetime_sure);
-		Button btn_cancel = (Button) view
-				.findViewById(R.id.btn_datetime_cancel);
+		Button btn_cancel = (Button) view.findViewById(R.id.btn_datetime_cancel);
 		// 确定按钮
 		btn_sure.setOnClickListener(new OnClickListener() {
 			@Override
@@ -790,10 +763,10 @@ public class TaskDetail extends SherlockActivity {
 				String _nowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")// 创建时间
 						.format(new Date(System.currentTimeMillis()));
 
-				currentSelectTime = (wv_year.getCurrentItem() + START_YEAR)
-						+ "-" + decimal.format((wv_month.getCurrentItem() + 1))
-						+ "-" + decimal.format((wv_day.getCurrentItem() + 1))
-						+ " " + decimal.format(wv_hours.getCurrentItem()) + ":"
+				currentSelectTime = (wv_year.getCurrentItem() + START_YEAR) + "-"
+						+ decimal.format((wv_month.getCurrentItem() + 1)) + "-"
+						+ decimal.format((wv_day.getCurrentItem() + 1)) + " "
+						+ decimal.format(wv_hours.getCurrentItem()) + ":"
 						+ decimal.format(wv_mins.getCurrentItem()) + ":00";
 
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -807,33 +780,25 @@ public class TaskDetail extends SherlockActivity {
 				}
 				long mins = (selectTime.getTime() - nowTime.getTime()) / 6000;
 				if (mins < 3) {
-					Toast.makeText(TaskDetail.this, "选择时间小于当前时间，请重新选择",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(TaskDetail.this, "选择时间小于当前时间，请重新选择", Toast.LENGTH_SHORT).show();
 				} else {
 					dialog.dismiss();
 					new AlertDialog.Builder(TaskDetail.this)
 							.setTitle("修改提醒")
 							.setMessage(
-									"确定将任务的截止时间从 "
-											+ end_time.getText().toString()
-											+ " 修改为 " + currentSelectTime
-											+ " 吗？")
-							.setPositiveButton("确定",
-									new DialogInterface.OnClickListener() {
+									"确定将任务的截止时间从 " + end_time.getText().toString() + " 修改为 "
+											+ currentSelectTime + " 吗？")
+							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
-										@Override
-										public void onClick(
-												DialogInterface arg0, int arg1) {
+								@Override
+								public void onClick(DialogInterface arg0, int arg1) {
 
-											// 向服务器发出修改请求
-											webRequestManager
-													.modifyAffairEndTime(
-															taskID,
-															currentSelectTime);
-										}
+									// 向服务器发出修改请求
+									// //////////TODO
+									webRequestManager.modifyAffairEndTime("", taskID, currentSelectTime);
+								}
 
-									}).setNegativeButton("取消", null).create()
-							.show();
+							}).setNegativeButton("取消", null).create().show();
 
 				}
 			}

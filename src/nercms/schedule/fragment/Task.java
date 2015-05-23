@@ -40,10 +40,9 @@ public class Task extends SherlockFragment implements OnClickListener {
 	private static final String TAG = "TaskFragment";
 
 	// TaskFragment页面中控件
-	private TextView start_delayed, start_doing, start_finished, rcv_delayed,
-			rcv_doing, rcv_finished;
-	private ImageView stt_delayed_tips, stt_doing_tips, stt_finished_tips,
-			rcv_delayed_tips, rcv_doing_tips, rcv_finished_tips;
+	private TextView start_delayed, start_doing, start_finished, rcv_delayed, rcv_doing, rcv_finished;
+	private ImageView stt_delayed_tips, stt_doing_tips, stt_finished_tips, rcv_delayed_tips,
+			rcv_doing_tips, rcv_finished_tips;
 
 	// 数据获取
 	private static DAOFactory daoFactory = DAOFactory.getInstance();
@@ -81,23 +80,19 @@ public class Task extends SherlockFragment implements OnClickListener {
 	// }
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.task_fragment, null);
 
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				getActivity());
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), getActivity());
 
 		initData();
 
 		// 2014-04-28 绑定6个统计数字所在控件 及其监视器
 		// 2014-5-23 数字赋值
 		// 2014-7-7 绑定6个未读提示红点标志
-		start_delayed = (TextView) v
-				.findViewById(R.id.task_start_delayed_number);
+		start_delayed = (TextView) v.findViewById(R.id.task_start_delayed_number);
 		start_delayed.setOnClickListener(this);// 点击后跳转到对应列表
-		stt_delayed_tips = (ImageView) v
-				.findViewById(R.id.task_start_delayed_tips);
+		stt_delayed_tips = (ImageView) v.findViewById(R.id.task_start_delayed_tips);
 		stt_delayed_tips.setVisibility(View.GONE);
 
 		start_doing = (TextView) v.findViewById(R.id.task_start_doing_number);
@@ -105,17 +100,14 @@ public class Task extends SherlockFragment implements OnClickListener {
 		stt_doing_tips = (ImageView) v.findViewById(R.id.task_start_doing_tips);
 		stt_doing_tips.setVisibility(View.GONE);
 
-		start_finished = (TextView) v
-				.findViewById(R.id.task_start_finished_number);
+		start_finished = (TextView) v.findViewById(R.id.task_start_finished_number);
 		start_finished.setOnClickListener(this);
-		stt_finished_tips = (ImageView) v
-				.findViewById(R.id.task_start_finished_tips);
+		stt_finished_tips = (ImageView) v.findViewById(R.id.task_start_finished_tips);
 		stt_finished_tips.setVisibility(View.GONE);
 
 		rcv_delayed = (TextView) v.findViewById(R.id.task_rcv_delayed_number);
 		rcv_delayed.setOnClickListener(this);
-		rcv_delayed_tips = (ImageView) v
-				.findViewById(R.id.task_rcv_delayed_tips);
+		rcv_delayed_tips = (ImageView) v.findViewById(R.id.task_rcv_delayed_tips);
 		rcv_delayed_tips.setVisibility(View.GONE);
 
 		rcv_doing = (TextView) v.findViewById(R.id.task_rcv_doing_number);
@@ -125,8 +117,7 @@ public class Task extends SherlockFragment implements OnClickListener {
 
 		rcv_finished = (TextView) v.findViewById(R.id.task_rcv_finished_number);
 		rcv_finished.setOnClickListener(this);
-		rcv_finished_tips = (ImageView) v
-				.findViewById(R.id.task_rcv_finished_tips);
+		rcv_finished_tips = (ImageView) v.findViewById(R.id.task_rcv_finished_tips);
 		rcv_finished_tips.setVisibility(View.GONE);
 
 		resetNumber();
@@ -156,7 +147,9 @@ public class Task extends SherlockFragment implements OnClickListener {
 				switch (msg.what) {
 				case Constant.MQTT_NEW_TASK:
 					Log.i("Task", "收到mqtt任务更新");
-					webRequestManager.getAffairUpdate();
+
+					// //////TODO 请求需要更改
+					webRequestManager.getAffairUpdate("", "");
 					initData();
 					resetNumber();
 					break;
@@ -176,78 +169,62 @@ public class Task extends SherlockFragment implements OnClickListener {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.MQTT_NEW_TASK, "Task");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.MQTT_NEW_FEEDBACK, "Task");
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SAVE_TASK_SUCCESS, "Task");
+		MessageHandlerManager.getInstance().register(handler, Constant.MQTT_NEW_TASK, "Task");
+		MessageHandlerManager.getInstance().register(handler, Constant.MQTT_NEW_FEEDBACK, "Task");
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_TASK_SUCCESS, "Task");
 	}
 
 	// 2014-5-23 WeiHao
 	// 准备任务条数数据
 	public void initData() {
-		userID = MySharedPreference.get(getActivity(),
-				MySharedPreference.USER_ID, null);
+		userID = MySharedPreference.get(getActivity(), MySharedPreference.USER_ID, null);
 		affairDao = daoFactory.getAffairDao(getActivity());
 
-		stDoingNum = affairDao.getAffairCountByTypeAndStatus(
-				LocalConstant.START_TASK_TYPE, LocalConstant.DOING_TASK_STATUS,
-				userID);
-		stFinishNum = affairDao.getAffairCountByTypeAndStatus(
-				LocalConstant.START_TASK_TYPE,
-				LocalConstant.FINISHED_TASK_STATUS, userID);
-		stDelayNum = affairDao.getAffairCountByTypeAndStatus(
-				LocalConstant.START_TASK_TYPE,
-				LocalConstant.DELAYED_TASK_STATUS, userID);
-
-		rvDoingNum = affairDao.getAffairCountByTypeAndStatus(
-				LocalConstant.RECEIVE_TASK_TYPE,
+		stDoingNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.START_TASK_TYPE,
 				LocalConstant.DOING_TASK_STATUS, userID);
-		rvFinishNum = affairDao.getAffairCountByTypeAndStatus(
-				LocalConstant.RECEIVE_TASK_TYPE,
+		stFinishNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.START_TASK_TYPE,
 				LocalConstant.FINISHED_TASK_STATUS, userID);
-		rvDelayNum = affairDao.getAffairCountByTypeAndStatus(
-				LocalConstant.RECEIVE_TASK_TYPE,
+		stDelayNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.START_TASK_TYPE,
 				LocalConstant.DELAYED_TASK_STATUS, userID);
 
-		if (affairDao.getUnreadNumByTypeAndStatus(
-				LocalConstant.START_TASK_TYPE, LocalConstant.DOING_TASK_STATUS,
-				userID) > 0) {
+		rvDoingNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
+				LocalConstant.DOING_TASK_STATUS, userID);
+		rvFinishNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
+				LocalConstant.FINISHED_TASK_STATUS, userID);
+		rvDelayNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
+				LocalConstant.DELAYED_TASK_STATUS, userID);
+
+		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.START_TASK_TYPE,
+				LocalConstant.DOING_TASK_STATUS, userID) > 0) {
 			stDoingNew = true;
 		} else {
 			stDoingNew = false;
 		}
-		if (affairDao.getUnreadNumByTypeAndStatus(
-				LocalConstant.START_TASK_TYPE,
+		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.START_TASK_TYPE,
 				LocalConstant.FINISHED_TASK_STATUS, userID) > 0) {
 			stFinishNew = true;
 		} else {
 			stFinishNew = false;
 		}
-		if (affairDao.getUnreadNumByTypeAndStatus(
-				LocalConstant.START_TASK_TYPE,
+		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.START_TASK_TYPE,
 				LocalConstant.DELAYED_TASK_STATUS, userID) > 0) {
 			stDelayNew = true;
 		} else {
 			stDelayNew = false;
 		}
-		if (affairDao.getUnreadNumByTypeAndStatus(
-				LocalConstant.RECEIVE_TASK_TYPE,
+		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
 				LocalConstant.DOING_TASK_STATUS, userID) > 0) {
 			rvDoingNew = true;
 		} else {
 			rvDoingNew = false;
 		}
-		if (affairDao.getUnreadNumByTypeAndStatus(
-				LocalConstant.RECEIVE_TASK_TYPE,
+		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
 				LocalConstant.FINISHED_TASK_STATUS, userID) > 0) {
 			rvFinishNew = true;
 		} else {
 			rvFinishNew = false;
 		}
-		if (affairDao.getUnreadNumByTypeAndStatus(
-				LocalConstant.RECEIVE_TASK_TYPE,
+		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
 				LocalConstant.DELAYED_TASK_STATUS, userID) > 0) {
 			rvDelayNew = true;
 		} else {
