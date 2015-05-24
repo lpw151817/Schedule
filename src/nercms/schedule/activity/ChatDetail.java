@@ -527,6 +527,12 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 				System.currentTimeMillis() + "", new String[] {});
 	}
 
+	private void sendMsg(MessageModel msg) {
+		webRequestManager.sendMessage("", "", msg.getSenderID() + "", new String[] {},
+				msg.getSendTime(), msg.getDescription(), msg.getAttachmentType() + "",
+				msg.getAttachmentURL(), System.currentTimeMillis() + "");
+	}
+
 	// 发送消息
 	private void sendMessage() {
 		String contString = mEditTextContent.getText().toString();
@@ -537,7 +543,8 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 			msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, contString, 0,
 					"", isGroup, Constant.READ);
 			// 发送消息到服务器
-			webRequestManager.sendMessage(msg);
+			// webRequestManager.sendMessage(msg);
+			sendMsg(msg);
 			// 保存本地数据库
 			msg.save(ChatDetail.this);
 			// 刷新显示
@@ -570,7 +577,8 @@ public class ChatDetail extends SherlockActivity implements OnClickListener {
 						if (msg == null) {
 							Toast.makeText(ChatDetail.this, "msg为空,不保存此反馈", Toast.LENGTH_SHORT).show();
 						} else {
-							webRequestManager.sendMessage(msg);
+							// webRequestManager.sendMessage(msg);
+							sendMsg(msg);
 							msg.save(ChatDetail.this);
 
 							msgList.add(msg);

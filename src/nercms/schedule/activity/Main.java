@@ -134,7 +134,8 @@ public class Main extends SherlockFragmentActivity {
 		webRequestManager.getAffairUpdate("", "");
 		// /////接口 未实现
 		webRequestManager.getFeedbackUpdate();
-		webRequestManager.getMessageUpdate();
+		// //////TODO 需要更改请求参数
+		webRequestManager.getMessageUpdate("", "");
 
 	}
 
@@ -190,7 +191,8 @@ public class Main extends SherlockFragmentActivity {
 					break;
 				case Constant.MQTT_NEW_MESSAGE:
 					Log.i("Chat", "Chat收到新消息");
-					webRequestManager.getMessageUpdate();
+					// //////TODO 需要更改请求参数
+					webRequestManager.getMessageUpdate("", "");
 					break;
 				case Constant.SHOW_TASK_NOTIFICATION:
 					AffairModel affair = (AffairModel) msg.obj;
