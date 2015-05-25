@@ -373,7 +373,7 @@ public class TaskAdd extends SherlockActivity {
 		webRequestManager.sendAffair("", this.task.getType() + "", task.getSponsorID() + "",
 				task.getDescription(), task.getTitle(), task.getBeginTime(), task.getEndTime(),
 				task.getCompleteTime(), task.getLastOperateType() + "", task.getLastOperateTime(), "",
-				ats, us);
+				ats, us, new String[] { task.getPerson().getPersonID() + "" });
 	}
 
 	// 2014-5-21 WeiHao
