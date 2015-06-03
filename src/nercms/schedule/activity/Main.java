@@ -34,6 +34,7 @@ import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.model.FeedbackModel;
 import android.wxapp.service.model.MessageModel;
 import android.wxapp.service.model.StructuredStaffModel;
+import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.MQTT;
@@ -56,7 +57,6 @@ public class Main extends SherlockFragmentActivity {
 	private View mainActionBarView;// 头部action bar空间
 	private FragmentPagerAdapter adapter;// fragment适配器
 
-	// private Handler handler;
 	private WebRequestManager webRequestManager;
 
 	// 2014-6-17
@@ -68,26 +68,26 @@ public class Main extends SherlockFragmentActivity {
 
 	private TextView netStatusTv;
 
-	// 2014-6-25 WeiHao
-	private DAOFactory daoFactory;
-	private PersonDao personDao;
+//	// 2014-6-25 WeiHao
+//	private DAOFactory daoFactory;
+//	private PersonDao personDao;
 
 	private String userID;
 
-	// private QuerySuggestionsAdapter mSuggestionsAdapter;
-	// private static final String[] COLUMNS = { BaseColumns._ID,
-	// SearchManager.SUGGEST_COLUMN_TEXT_1, };
+//	 private QuerySuggestionsAdapter mSuggestionsAdapter;
+//	 private static final String[] COLUMNS = { BaseColumns._ID,
+//	 SearchManager.SUGGEST_COLUMN_TEXT_1, };
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
+		Log.i("Main", "On Create");
 		userID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, null);
 
 		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Main.this);
-		daoFactory = DAOFactory.getInstance();
-		personDao = daoFactory.getPersonDao(Main.this);
+//		daoFactory = DAOFactory.getInstance();
+//		personDao = daoFactory.getPersonDao(Main.this);
 		DisplayMetrics displayMetrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 		Utils.Constant.displayWidth = displayMetrics.widthPixels;
@@ -136,7 +136,6 @@ public class Main extends SherlockFragmentActivity {
 		// webRequestManager.getFeedbackUpdate();
 		// // //////TODO 需要更改请求参数
 		// webRequestManager.getMessageUpdate("", "");
-
 	}
 
 	private void initHandler() {
@@ -169,25 +168,25 @@ public class Main extends SherlockFragmentActivity {
 					break;
 
 				case Constant.SHOW_MESSAGE_NOTIFICATION:
-					MessageModel message = (MessageModel) msg.obj;
-
-					// 2014-7-30 WeiHao 逻辑修改
-					// 判断收到的是否是群消息
-					// 如果是群消息，Notification显示收到来自群名的新消息
-					// 如果是个人消息，notification显示收到来自发送人的新消息
-					String showName = "";
-					String objectID = "";
-					if (String.valueOf(message.getReceiverID()).length() != 6) {
-						showName = personDao.getOrgNodeByOrgID(String.valueOf(message.getReceiverID()))
-								.getDescription();
-						objectID = String.valueOf(message.getReceiverID());
-					} else {
-						showName = personDao.getPersonNameByID(String.valueOf(message.getSenderID()));
-						objectID = String.valueOf(message.getSenderID());
-					}
-
-					MyNotification.showMessageNotification(showName, objectID, Main.this, new Intent(
-							Main.this, ChatDetail.class));
+//					MessageModel message = (MessageModel) msg.obj;
+//
+//					// 2014-7-30 WeiHao 逻辑修改
+//					// 判断收到的是否是群消息
+//					// 如果是群消息，Notification显示收到来自群名的新消息
+//					// 如果是个人消息，notification显示收到来自发送人的新消息
+//					String showName = "";
+//					String objectID = "";
+//					if (String.valueOf(message.getReceiverID()).length() != 6) {
+//						showName = personDao.getOrgNodeByOrgID(String.valueOf(message.getReceiverID()))
+//								.getDescription();
+//						objectID = String.valueOf(message.getReceiverID());
+//					} else {
+//						showName = personDao.getPersonNameByID(String.valueOf(message.getSenderID()));
+//						objectID = String.valueOf(message.getSenderID());
+//					}
+//
+//					MyNotification.showMessageNotification(showName, objectID, Main.this, new Intent(
+//							Main.this, ChatDetail.class));
 					break;
 				case Constant.MQTT_NEW_MESSAGE:
 					Log.i("Chat", "Chat收到新消息");
@@ -195,22 +194,39 @@ public class Main extends SherlockFragmentActivity {
 					webRequestManager.getMessageUpdate("", "");
 					break;
 				case Constant.SHOW_TASK_NOTIFICATION:
-					AffairModel affair = (AffairModel) msg.obj;
-					String sponsorName = personDao.getPersonNameByID(String.valueOf(affair
-							.getSponsorID()));
-					boolean isModify = false; // 是否为修改任务
-					if (affair.getLastOperateType() == 4) {
-						isModify = true;
-					}
-					MyNotification.showAffairNotification(2, affair.getStatus(), isModify, affair
-							.getAffairID(), sponsorName, affair.getTitle(), Main.this, new Intent(
-							Main.this, TaskDetail.class));
+//					AffairModel affair = (AffairModel) msg.obj;
+//					String sponsorName = personDao.getPersonNameByID(String.valueOf(affair
+//							.getSponsorID()));
+//					boolean isModify = false; // 是否为修改任务
+//					if (affair.getLastOperateType() == 4) {
+//						isModify = true;
+//					}
+//					MyNotification.showAffairNotification(2, affair.getStatus(), isModify, affair
+//							.getAffairID(), sponsorName, affair.getTitle(), Main.this, new Intent(
+//							Main.this, TaskDetail.class));
 					break;
 				case Constant.SHOW_FEEDBACK_NOTIFICATION:
-					FeedbackModel fb = (FeedbackModel) msg.obj;
-					String senderName = personDao.getPersonNameByID(String.valueOf(fb.getPersonID()));
-					MyNotification.showFeedbackNotification(senderName, fb.getAffairID(), Main.this,
-							new Intent(Main.this, ChatDetail.class));
+//					FeedbackModel fb = (FeedbackModel) msg.obj;
+//					String senderName = personDao.getPersonNameByID(String.valueOf(fb.getPersonID()));
+//					MyNotification.showFeedbackNotification(senderName, fb.getAffairID(), Main.this,
+//							new Intent(Main.this, ChatDetail.class));
+					break;
+
+				case Constant.LOGOUT_REQUEST_SUCCESS:
+					// 注销mqtt
+					MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, "");
+					MQTT.get_instance().close();
+					// 停止服务
+					stopService(new Intent(Main.this, SDCardService.class));
+					// 跳转到登录界面
+					Intent intent9 = new Intent(Main.this, Login.class);
+					intent9.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					startActivity(intent9);
+					Main.this.finish();
+					break;
+				case Constant.LOGOUT_REQUEST_FAIL:
+					Log.e("Main", "logout fail");
+					Toast.makeText(Main.this, "注销失败", Toast.LENGTH_SHORT).show();
 					break;
 
 				default:
@@ -220,17 +236,29 @@ public class Main extends SherlockFragmentActivity {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler, LocalConstant.SD_MOUNTED, "Main");
-		MessageHandlerManager.getInstance().register(handler, LocalConstant.SD_UNMOUNTED, "Main");
-		MessageHandlerManager.getInstance().register(handler, LocalConstant.NET_AVAILABLE, "Main");
-		MessageHandlerManager.getInstance().register(handler, LocalConstant.NET_UNAVAILABLE, "Main");
+		// MessageHandlerManager.getInstance().register(handler,
+		// LocalConstant.SD_MOUNTED, "Main");
+		// MessageHandlerManager.getInstance().register(handler,
+		// LocalConstant.SD_UNMOUNTED, "Main");
+		// MessageHandlerManager.getInstance().register(handler,
+		// LocalConstant.NET_AVAILABLE, "Main");
+		// MessageHandlerManager.getInstance().register(handler,
+		// LocalConstant.NET_UNAVAILABLE, "Main");
+		//
+		// MessageHandlerManager.getInstance().register(handler,
+		// Constant.SHOW_TASK_NOTIFICATION, "Main");
+		// MessageHandlerManager.getInstance()
+		// .register(handler, Constant.SHOW_MESSAGE_NOTIFICATION, "Main");
+		// MessageHandlerManager.getInstance().register(handler,
+		// Constant.SHOW_FEEDBACK_NOTIFICATION,
+		// "Main");
+		// MessageHandlerManager.getInstance().register(handler,
+		// Constant.MQTT_NEW_MESSAGE, "Main");
 
-		MessageHandlerManager.getInstance().register(handler, Constant.SHOW_TASK_NOTIFICATION, "Main");
-		MessageHandlerManager.getInstance()
-				.register(handler, Constant.SHOW_MESSAGE_NOTIFICATION, "Main");
-		MessageHandlerManager.getInstance().register(handler, Constant.SHOW_FEEDBACK_NOTIFICATION,
-				"Main");
-		MessageHandlerManager.getInstance().register(handler, Constant.MQTT_NEW_MESSAGE, "Main");
+		MessageHandlerManager.getInstance().register(handler, Constant.LOGOUT_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_LOGOUT);
+		MessageHandlerManager.getInstance().register(handler, Constant.LOGOUT_REQUEST_FAIL,
+				Contants.METHOD_PERSON_LOGOUT);
 	}
 
 	/*
@@ -370,16 +398,8 @@ public class Main extends SherlockFragmentActivity {
 				break;
 			case 9:
 				// 注销页面
-				// 注销mqtt
-				MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, "");
-				MQTT.get_instance().close();
-				// 停止服务
-				stopService(new Intent(Main.this, SDCardService.class));
-				// 跳转到登录界面
-				Intent intent9 = new Intent(this, Login.class);
-				intent9.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				startActivity(intent9);
-				this.finish();
+
+				webRequestManager.logOut();
 				return true;
 			case 10:
 				// 弹出退出窗口

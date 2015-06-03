@@ -273,7 +273,7 @@ public class ContactAdd extends BaseActivity {
 					String tempID = String.valueOf((Object) msg.obj);
 					Log.v("ContactAdd", "receive msg , id: " + tempID);
 					customer.setCustomerID(tempID);
-					customer.save(ContactAdd.this);
+//					customer.save(ContactAdd.this);
 					CustomerContactModel ccm;
 					for (int i = 0; i < customerList.size(); i++) {
 						ccm = customerList.get(i);

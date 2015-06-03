@@ -3,18 +3,39 @@ package nercms.schedule.activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface.OnClickListener;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockActivity;
 
 public class BaseActivity extends SherlockActivity {
 	protected ProgressDialog mProgressDialog;
 
+	protected String getUserId() {
+		return MySharedPreference.get(this, MySharedPreference.USER_ID, null);
+	}
+
+	protected void startActivity(Bundle bundle, Class<?> targetActivity) {
+		Intent intent = new Intent();
+		intent.setClass(this, targetActivity);
+		if (bundle != null)
+			intent.putExtras(bundle);
+		startActivity(intent);
+	}
+
+	protected void startActivity(Class<?> targetActivity) {
+		startActivity(null, targetActivity);
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mProgressDialog = new ProgressDialog(this);
+		Log.v(getClass().getName(), "On Create");
 	}
 
 	protected void showProgressDialog(String title, String message) {

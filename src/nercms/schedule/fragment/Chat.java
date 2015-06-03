@@ -59,7 +59,7 @@ public class Chat extends SherlockFragment{
 
 		recentMsgListView = (ListView) v.findViewById(R.id.chat_list);
 		
-		initData();
+//		initData();
 
 		initHandler();
 

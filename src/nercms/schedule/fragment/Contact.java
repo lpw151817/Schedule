@@ -87,8 +87,8 @@ public class Contact extends SherlockFragment {
 		// jiaocuina 0528添加参数 来区分select页面和contact页面所用adapter
 		adapter = new TreeViewAdapter(getActivity(), 38, 1);
 		superAdapter = new SuperTreeViewAdapter(getActivity(), null, 1);
-		// 默认选中 企业
-		enterpriseBtn.performClick();
+//		// 默认选中 企业
+//		enterpriseBtn.performClick();
 		
 		initHandler();
 		
