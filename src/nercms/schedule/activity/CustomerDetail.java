@@ -29,7 +29,7 @@ import com.actionbarsherlock.view.SubMenu;
 //0527
 //数据填充待添加
 //客户详情表   跟联系人详情表稍有区别  字段不同  按钮不同 可修改删除 
-public class CustomerDetail extends SherlockActivity {
+public class CustomerDetail extends BaseActivity {
 	private static final String TAG = "CustomerDetail";
 	// 网络请求入口
 	private WebRequestManager webRequestManager;

@@ -10,6 +10,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -30,9 +31,13 @@ import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.normal.NormalServerResponse;
+import android.wxapp.service.jerry.model.person.GetOrgCodePersonResponse;
+import android.wxapp.service.jerry.model.person.GetOrgCodeResponse;
 import android.wxapp.service.jerry.model.person.LoginResponse;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.thread.SaveOrgCodePersonThread;
+import android.wxapp.service.thread.SaveOrgCodeThread;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.MQTT;
 import android.wxapp.service.util.MySharedPreference;
@@ -54,7 +59,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @version V1.3
  * @new 登录成功后，注册MQTT
  */
-public class Login extends SherlockActivity {
+public class Login extends BaseActivity {
 
 	private EditText etUserName; // 用户名编辑框
 	private EditText etPassword; // 密码编辑框
@@ -69,8 +74,6 @@ public class Login extends SherlockActivity {
 	private WebRequestManager webRequestManager;
 
 	private String TAG = "Login";
-
-	private ProgressDialog progressDialog = null;
 
 	private PersonDao personDao;
 
@@ -153,10 +156,12 @@ public class Login extends SherlockActivity {
 
 					// 接收用户ID
 					String userID = ((LoginResponse) msg.obj).getUid();
-
+					// 保存用户id
 					MySharedPreference.save(Login.this, MySharedPreference.USER_ID, userID);
-
+					// 保存用户的登录名
 					MySharedPreference.save(Login.this, MySharedPreference.USER_NAME, inputUserName);
+					// 保存用户密码
+					MySharedPreference.save(Login.this, MySharedPreference.USER_IC, inputPassword);
 
 					// 2014-6-24 WeiHao
 					// 2.mqtt订阅
@@ -164,24 +169,39 @@ public class Login extends SherlockActivity {
 					MQTT.CLIENT_ID = userID;
 					MQTT mqtt = MQTT.get_instance();
 					mqtt.publish_message(MQTT.SUBSCRIBE_TOPIC_PREFIX + MQTT.CLIENT_ID, "Registration", 0);
-					// 3.请求下载所有联系人（如果数据表为空）
-					if (personDao.isDBTNull()) {
-						// todo 更改组织结构树
-						webRequestManager.getAllPerson();
-					} else {
-						lastUserID = MySharedPreference
-								.get(Login.this, MySharedPreference.USER_ID, null);
-						if (lastUserID != null && lastUserID.equalsIgnoreCase(userID)) {
-							// 4.取消进度显示
-							progressDialog.dismiss();
-							// 5.跳转到主界面
-							startActivity(new Intent(Login.this, Main.class));
-							Login.this.finish();
-						} else {
-							// 切换登陆用户，重新下载联系人
-							webRequestManager.getAllPerson();
-						}
-					}
+
+					// ///Jerry 6.3
+					dismissProgressDialog();
+					// 5.跳转到主界面
+					startActivity(new Intent(Login.this, Main.class));
+					Login.this.finish();
+					getOrgInfo();
+					// ////////////////
+
+					// // 3.请求下载所有联系人（如果数据表为空）
+					// if (personDao.isDBTNull()) {
+					// // webRequestManager.getAllPerson();
+					// // 从第一个orgcode开始获取
+					//
+					// getOrgInfo();
+					// } else {
+					// lastUserID = MySharedPreference
+					// .get(Login.this, MySharedPreference.USER_ID, null);
+					// if (lastUserID != null &&
+					// lastUserID.equalsIgnoreCase(userID)) {
+					// // 4.取消进度显示
+					// progressDialog.dismiss();
+					// // 5.跳转到主界面
+					// startActivity(new Intent(Login.this, Main.class));
+					// Login.this.finish();
+					// } else {
+					// // 切换登陆用户，重新下载联系人
+					// // webRequestManager.getAllPerson();
+					// // 从第一个orgcode开始获取
+					//
+					// getOrgInfo();
+					// }
+					// }
 
 					// 写日志
 					MyLog.i(TAG, "用户：" + userID + " 登陆成功");
@@ -189,35 +209,70 @@ public class Login extends SherlockActivity {
 				// 登录 失败
 				case Constant.LOGIN_REQUEST_FAIL:
 					MyLog.i(TAG, "登录失败");
-					progressDialog.dismiss();
+					dismissProgressDialog();
 					String errorCode = ((NormalServerResponse) msg.obj).getEc();
-					new AlertDialog.Builder(Login.this)
-							.setIcon(getResources().getDrawable(R.drawable.login_error_icon))
-							.setTitle("登录失败").setMessage(Utils.getErrorMsg(errorCode)).create().show();
+					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode), R.drawable.login_error_icon,
+							"确定", new DialogInterface.OnClickListener() {
+
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									Log.i("Login", "关闭错误对话框");
+								}
+							});
+					break;
+				// 保存orgcode失败
+				case Constant.SAVE_ORG_CODE_FAIL:
+					MyLog.e(TAG, "保存orgcode失败");
+					break;
+				// 保存orgcode成功
+				case Constant.SAVE_ORG_CODE_SUCCESS:
+					MyLog.e(TAG, "保存orgcode成功");
+					break;
+				// 获取组织结点失败
+				case Constant.QUERY_ORG_NODE_REQUEST_FAIL:
+					MyLog.i(TAG, "获取结点失败");
+					dismissProgressDialog();
+					showAlterDialog("获取结点失败",
+							Utils.getErrorMsg(((NormalServerResponse) msg.obj).getEc()),
+							R.drawable.login_error_icon);
+					break;
+				// 存储orgperson成功
+				case Constant.SAVE_ORG_PERSON_SUCCESS:
+					MyLog.e(TAG, "保存orgperson成功");
+					break;
+				// 存储orgperson失败
+				case Constant.SAVE_ORG_PERSON_FAIL:
+					MyLog.e(TAG, "保存orgperson失败");
+					break;
+				// 获取orgperson失败
+				case Constant.QUERY_ORG_PERSON_REQUEST_FAIL:
+					showAlterDialog("获取orgperson失败",
+							Utils.getErrorMsg(((NormalServerResponse) msg.obj).getEc()),
+							R.drawable.login_error_icon);
 					break;
 				// 保存联系人完成
 				case Constant.SAVE_ALL_PERSON_SUCCESS:
 					// 4.取消进度显示
-					progressDialog.dismiss();
+					dismissProgressDialog();
 					// 5.跳转到主界面
 					startActivity(new Intent(Login.this, Main.class));
 					Login.this.finish();
 					break;
-
 				default:
+					Log.e("LoginActivity", msg.what + "<<<<未处理");
 					break;
 				}
 
 			}
 		};
-
 		// 注册Handler
-		MessageHandlerManager.getInstance().register(handler, Constant.LOGIN_REQUEST_FAIL,
-				Contants.METHOD_PERSON_LOGIN);
-		MessageHandlerManager.getInstance().register(handler, Constant.LOGIN_REQUEST_SUCCESS,
-				Contants.METHOD_PERSON_LOGIN);
-		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ALL_PERSON_SUCCESS,
-				Contants.METHOD_PERSON_LOGIN);
+		registHandler();
+	}
+
+	// 获取组织相关信息并存入数据库
+	private void getOrgInfo() {
+		// webRequestManager.getOrgCode();
+		// webRequestManager.getOrgPerson();
 	}
 
 	// 判断用户名与密码符合要求则登录成功
@@ -226,20 +281,20 @@ public class Login extends SherlockActivity {
 
 		// 2014-6-24 WeiHao
 		// 1.显示进度条
-		progressDialog = ProgressDialog.show(Login.this, "正在登录", "努力加载数据中...请稍后~");
-		progressDialog.setCancelable(true);
-		progressDialog.setCanceledOnTouchOutside(false);
+		mProgressDialog.setCancelable(true);
+		mProgressDialog.setCanceledOnTouchOutside(false);
+		showProgressDialog("正在登录", "努力加载数据中...请稍后~");
 		// 隐藏软键盘
 		InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		mInputMethodManager.hideSoftInputFromWindow(etPassword.getWindowToken(), 0);
 
 		if (!checkInternet()) {
-			progressDialog.dismiss();
+			dismissProgressDialog();
 			return;
 		}
 
 		if (!checkSDCard()) {
-			progressDialog.dismiss();
+			dismissProgressDialog();
 			return;
 		}
 
@@ -248,7 +303,7 @@ public class Login extends SherlockActivity {
 
 		if (inputUserName == null || inputUserName.equals("") || inputPassword == null
 				|| inputPassword.equals("")) {
-			progressDialog.dismiss();
+			dismissProgressDialog();
 			new AlertDialog.Builder(Login.this)
 					.setIcon(getResources().getDrawable(R.drawable.login_error_icon)).setTitle("登录错误")
 					.setMessage("帐号或者密码不能为空，\n请输入后再登录！").create().show();
@@ -326,11 +381,9 @@ public class Login extends SherlockActivity {
 		// 点击返回键
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 			// 如果正在登录，取消登录
-			if (progressDialog != null && progressDialog.isShowing()) {
-				progressDialog.dismiss();
-				AppApplication.getInstance().myQueue.cancelAll(this);
-				Utils.showShortToast(this, "取消登录");
-			}
+			dismissProgressDialog();
+			AppApplication.getInstance().myQueue.cancelAll(this);
+			Utils.showShortToast(this, "取消登录");
 		}
 		return super.onKeyDown(keyCode, event);
 	}
@@ -344,7 +397,52 @@ public class Login extends SherlockActivity {
 				Contants.METHOD_PERSON_LOGIN);
 		MessageHandlerManager.getInstance().unregister(Constant.SAVE_ALL_PERSON_SUCCESS,
 				Contants.METHOD_PERSON_LOGIN);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_ORG_NODE_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_GET_ORG_CODE);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_ORG_CODE_SUCCESS,
+				SaveOrgCodeThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_ORG_CODE_FAIL,
+				SaveOrgCodeThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_ORG_NODE_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_ORG_CODE);
+
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_ORG_PERSON_SUCCESS,
+				SaveOrgCodePersonThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_ORG_PERSON_FAIL,
+				SaveOrgCodePersonThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_ORG_PERSON);
 		Log.v("Login", "onDestroy,注册Handler");
 		super.onDestroy();
+	}
+
+	// 注册Handler
+	private void registHandler() {
+		MessageHandlerManager.getInstance().register(handler, Constant.LOGIN_REQUEST_FAIL,
+				Contants.METHOD_PERSON_LOGIN);
+		MessageHandlerManager.getInstance().register(handler, Constant.LOGIN_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_LOGIN);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ALL_PERSON_SUCCESS,
+				Contants.METHOD_PERSON_LOGIN);
+
+		// MessageHandlerManager.getInstance().register(handler,
+		// Constant.QUERY_ORG_NODE_REQUEST_SUCCESS,
+		// Contants.METHOD_PERSON_GET_ORG_CODE);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_CODE_SUCCESS,
+				SaveOrgCodeThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_CODE_FAIL,
+				SaveOrgCodeThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_NODE_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_ORG_CODE);
+
+		// MessageHandlerManager.getInstance().register(handler,
+		// Constant.QUERY_ORG_PERSON_REQUEST_SUCCESS,
+		// Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_PERSON_SUCCESS,
+				SaveOrgCodePersonThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_PERSON_FAIL,
+				SaveOrgCodePersonThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_ORG_PERSON);
 	}
 }

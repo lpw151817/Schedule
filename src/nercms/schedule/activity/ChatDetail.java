@@ -58,7 +58,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @description 发起消息;点击头像跳转到联系人详情
  * 
  */
-public class ChatDetail extends SherlockActivity implements OnClickListener {
+public class ChatDetail extends BaseActivity implements OnClickListener {
 	/** Called when the activity is first created. */
 
 	private Button mBtnSend;// 发送按钮

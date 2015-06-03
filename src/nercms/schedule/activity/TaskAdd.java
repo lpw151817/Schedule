@@ -72,7 +72,7 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
-public class TaskAdd extends SherlockActivity {
+public class TaskAdd extends BaseActivity {
 
 	private static final String TAG = "TaskAddActivity";
 

@@ -76,7 +76,7 @@ import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
-public class TaskDetail extends SherlockActivity {
+public class TaskDetail extends BaseActivity {
 
 	// 全局变量
 	private WebRequestManager webRequestManager;

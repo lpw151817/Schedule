@@ -30,7 +30,7 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
-public class ContactSelect extends SherlockActivity {
+public class ContactSelect extends BaseActivity {
 
 	private static final String TAG = "ContactSelect";
 

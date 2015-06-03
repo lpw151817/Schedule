@@ -36,16 +36,24 @@ public class Utils {
 	public static final int EC_USERNAME_ERROR = 3;
 
 	public static String getErrorMsg(String ec) {
-		switch (Integer.parseInt(ec)) {
-		case EC_USER_NOT_EXIST:
-			return "用户不存在";
-		case EC_PWD_ERROR:
-			return "密码错误";
-		case EC_USERNAME_ERROR:
-			return "用户名冲突";
-		default:
-			return "";
+
+		try {
+			switch (Integer.parseInt(ec)) {
+			case EC_USER_NOT_EXIST:
+				return "用户不存在";
+			case EC_PWD_ERROR:
+				return "密码错误";
+			case EC_USERNAME_ERROR:
+				return "用户名冲突";
+			default:
+				return "";
+			}
+		} catch (Exception e) {
+			Log.e("Utils", e.toString());
+			return "转换错误";
+
 		}
+
 	}
 
 	public static class Constant {

@@ -28,7 +28,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @description 跳转到联系人详细信息页面 不可以对联系人进行编辑及修改 可以发起消息|电话|会议 0527修改为actionbar样式
  *              数据主要参考StructuredStaffModel
  */
-public class ContactDetail extends SherlockActivity {
+public class ContactDetail extends BaseActivity {
 
 	// 本地数据请求入口
 	private static DAOFactory daoFactory = DAOFactory.getInstance();

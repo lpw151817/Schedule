@@ -129,13 +129,13 @@ public class Main extends SherlockFragmentActivity {
 		// 启动SD卡监听服务
 		startService(new Intent(Main.this, SDCardService.class));
 
-		// 2014-6-24 WeiHao 登录之后，获取新任务、反馈、消息等
-		// //////TODO 需要更改请求参数
-		webRequestManager.getAffairUpdate("", "");
-		// /////接口 未实现
-		webRequestManager.getFeedbackUpdate();
-		// //////TODO 需要更改请求参数
-		webRequestManager.getMessageUpdate("", "");
+		// // 2014-6-24 WeiHao 登录之后，获取新任务、反馈、消息等
+		// // //////TODO 需要更改请求参数
+		// webRequestManager.getAffairUpdate("", "");
+		// // /////接口 未实现
+		// webRequestManager.getFeedbackUpdate();
+		// // //////TODO 需要更改请求参数
+		// webRequestManager.getMessageUpdate("", "");
 
 	}
 

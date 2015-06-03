@@ -27,7 +27,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.wxapp.service.util.MySharedPreference;
 
-public class VoiceMeeting extends Activity {
+public class VoiceMeeting extends BaseActivity {
 
 	private String userID;// ±æ»ÀID
 

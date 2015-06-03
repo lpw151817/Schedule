@@ -16,7 +16,7 @@ import android.wxapp.service.model.ConferencePersonModel;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 
-public class MeetingDetail extends SherlockActivity {
+public class MeetingDetail extends BaseActivity {
 
 	private ImageView iconIv;
 	private TextView titleTv;// 会议主题

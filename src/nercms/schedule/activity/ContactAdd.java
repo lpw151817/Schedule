@@ -34,7 +34,7 @@ import com.actionbarsherlock.view.MenuItem;
  * 
  *              0527修改界面 头部改为actionbar样式
  */
-public class ContactAdd extends SherlockActivity {
+public class ContactAdd extends BaseActivity {
 
 	// 网络请求入口
 	private WebRequestManager webRequestManager;

@@ -29,7 +29,7 @@ import android.wxapp.service.util.MySharedPreference;
  * 
  */
 
-public class VoiceCall extends Activity {
+public class VoiceCall extends BaseActivity {
 
 	private String userID;// ±æ»ÀID
 

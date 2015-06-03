@@ -20,7 +20,7 @@ import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 
 
-public class TaskList extends SherlockActivity {
+public class TaskList extends BaseActivity {
 	
 	// 2014-5-23 WeiHao
 

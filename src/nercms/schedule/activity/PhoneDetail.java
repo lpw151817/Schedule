@@ -17,7 +17,7 @@ import android.wxapp.service.util.MySharedPreference;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 
-public class PhoneDetail extends SherlockActivity {
+public class PhoneDetail extends BaseActivity {
 
 	private String userID;
 	private String phoneID;
