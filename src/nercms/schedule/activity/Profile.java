@@ -256,7 +256,10 @@ public class Profile extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-		MessageHandlerManager.getInstance().unregisterAll();
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_PERSON_INFO_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_GET_PERSON_INFO);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_PERSON_INFO_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_PERSON_INFO);
 		super.onDestroy();
 	}
 }

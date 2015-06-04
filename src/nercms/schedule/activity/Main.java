@@ -68,15 +68,15 @@ public class Main extends SherlockFragmentActivity {
 
 	private TextView netStatusTv;
 
-//	// 2014-6-25 WeiHao
-//	private DAOFactory daoFactory;
-//	private PersonDao personDao;
+	// // 2014-6-25 WeiHao
+	// private DAOFactory daoFactory;
+	// private PersonDao personDao;
 
 	private String userID;
 
-//	 private QuerySuggestionsAdapter mSuggestionsAdapter;
-//	 private static final String[] COLUMNS = { BaseColumns._ID,
-//	 SearchManager.SUGGEST_COLUMN_TEXT_1, };
+	// private QuerySuggestionsAdapter mSuggestionsAdapter;
+	// private static final String[] COLUMNS = { BaseColumns._ID,
+	// SearchManager.SUGGEST_COLUMN_TEXT_1, };
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -86,8 +86,8 @@ public class Main extends SherlockFragmentActivity {
 		userID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, null);
 
 		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Main.this);
-//		daoFactory = DAOFactory.getInstance();
-//		personDao = daoFactory.getPersonDao(Main.this);
+		// daoFactory = DAOFactory.getInstance();
+		// personDao = daoFactory.getPersonDao(Main.this);
 		DisplayMetrics displayMetrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 		Utils.Constant.displayWidth = displayMetrics.widthPixels;
@@ -168,25 +168,29 @@ public class Main extends SherlockFragmentActivity {
 					break;
 
 				case Constant.SHOW_MESSAGE_NOTIFICATION:
-//					MessageModel message = (MessageModel) msg.obj;
-//
-//					// 2014-7-30 WeiHao 逻辑修改
-//					// 判断收到的是否是群消息
-//					// 如果是群消息，Notification显示收到来自群名的新消息
-//					// 如果是个人消息，notification显示收到来自发送人的新消息
-//					String showName = "";
-//					String objectID = "";
-//					if (String.valueOf(message.getReceiverID()).length() != 6) {
-//						showName = personDao.getOrgNodeByOrgID(String.valueOf(message.getReceiverID()))
-//								.getDescription();
-//						objectID = String.valueOf(message.getReceiverID());
-//					} else {
-//						showName = personDao.getPersonNameByID(String.valueOf(message.getSenderID()));
-//						objectID = String.valueOf(message.getSenderID());
-//					}
-//
-//					MyNotification.showMessageNotification(showName, objectID, Main.this, new Intent(
-//							Main.this, ChatDetail.class));
+					// MessageModel message = (MessageModel) msg.obj;
+					//
+					// // 2014-7-30 WeiHao 逻辑修改
+					// // 判断收到的是否是群消息
+					// // 如果是群消息，Notification显示收到来自群名的新消息
+					// // 如果是个人消息，notification显示收到来自发送人的新消息
+					// String showName = "";
+					// String objectID = "";
+					// if (String.valueOf(message.getReceiverID()).length() !=
+					// 6) {
+					// showName =
+					// personDao.getOrgNodeByOrgID(String.valueOf(message.getReceiverID()))
+					// .getDescription();
+					// objectID = String.valueOf(message.getReceiverID());
+					// } else {
+					// showName =
+					// personDao.getPersonNameByID(String.valueOf(message.getSenderID()));
+					// objectID = String.valueOf(message.getSenderID());
+					// }
+					//
+					// MyNotification.showMessageNotification(showName,
+					// objectID, Main.this, new Intent(
+					// Main.this, ChatDetail.class));
 					break;
 				case Constant.MQTT_NEW_MESSAGE:
 					Log.i("Chat", "Chat收到新消息");
@@ -194,22 +198,27 @@ public class Main extends SherlockFragmentActivity {
 					webRequestManager.getMessageUpdate("", "");
 					break;
 				case Constant.SHOW_TASK_NOTIFICATION:
-//					AffairModel affair = (AffairModel) msg.obj;
-//					String sponsorName = personDao.getPersonNameByID(String.valueOf(affair
-//							.getSponsorID()));
-//					boolean isModify = false; // 是否为修改任务
-//					if (affair.getLastOperateType() == 4) {
-//						isModify = true;
-//					}
-//					MyNotification.showAffairNotification(2, affair.getStatus(), isModify, affair
-//							.getAffairID(), sponsorName, affair.getTitle(), Main.this, new Intent(
-//							Main.this, TaskDetail.class));
+					// AffairModel affair = (AffairModel) msg.obj;
+					// String sponsorName =
+					// personDao.getPersonNameByID(String.valueOf(affair
+					// .getSponsorID()));
+					// boolean isModify = false; // 是否为修改任务
+					// if (affair.getLastOperateType() == 4) {
+					// isModify = true;
+					// }
+					// MyNotification.showAffairNotification(2,
+					// affair.getStatus(), isModify, affair
+					// .getAffairID(), sponsorName, affair.getTitle(),
+					// Main.this, new Intent(
+					// Main.this, TaskDetail.class));
 					break;
 				case Constant.SHOW_FEEDBACK_NOTIFICATION:
-//					FeedbackModel fb = (FeedbackModel) msg.obj;
-//					String senderName = personDao.getPersonNameByID(String.valueOf(fb.getPersonID()));
-//					MyNotification.showFeedbackNotification(senderName, fb.getAffairID(), Main.this,
-//							new Intent(Main.this, ChatDetail.class));
+					// FeedbackModel fb = (FeedbackModel) msg.obj;
+					// String senderName =
+					// personDao.getPersonNameByID(String.valueOf(fb.getPersonID()));
+					// MyNotification.showFeedbackNotification(senderName,
+					// fb.getAffairID(), Main.this,
+					// new Intent(Main.this, ChatDetail.class));
 					break;
 
 				case Constant.LOGOUT_REQUEST_SUCCESS:
@@ -259,6 +268,16 @@ public class Main extends SherlockFragmentActivity {
 				Contants.METHOD_PERSON_LOGOUT);
 		MessageHandlerManager.getInstance().register(handler, Constant.LOGOUT_REQUEST_FAIL,
 				Contants.METHOD_PERSON_LOGOUT);
+	}
+
+	@Override
+	protected void onDestroy() {
+		// 注销所有handler
+		MessageHandlerManager.getInstance().unregister(Constant.LOGOUT_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_LOGOUT);
+		MessageHandlerManager.getInstance().unregister(Constant.LOGOUT_REQUEST_FAIL,
+				Contants.METHOD_PERSON_LOGOUT);
+		super.onDestroy();
 	}
 
 	/*
@@ -435,13 +454,6 @@ public class Main extends SherlockFragmentActivity {
 			}
 		}
 		return true;
-	}
-
-	@Override
-	protected void onDestroy() {
-		// 注销所有handler
-		MessageHandlerManager.getInstance().unregisterAll();
-		super.onDestroy();
 	}
 
 	@Override
