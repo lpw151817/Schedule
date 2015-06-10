@@ -147,6 +147,8 @@ public class Profile extends BaseActivity {
 	// }
 
 	private void initData() {
+		// 先从数据库中读取数据
+		mPersonInfo = DAOFactory.getInstance().getPersonDao(this).getCustomer();
 		// 如果没有数据，则先进行网络请求
 		if (mPersonInfo == null) {
 			showProgressDialog("loading...");
@@ -178,7 +180,6 @@ public class Profile extends BaseActivity {
 		// personDao = daoFactory.getPersonDao(Profile.this);
 		// GetPersonInfoResponse r = personDao.getCustomer();
 		// if (r == null) {
-		// // TODO
 		// } else {
 		//
 		// mySSM = personDao.getSSMByID(userID);

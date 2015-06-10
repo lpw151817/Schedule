@@ -521,7 +521,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 	// TODO 传入参数需要更改！！！！
 	private void sendFb(FeedbackModel fdM) {
-		webRequestManager.sendFeedback(ChatDetail.this, "", fdM.getPersonID() + "",
+		webRequestManager.sendFeedback(ChatDetail.this, fdM.getPersonID() + "",
 				System.currentTimeMillis() + "", fdM.getContent(), fdM.getAttachment()
 						.getAttachmentType() + "", fdM.getAttachment().getAttachmentURL(),
 				System.currentTimeMillis() + "", new String[] {});

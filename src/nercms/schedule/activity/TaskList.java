@@ -1,6 +1,7 @@
 package nercms.schedule.activity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import nercms.schedule.R;
 import nercms.schedule.adapter.TaskListViewAdapter;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.AffairDao;
 import android.wxapp.service.dao.DAOFactory;
+import android.wxapp.service.jerry.model.affair.QueryAffairListResponseAffairs;
 import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.MySharedPreference;
@@ -19,16 +21,15 @@ import android.wxapp.service.util.MySharedPreference;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 
-
 public class TaskList extends BaseActivity {
-	
+
 	// 2014-5-23 WeiHao
 
 	// 全局变量
 	private WebRequestManager webRequestManager;
 	private static final String TAG = "TaskListActivity";
 	private static DAOFactory daoFactory = DAOFactory.getInstance();
-	
+
 	// 本人ID
 	private String userID;
 
@@ -51,23 +52,21 @@ public class TaskList extends BaseActivity {
 
 	// 数据
 	private AffairDao affairdao;
-	private ArrayList<AffairModel> mList;// 任务列表
+	private List<QueryAffairListResponseAffairs> mList;// 任务列表
 
-	//控件
+	// 控件
 	ListView taskListView;
 	TaskListViewAdapter taskListViewAdapter;
-	
+
 	public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.task_list);  
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.task_list);
 
 		// 初始化网络请求管理器
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				TaskList.this);
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), TaskList.this);
 
 		// 准备用户信息
-		userID = MySharedPreference.get(TaskList.this,
-				MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(TaskList.this, MySharedPreference.USER_ID, "");
 
 		// 根据任务界面传来的任务类型和任务状态初始化入口变量
 		entranceType = getIntent().getIntExtra("type", -1);
@@ -81,9 +80,8 @@ public class TaskList extends BaseActivity {
 		// 初始化列表适配器
 		initAdapter();
 
-
 	}
-	
+
 	private void initActionBar() {
 		getSupportActionBar().setDisplayShowCustomEnabled(false);
 		getSupportActionBar().setDisplayShowTitleEnabled(true);
@@ -105,22 +103,22 @@ public class TaskList extends BaseActivity {
 
 		mListView = (ListView) findViewById(R.id.task_list);
 		affairdao = daoFactory.getAffairDao(TaskList.this);
-		
+
 		activityTitle = "";
-		
+
 		// 数据准备
 		if (entranceType == 1) { // 发起任务
 			activityTitle = "发起任务 - ";
 			if (entranceStatus == 1) { // 进行中（未完成）
 				activityTitle += "进行中";
 				// 获取数据
-				mList = affairdao.getSendAffairByStatus(userID, 1);
+				mList = affairdao.getAffairByTypeAndStatus(1, 1, userID);
 			} else if (entranceStatus == 2) { // 已完成
 				activityTitle += "已完成";
-				mList = affairdao.getSendAffairByStatus(userID, 2);
+				mList = affairdao.getAffairByTypeAndStatus(1, 2, userID);
 			} else if (entranceStatus == 3) { // 延迟
 				activityTitle += "已延迟";
-				mList = affairdao.getSendAffairByStatus(userID, 3);
+				mList = affairdao.getAffairByTypeAndStatus(1, 3, userID);
 			} else {
 				mList = null;
 			}
@@ -128,23 +126,22 @@ public class TaskList extends BaseActivity {
 			activityTitle = "接收任务 - ";
 			if (entranceStatus == 1) { // 进行中（未完成）
 				activityTitle += "进行中";
-				mList = affairdao.getReceiveAffairByStatus(userID, 1);
+				mList = affairdao.getAffairByTypeAndStatus(2, 1, userID);
 			} else if (entranceStatus == 2) { // 已完成
 				activityTitle += "已完成";
-				mList = affairdao.getReceiveAffairByStatus(userID, 2);
+				mList = affairdao.getAffairByTypeAndStatus(2, 2, userID);
 			} else if (entranceStatus == 3) { // 延迟
 				activityTitle += "已延迟";
-				mList = affairdao.getReceiveAffairByStatus(userID, 3);
+				mList = affairdao.getAffairByTypeAndStatus(2, 3, userID);
 			} else {
 				mList = null;
 			}
 		}
 		getSupportActionBar().setTitle(activityTitle);
 	}
-	
+
 	private void initAdapter() {
-		taskListViewAdapter = new TaskListViewAdapter(mList, TaskList.this,
-				entranceType, entranceStatus);
+		taskListViewAdapter = new TaskListViewAdapter(mList, TaskList.this, entranceType, entranceStatus);
 		mListView.setAdapter(taskListViewAdapter);
 	}
 

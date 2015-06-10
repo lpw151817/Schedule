@@ -19,8 +19,8 @@ public class SuperTreeViewAdapter extends BaseExpandableListAdapter {
 
 	// ***********0528添加标志位**************************************
 	private int contactAdapterType = -1;
-	// *************************************************
 
+	// *************************************************
 
 	static public class SuperTreeNode {
 		public Object parent;
@@ -32,8 +32,7 @@ public class SuperTreeViewAdapter extends BaseExpandableListAdapter {
 	private OnChildClickListener stvClickEvent;// 外部回调函数
 
 	// ****************0528修改构造函数*********************************
-	public SuperTreeViewAdapter(Context view,
-			OnChildClickListener stvClickEvent, int contactAapterType) {
+	public SuperTreeViewAdapter(Context view, OnChildClickListener stvClickEvent, int contactAapterType) {
 		parentContext = view;
 		this.stvClickEvent = stvClickEvent;
 		this.contactAdapterType = contactAapterType;
@@ -60,8 +59,8 @@ public class SuperTreeViewAdapter extends BaseExpandableListAdapter {
 	}
 
 	public ExpandableListView getExpandableListView() {
-		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-				ViewGroup.LayoutParams.FILL_PARENT, TreeViewAdapter.ItemHeight);
+		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+				TreeViewAdapter.ItemHeight);
 		ExpandableListView superTreeView = new ExpandableListView(parentContext);
 		superTreeView.setLayoutParams(lp);
 		return superTreeView;
@@ -70,60 +69,56 @@ public class SuperTreeViewAdapter extends BaseExpandableListAdapter {
 	/**
 	 * 三层树结构中的第二层是一个ExpandableListView
 	 */
-	public View getChildView(int groupPosition, int childPosition,
-			boolean isLastChild, View convertView, ViewGroup parent) {
-			// 是
-			final ExpandableListView treeView = getExpandableListView();
-			final TreeViewAdapter treeViewAdapter = new TreeViewAdapter(
-					this.parentContext, 30, this.contactAdapterType);// ********添加参数**************
-			List<TreeNode> tmp = treeViewAdapter.getTreeNode();// 临时变量取得TreeViewAdapter的TreeNode集合，可为空
-			final TreeNode treeNode = (TreeNode) getChild(groupPosition,
-					childPosition);
-			tmp.add(treeNode);
-			treeViewAdapter.updateTreeNode(tmp);
-			treeView.setAdapter(treeViewAdapter);
+	public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
+			View convertView, ViewGroup parent) {
+		// 是
+		final ExpandableListView treeView = getExpandableListView();
+		final TreeViewAdapter treeViewAdapter = new TreeViewAdapter(this.parentContext, 30,
+				this.contactAdapterType);// ********添加参数**************
+		List<TreeNode> tmp = treeViewAdapter.getTreeNode();// 临时变量取得TreeViewAdapter的TreeNode集合，可为空
+		final TreeNode treeNode = (TreeNode) getChild(groupPosition, childPosition);
+		tmp.add(treeNode);
+		treeViewAdapter.updateTreeNode(tmp);
+		treeView.setAdapter(treeViewAdapter);
 
-			// 关键点：取得选中的二级树形菜单的父子节点,结果返回给外部回调函数
-			treeView.setOnChildClickListener(this.stvClickEvent);
+		// 关键点：取得选中的二级树形菜单的父子节点,结果返回给外部回调函数
+		treeView.setOnChildClickListener(this.stvClickEvent);
 
-			/**
-			 * 关键点：第二级菜单展开时通过取得节点数来设置第三级菜单的大小
-			 */
-			treeView.setOnGroupExpandListener(new OnGroupExpandListener() {
-				@Override
-				public void onGroupExpand(int groupPosition) {
+		/**
+		 * 关键点：第二级菜单展开时通过取得节点数来设置第三级菜单的大小
+		 */
+		treeView.setOnGroupExpandListener(new OnGroupExpandListener() {
+			@Override
+			public void onGroupExpand(int groupPosition) {
 
-					AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-							ViewGroup.LayoutParams.FILL_PARENT,
-							(treeNode.childs.size() + 1)
-									* TreeViewAdapter.ItemHeight + 10);
-					treeView.setLayoutParams(lp);
-				}
-			});
+				AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+						ViewGroup.LayoutParams.FILL_PARENT, (treeNode.childs.size() + 1)
+								* TreeViewAdapter.ItemHeight + 10);
+				treeView.setLayoutParams(lp);
+			}
+		});
 
-			/**
-			 * 第二级菜单回收时设置为标准Item大小
-			 */
-			treeView.setOnGroupCollapseListener(new OnGroupCollapseListener() {
-				@Override
-				public void onGroupCollapse(int groupPosition) {
+		/**
+		 * 第二级菜单回收时设置为标准Item大小
+		 */
+		treeView.setOnGroupCollapseListener(new OnGroupCollapseListener() {
+			@Override
+			public void onGroupCollapse(int groupPosition) {
 
-					AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-							ViewGroup.LayoutParams.FILL_PARENT,
-							TreeViewAdapter.ItemHeight);
-					treeView.setLayoutParams(lp);
-				}
-			});
-			treeView.setPadding(TreeViewAdapter.PaddingLeft * 2, 0, 0, 0);
-			return treeView;
+				AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
+						ViewGroup.LayoutParams.FILL_PARENT, TreeViewAdapter.ItemHeight);
+				treeView.setLayoutParams(lp);
+			}
+		});
+		treeView.setPadding(TreeViewAdapter.PaddingLeft * 2, 0, 0, 0);
+		return treeView;
 
 	}
 
 	/**
 	 * 三级树结构中的首层是TextView,用于作为title
 	 */
-	public View getGroupView(int groupPosition, boolean isExpanded,
-			View convertView, ViewGroup parent) {
+	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
 		TextView textView = TreeViewAdapter.getTextView(this.parentContext);
 		textView.setText(getGroup(groupPosition).toString());
 		textView.setPadding(TreeViewAdapter.PaddingLeft * 2, 0, 0, 0);

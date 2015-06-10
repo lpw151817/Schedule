@@ -67,28 +67,28 @@ public class Chat extends SherlockFragment{
 	}
 
 	private void initData() {
-		// 查询最新消息
-		msgDao = daoFactory.getMessageDao(getActivity());
-		ArrayList<MessageModel> recentMsgList = msgDao
-				.getRecentMessageListByUserID(userID);
-
-		// 对最新消息列表按照发送时间进行重新排序
-		for (int i = 0; i < recentMsgList.size(); i++) {
-			Collections.sort(recentMsgList, new Comparator<MessageModel>() {
-
-				@Override
-				public int compare(MessageModel m1, MessageModel m2) {
-					return m2.getSendTime().compareTo(m1.getSendTime());
-				}
-
-			});
-		}
-
-		// 填充
-		recentMsgAdapter = new ChatFragmentListAdapter(getActivity(),
-				recentMsgList);
-
-		recentMsgListView.setAdapter(recentMsgAdapter);
+//		// 查询最新消息
+//		msgDao = daoFactory.getMessageDao(getActivity());
+//		ArrayList<MessageModel> recentMsgList = msgDao
+//				.getRecentMessageListByUserID(userID);
+//
+//		// 对最新消息列表按照发送时间进行重新排序
+//		for (int i = 0; i < recentMsgList.size(); i++) {
+//			Collections.sort(recentMsgList, new Comparator<MessageModel>() {
+//
+//				@Override
+//				public int compare(MessageModel m1, MessageModel m2) {
+//					return m2.getSendTime().compareTo(m1.getSendTime());
+//				}
+//
+//			});
+//		}
+//
+//		// 填充
+//		recentMsgAdapter = new ChatFragmentListAdapter(getActivity(),
+//				recentMsgList);
+//
+//		recentMsgListView.setAdapter(recentMsgAdapter);
 	}
 	
 	@SuppressLint("HandlerLeak")

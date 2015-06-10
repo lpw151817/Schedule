@@ -27,10 +27,18 @@
             android:background="@drawable/btn_right_header_contacts"/>
     </LinearLayout>
 
+    
     <ExpandableListView
         android:id="@+id/expandablelistview"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         >
     </ExpandableListView>
+    
+    <!--
+         <View android:id="@+id/container"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+    -->
+
 </LinearLayout>

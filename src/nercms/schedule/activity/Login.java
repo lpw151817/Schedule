@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.DAOFactory;
+import android.wxapp.service.dao.DatabaseHelper;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.normal.NormalServerResponse;
@@ -171,7 +172,11 @@ public class Login extends BaseActivity {
 					// 5.跳转到主界面
 					startActivity(new Intent(Login.this, Main.class));
 					Login.this.finish();
-					getOrgInfo();
+
+					// TODO 写一个Timer定时请求服务器是否有更新数据
+					getOrgInfoUpdate();
+					getAffairUpdate();
+
 					// ////////////////
 
 					// // 3.请求下载所有联系人（如果数据表为空）
@@ -266,13 +271,21 @@ public class Login extends BaseActivity {
 	}
 
 	// 获取组织相关信息并存入数据库
-	private void getOrgInfo() {
-		// webRequestManager.getOrgCode();
-		// webRequestManager.getOrgPerson();
+	private void getOrgInfoUpdate() {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGCODE_TIMESTAMP, null) == null)
+			webRequestManager.getOrgCodeUpdate();
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGPERSON_TIMESTAMP, null) == null)
+			webRequestManager.getOrgPersonUpdate();
+	}
+
+	private void getAffairUpdate() {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_TASK_TIMESTAMP, null) == null) {
+			// 获取全部数据
+			webRequestManager.getAffairUpdate("1");
+		}
 	}
 
 	// 判断用户名与密码符合要求则登录成功
-
 	public void login_mainschedule() {
 
 		// 2014-6-24 WeiHao

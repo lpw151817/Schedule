@@ -262,7 +262,7 @@ public class TaskDetail extends BaseActivity {
 						public void onClick(DialogInterface dialog, int which) {
 							// 发送网络请求
 							// ////TODO 参数需要更改
-							webRequestManager.endAffair("", taskID);
+							webRequestManager.endAffair(taskID + "");
 							// 修改本地数据库（已包含在网络请求接口的成功返回情况里）...
 
 						}

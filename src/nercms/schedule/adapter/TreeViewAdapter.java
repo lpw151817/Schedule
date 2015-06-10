@@ -25,15 +25,15 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.model.StructuredStaffModel;
 import android.wxapp.service.util.MySharedPreference;
 
 public class TreeViewAdapter extends BaseExpandableListAdapter {
 
-	
 	public static final int ItemHeight = (int) (Utils.Constant.displayWidth * 0.15f);
-	public static final int PaddingLeft =(int) (Utils.Constant.displayWidth * 0.04f);
+	public static final int PaddingLeft = (int) (Utils.Constant.displayWidth * 0.04f);
 	private int myPaddingLeft = 0;
 	public static final int Text_Size = 16;
 
@@ -49,13 +49,11 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 	List<TreeNode> treeNodes = new ArrayList<TreeNode>();
 	Context parentContext;
 
-	public TreeViewAdapter(Context context, int myPaddingLeft,
-			int contactAdapterType) {
+	public TreeViewAdapter(Context context, int myPaddingLeft, int contactAdapterType) {
 		parentContext = context;
 		this.myPaddingLeft = myPaddingLeft;
 		this.contactAdapterType = contactAdapterType;
-		userID = MySharedPreference
-				.get(context, MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(context, MySharedPreference.USER_ID, "");
 	}
 
 	public List<TreeNode> getTreeNode() {
@@ -83,8 +81,8 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 	}
 
 	static public TextView getTextView(Context context) {
-		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
-				ViewGroup.LayoutParams.FILL_PARENT, ItemHeight);
+		AbsListView.LayoutParams lp = new AbsListView.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+				ItemHeight);
 		TextView textView = new TextView(context);
 		textView.setLayoutParams(lp);
 		textView.setTextSize(Text_Size);
@@ -95,25 +93,24 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 	@SuppressLint("ResourceAsColor")
 	@SuppressWarnings("deprecation")
 	@Override
-	public View getChildView(final int groupPosition, final int childPosition,
-			boolean isLastChild, View convertView, ViewGroup parent) {
+	public View getChildView(final int groupPosition, final int childPosition, boolean isLastChild,
+			View convertView, ViewGroup parent) {
 		// ***************0521***添加checkbox***********************************************
-		if (contactAdapterType == 1) {//进入联系人展示页面
+		if (contactAdapterType == 1) {// 进入联系人展示页面
 			TextView textView2 = getTextView(this.parentContext);
 			textView2.setText(getChild(groupPosition, childPosition).getName());
 			textView2.setPadding(myPaddingLeft + PaddingLeft, 0, 0, 0);
-			textView2.setBackgroundDrawable(parentContext.getResources()
-					.getDrawable(
+			textView2.setBackgroundDrawable(parentContext.getResources().getDrawable(
 					R.drawable.text_contact_list_item));
 			textView2.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					StructuredStaffModel ssm = getChild(groupPosition,
-							childPosition);
+					StructuredStaffModel ssm = getChild(groupPosition, childPosition);
 					// **********************个人通讯录 调用系统显示页面*************
-					if (ssm.getOrgCode().equals("P")) {
+					if (ssm.getOrgCode().equals("")) {
+						Toast.makeText(parentContext, "没有数据", Toast.LENGTH_SHORT).show();
+					} else if (ssm.getOrgCode().equals("P")) {
 						Intent it = new Intent(Intent.ACTION_VIEW, Uri
-								.parse("content://contacts/people/"
-										+ ssm.getContactID().toString()));
+								.parse("content://contacts/people/" + ssm.getContactID().toString()));
 						parentContext.startActivity(it);
 						Log.d("TreeView", ssm.getContactID().toString());
 						Log.d("TreeView", ssm.getName().toString());
@@ -121,14 +118,12 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 					// 客户判断
 					else if (ssm.getOrgCode().equals("C")) {
 
-						Intent intent = new Intent(parentContext,
-								CustomerDetail.class);
+						Intent intent = new Intent(parentContext, CustomerDetail.class);
 						intent.putExtra("CUSTOMER_ID", ssm.getContactID());
 						Log.i("TreeViewAdapter", ssm.getContactID());
 						parentContext.startActivity(intent);
 					} else { // orgCode！=null,该点击为企业联系人
-						Intent intent = new Intent(parentContext,
-								ContactDetail.class);
+						Intent intent = new Intent(parentContext, ContactDetail.class);
 						if (ssm.getContactID().contains("Group")) {
 							intent.putExtra("IS_GROUP", 1);
 							intent.putExtra("CONTACT_ID", ssm.getOrgCode()); // 此处传机构节点代码
@@ -141,10 +136,10 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 				}
 			});
 			return textView2;
-			
-		} else {//联系人选择页面
-			RelativeLayout layout = (RelativeLayout) LayoutInflater.from(
-					parentContext).inflate(R.layout.contact_select_item, null);
+
+		} else {// 联系人选择页面
+			RelativeLayout layout = (RelativeLayout) LayoutInflater.from(parentContext).inflate(
+					R.layout.contact_select_item, null);
 			layout.setMinimumHeight(ItemHeight);
 			TextView textView = (TextView) layout.findViewById(R.id.childtext);
 			textView.setText(getChild(groupPosition, childPosition).getName());
@@ -154,15 +149,13 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 
 			box.setOnCheckedChangeListener(new CheckBox.OnCheckedChangeListener() {
 				String name, id;
-				
-				public void onCheckedChanged(CompoundButton buttonView,
-						boolean isChecked) {
+
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					if (isChecked) {
 
 						name = getChild(groupPosition, childPosition).getName();
-						id = getChild(groupPosition, childPosition)
-								.getContactID();
-						//0625 当前登陆用户不可勾选，toast语句提醒  并取消勾选
+						id = getChild(groupPosition, childPosition).getContactID();
+						// 0625 当前登陆用户不可勾选，toast语句提醒 并取消勾选
 						if (userID.equalsIgnoreCase(id)) {
 							box.setChecked(false);
 							Utils.showShortToast(parentContext, "不可选中自己");
@@ -171,18 +164,15 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 
 						String[] temp = new String[] { id, name };
 						MessageHandlerManager.getInstance().sendMessage(
-								LocalConstant.SELECT_CONTACT_CHECKED, temp,
-								"ContactSelect");
+								LocalConstant.SELECT_CONTACT_CHECKED, temp, "ContactSelect");
 					} else {
 						name = getChild(groupPosition, childPosition).getName();
-						id = getChild(groupPosition, childPosition)
-								.getContactID();
+						id = getChild(groupPosition, childPosition).getContactID();
 
 						String[] temp = new String[] { id, name };
 
 						MessageHandlerManager.getInstance().sendMessage(
-								LocalConstant.SELECT_CONTACT_UNCHECKED, temp,
-								"ContactSelect");
+								LocalConstant.SELECT_CONTACT_UNCHECKED, temp, "ContactSelect");
 
 					}
 				}
@@ -217,8 +207,7 @@ public class TreeViewAdapter extends BaseExpandableListAdapter {
 	}
 
 	@Override
-	public View getGroupView(int groupPosition, boolean isExpanded,
-			View convertView, ViewGroup parent) {
+	public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
 		// TODO Auto-generated method stub
 		TextView textView = getTextView(this.parentContext);
 		textView.setText(getGroup(groupPosition).toString());

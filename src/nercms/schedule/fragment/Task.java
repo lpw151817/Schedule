@@ -149,7 +149,7 @@ public class Task extends SherlockFragment implements OnClickListener {
 					Log.i("Task", "收到mqtt任务更新");
 
 					// //////TODO 请求需要更改
-					webRequestManager.getAffairUpdate("", "");
+					webRequestManager.getAffairUpdate("");
 					initData();
 					resetNumber();
 					break;
@@ -193,7 +193,7 @@ public class Task extends SherlockFragment implements OnClickListener {
 				LocalConstant.FINISHED_TASK_STATUS, userID);
 		rvDelayNum = affairDao.getAffairCountByTypeAndStatus(LocalConstant.RECEIVE_TASK_TYPE,
 				LocalConstant.DELAYED_TASK_STATUS, userID);
-
+		
 		if (affairDao.getUnreadNumByTypeAndStatus(LocalConstant.START_TASK_TYPE,
 				LocalConstant.DOING_TASK_STATUS, userID) > 0) {
 			stDoingNew = true;
