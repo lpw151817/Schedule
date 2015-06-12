@@ -21,6 +21,12 @@ import android.wxapp.service.util.MySharedPreference;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 
+/**
+ * 6.10 FINAL
+ * 
+ * @author JerryLiu
+ *
+ */
 public class TaskList extends BaseActivity {
 
 	// 2014-5-23 WeiHao

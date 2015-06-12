@@ -72,8 +72,7 @@ public class MessageListAdapter extends BaseAdapter {
 		this.daoFactory = DAOFactory.getInstance();
 		personDao = daoFactory.getPersonDao(context);
 
-		options = new DisplayImageOptions.Builder()
-				.showImageOnLoading(R.drawable.no_picture) // 设置图片在下载期间显示的图片
+		options = new DisplayImageOptions.Builder().showImageOnLoading(R.drawable.no_picture) // 设置图片在下载期间显示的图片
 				.showImageForEmptyUri(R.drawable.no_picture)// 设置图片Uri为空或是错误的时候显示的图片
 				.showImageOnFail(R.drawable.no_picture) // 设置图片加载/解码过程中错误时候显示的图片
 				.cacheInMemory(true)// 设置下载的图片是否缓存在内存中
@@ -114,11 +113,9 @@ public class MessageListAdapter extends BaseAdapter {
 	@Override
 	public int getItemViewType(int position) {
 		// 根据发送人ID设置消息的位置在左端还是右端
-		String senderID = String.valueOf(((MessageModel) msglist.get(position))
-				.getSenderID());
+		String senderID = String.valueOf(((MessageModel) msglist.get(position)).getSenderID());
 
-		String userID = MySharedPreference.get(context,
-				MySharedPreference.USER_ID, "");
+		String userID = MySharedPreference.get(context, MySharedPreference.USER_ID, "");
 
 		if (senderID.equals(userID))
 			return RIGHT_ITEM;
@@ -135,27 +132,24 @@ public class MessageListAdapter extends BaseAdapter {
 		if (getItemViewType(position) == RIGHT_ITEM) { // 自己发出的消息
 			if (convertView == null) {
 				holder = new ViewHolder();
-				convertView = mInflater.inflate(
-						R.layout.chat_item_right_example, parent, false);
+				convertView = mInflater.inflate(R.layout.chat_item_right_example, parent, false);
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
 		} else {
 			if (convertView == null) {
 				holder = new ViewHolder();
-				convertView = mInflater.inflate(
-						R.layout.chat_item_left_example, null);
+				convertView = mInflater.inflate(R.layout.chat_item_left_example, null);
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
 
 			// 2014-7-31
-			holder.userName = (TextView) convertView
-					.findViewById(R.id.tv_username);
+			holder.userName = (TextView) convertView.findViewById(R.id.tv_username);
 			if (msg.getIsGroup() == 1) {// 判断为群消息，显示左边发送者名字
 				holder.userName.setVisibility(View.VISIBLE);
-				holder.userName.setText(personDao.getPersonNameByID(String
-						.valueOf(msg.getSenderID())));
+				holder.userName.setText(personDao.getPersonInfo(String.valueOf(msg.getSenderID()))
+						.getUn());
 			} else { // 个人消息，隐藏名字显示
 				holder.userName.setVisibility(View.GONE);
 			}
@@ -163,16 +157,14 @@ public class MessageListAdapter extends BaseAdapter {
 
 		// 获取控件对象
 		holder.time = (TextView) convertView.findViewById(R.id.tv_sendtime);
-		holder.contentLayout = (RelativeLayout) convertView
-				.findViewById(R.id.rl_contentLayout);
+		holder.contentLayout = (RelativeLayout) convertView.findViewById(R.id.rl_contentLayout);
 		holder.text = (TextView) convertView.findViewById(R.id.tv_chatcontent);
 		holder.media = (ImageView) convertView.findViewById(R.id.iv_chat_media);
 		convertView.setTag(holder);
 
 		holder.time.setText(msg.getSendTime());
 
-		if (msg.getAttachmentURL() == null
-				|| msg.getAttachmentURL().equalsIgnoreCase("")) { // 文本消息
+		if (msg.getAttachmentURL() == null || msg.getAttachmentURL().equalsIgnoreCase("")) { // 文本消息
 			holder.text.setVisibility(View.VISIBLE);
 			holder.text.setText(msg.getDescription());
 			holder.media.setVisibility(View.GONE);
@@ -183,8 +175,7 @@ public class MessageListAdapter extends BaseAdapter {
 
 			File sdcardDir = Environment.getExternalStorageDirectory();
 			String path = sdcardDir.getPath() + "/nercms-Schedule/Attachments/";
-			String videoThumbnailDir = sdcardDir.getPath()
-					+ "/nercms-Schedule/Thumbnail/";
+			String videoThumbnailDir = sdcardDir.getPath() + "/nercms-Schedule/Thumbnail/";
 
 			switch (type) {
 			case LocalConstant.IAMGE_TYPE:
@@ -197,8 +188,7 @@ public class MessageListAdapter extends BaseAdapter {
 
 					// 判断文件是否存在，不存在则连接文件服务器下载
 					if (!new File(picPath).exists()) {
-						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL
-								+ File.separator + picName;
+						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL + File.separator + picName;
 
 						// new HttpDownloadTask(context).execute(downUrl,
 						// "/nercms-Schedule/Attachments/", picName);
@@ -213,15 +203,12 @@ public class MessageListAdapter extends BaseAdapter {
 										Utils.saveBitmap(response, picPath);
 										// 异步加载本地图片
 										com.nostra13.universalimageloader.core.ImageLoader
-												.getInstance().displayImage(
-														"file://" + picPath,
-														holder.media, options);
+												.getInstance()
+												.displayImage("file://" + picPath, holder.media, options);
 									}
-								}, 0, 0, Config.RGB_565,
-								new Response.ErrorListener() {
+								}, 0, 0, Config.RGB_565, new Response.ErrorListener() {
 									@Override
-									public void onErrorResponse(
-											VolleyError error) {
+									public void onErrorResponse(VolleyError error) {
 									}
 								});
 						// 加入请求队列
@@ -240,10 +227,8 @@ public class MessageListAdapter extends BaseAdapter {
 					} else {
 						// addImage(holder.media, picPath);
 						// 异步加载本地图片
-						com.nostra13.universalimageloader.core.ImageLoader
-								.getInstance().displayImage(
-										"file://" + picPath, holder.media,
-										options);
+						com.nostra13.universalimageloader.core.ImageLoader.getInstance().displayImage(
+								"file://" + picPath, holder.media, options);
 					}
 				}
 				break;
@@ -258,27 +243,22 @@ public class MessageListAdapter extends BaseAdapter {
 
 					// 判断文件是否存在，不存在则连接文件服务器下载
 					if (!new File(videoPath).exists()) {
-						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL
-								+ File.separator + videoName;
-						new HttpDownloadTask(context).execute(downUrl,
-								"/nercms-Schedule/Attachments/", videoName);
+						String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+								+ videoName;
+						new HttpDownloadTask(context).execute(downUrl, "/nercms-Schedule/Attachments/",
+								videoName);
 					} else {
-						//判断视频缩略图是否存在，不存在则声称缩略图
+						// 判断视频缩略图是否存在，不存在则声称缩略图
 						String thumbnailPath = videoThumbnailDir
-								+ videoName
-										.substring(0, videoName.indexOf("."))
-								+ ".jpg";
+								+ videoName.substring(0, videoName.indexOf(".")) + ".jpg";
 						if (!new File(thumbnailPath).exists()) {
-							Utils.saveBitmap(ThumbnailUtils
-									.createVideoThumbnail(videoPath,
-											Thumbnails.MINI_KIND),
+							Utils.saveBitmap(
+									ThumbnailUtils.createVideoThumbnail(videoPath, Thumbnails.MINI_KIND),
 									thumbnailPath);
 						}
 
-						com.nostra13.universalimageloader.core.ImageLoader
-								.getInstance().displayImage(
-										"file://" + thumbnailPath,
-										holder.media, options);
+						com.nostra13.universalimageloader.core.ImageLoader.getInstance().displayImage(
+								"file://" + thumbnailPath, holder.media, options);
 					}
 				}
 
@@ -296,19 +276,17 @@ public class MessageListAdapter extends BaseAdapter {
 			public void onClick(View arg0) {
 				if (msg.getAttachmentType() == LocalConstant.IAMGE_TYPE) {
 					Intent intent = new Intent(Intent.ACTION_VIEW);
-					intent.setDataAndType(Uri.parse("file://"
-							+ Environment.getExternalStorageDirectory()
-									.getPath()
-							+ "/nercms-Schedule/Attachments/"
-							+ msg.getAttachmentURL()), "image/*");
+					intent.setDataAndType(
+							Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath()
+									+ "/nercms-Schedule/Attachments/" + msg.getAttachmentURL()),
+							"image/*");
 					context.startActivity(intent);
 				} else if (msg.getAttachmentType() == LocalConstant.VIDEO_TYPE) {
 					Intent intent = new Intent(Intent.ACTION_VIEW);
-					intent.setDataAndType(Uri.parse("file://"
-							+ Environment.getExternalStorageDirectory()
-									.getPath()
-							+ "/nercms-Schedule/Attachments/"
-							+ msg.getAttachmentURL()), "video/*");
+					intent.setDataAndType(
+							Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath()
+									+ "/nercms-Schedule/Attachments/" + msg.getAttachmentURL()),
+							"video/*");
 					context.startActivity(intent);
 				}
 

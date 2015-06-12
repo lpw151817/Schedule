@@ -81,30 +81,30 @@ public class Login extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login);
 
-		// // 用户测试使用，直接跳过本Activity
-		// startActivity(Main.class);
-		// return;
+		// 用户测试使用，直接跳过本Activity
+		startActivity(Main.class);
+		return;
 
-		Log.v("Login", "Login onCreate");
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
-
-		initActionBar();
-
-		etUserName = (EditText) findViewById(R.id.login_user_edit);
-		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
-
-		// 默认显示上次登录的用户ID
-		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
-
-		btnLogin = (Button) findViewById(R.id.login_login_btn);
-		btnLogin.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				MyLog.i(TAG, "登录按钮点击");
-				login_mainschedule();
-			}
-		});
+//		Log.v("Login", "Login onCreate");
+//		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
+//
+//		initActionBar();
+//
+//		etUserName = (EditText) findViewById(R.id.login_user_edit);
+//		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
+//
+//		// 默认显示上次登录的用户ID
+//		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
+//
+//		btnLogin = (Button) findViewById(R.id.login_login_btn);
+//		btnLogin.setOnClickListener(new OnClickListener() {
+//
+//			@Override
+//			public void onClick(View arg0) {
+//				MyLog.i(TAG, "登录按钮点击");
+//				login_mainschedule();
+//			}
+//		});
 
 	}
 

@@ -61,16 +61,13 @@ public class MeetingDetail extends BaseActivity {
 	private void initData() {
 		personDao = daoFactory.getPersonDao(MeetingDetail.this);
 		conferenceDao = daoFactory.getConferenceDao(MeetingDetail.this);
-		conferencePersonDao = daoFactory
-				.getConferencePersonDao(MeetingDetail.this);
-		ConferenceModel conference = conferenceDao
-				.getConferenceByID(conferenceID);
+		conferencePersonDao = daoFactory.getConferencePersonDao(MeetingDetail.this);
+		ConferenceModel conference = conferenceDao.getConferenceByID(conferenceID);
 		ArrayList<ConferencePersonModel> cpList = conferencePersonDao
 				.getConferencePersonListByID(conferenceID);
 
 		// 发起人姓名
-		String sponsorName = personDao.getPersonNameByID(String
-				.valueOf(conference.getSponsorID()));
+		String sponsorName = personDao.getPersonInfo(conference.getSponsorID() + "").getUn();
 		sponsorTv.setText(sponsorName);
 		// 会议主题
 		titleTv.setText(conference.getConferenceName());
@@ -92,14 +89,13 @@ public class MeetingDetail extends BaseActivity {
 		String speakerNameString = sponsorName;
 		if (speakerList != null) {
 			String personID;
-//			speakerNameString += " ; ";
+			// speakerNameString += " ; ";
 			for (int i = 0; i < speakerList.size(); i++) {
 				personID = String.valueOf(speakerList.get(i).getPersonID());
 				if (i != speakerList.size() - 1) {
-					speakerNameString += personDao.getPersonNameByID(personID)
-							+ " ; ";
+					speakerNameString += personDao.getPersonInfo(personID).getUn() + " ; ";
 				} else {
-					speakerNameString += personDao.getPersonNameByID(personID);
+					speakerNameString += personDao.getPersonInfo(personID).getUn();
 				}
 			}
 		}
@@ -111,14 +107,11 @@ public class MeetingDetail extends BaseActivity {
 			String personID;
 			participatorNameString = "";
 			for (int i = 0; i < participatorList.size(); i++) {
-				personID = String
-						.valueOf(participatorList.get(i).getPersonID());
+				personID = String.valueOf(participatorList.get(i).getPersonID());
 				if (i != participatorList.size() - 1) { // 非最后一项
-					participatorNameString += personDao
-							.getPersonNameByID(personID) + " ; ";
+					participatorNameString += personDao.getPersonInfo(personID).getUn() + " ; ";
 				} else { // 最后一项，不显示分号
-					participatorNameString += personDao
-							.getPersonNameByID(personID);
+					participatorNameString += personDao.getPersonInfo(personID).getUn();
 				}
 			}
 		}

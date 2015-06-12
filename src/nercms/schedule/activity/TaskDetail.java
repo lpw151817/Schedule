@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import nercms.schedule.R;
 import nercms.schedule.dateSelect.NumericWheelAdapter;
@@ -56,6 +57,10 @@ import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.dao.PersonOnDutyDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.affair.CreateTaskRequestAttachment;
+import android.wxapp.service.jerry.model.affair.CreateTaskRequestIds;
+import android.wxapp.service.jerry.model.affair.QueryAffairInfoResponse;
+import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.model.AffairAttachModel;
 import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.model.PersonOnDutyModel;
@@ -88,8 +93,8 @@ public class TaskDetail extends BaseActivity {
 
 	private Handler handler;
 
-	private AffairModel task;
-	private PersonOnDutyModel pod;
+	private QueryAffairInfoResponse task;
+	// private PersonOnDutyModel pod;
 
 	// 控件
 	private EditText task_title;// 任务主题
@@ -129,13 +134,14 @@ public class TaskDetail extends BaseActivity {
 	// 任务ID
 	private String taskID;
 	// 责任人姓名
-	private String podName;
+	private String podName = "";
 	// 发起人姓名
 	private String sponsorName;
 	// 本人ID
 	private String userID;
 	// 任务附件列表
-	private ArrayList<AffairAttachModel> taskAttackList;
+	// private ArrayList<AffairAttachModel> taskAttackList;
+	private List<CreateTaskRequestAttachment> taskAttackList;
 
 	DisplayImageOptions options;
 
@@ -187,6 +193,8 @@ public class TaskDetail extends BaseActivity {
 		initActionBar();
 		// 初始化控件
 		initView();
+
+		// TODO
 		initHandler();
 
 	}
@@ -279,32 +287,34 @@ public class TaskDetail extends BaseActivity {
 		Log.v("", "initData");
 
 		affairDao = daoFactory.getAffairDao(TaskDetail.this);
-		task = affairDao.getAffairById(taskID);
-		// 不管是否已读，标记未已读
+		task = affairDao.getAffairInfoByAid(taskID);
+		// 修改任务为已读
 		affairDao.updateAffairIsRead(taskID);
 
-		podDao = daoFactory.getPersonOnDutyDao(TaskDetail.this);
-		pod = podDao.getPersonByAffairID(taskID);
-
 		personDao = daoFactory.getPersonDao(TaskDetail.this);
-		podName = personDao.getSSMByID(Integer.toString(pod.getPersonID())).getName();
-		sponsorName = personDao.getSSMByID(Integer.toString(task.getSponsorID())).getName();
-
-		attachDao = daoFactory.getAttachmentDao(TaskDetail.this);
-		taskAttackList = attachDao.getAttachByAffairID(taskID);
-		if (taskAttackList.size() != 0) {
-			task.setAttachments(taskAttackList);
-		} else {
-			task.setAttachments(null);
+		Map<String, List<CreateTaskRequestIds>> ids = affairDao.getPersonIdByAffairId(taskID);
+		// 负责人数据
+		List<CreateTaskRequestIds> pods = ids.get("1");
+		for (CreateTaskRequestIds createTaskRequestIds : pods) {
+			GetPersonInfoResponse temp = personDao.getPersonInfo(createTaskRequestIds.getRid());
+			if (temp != null)
+				podName += personDao.getPersonInfo(createTaskRequestIds.getRid()).getUn() + "/";
+			else
+				continue;
 		}
+		// 抄送人数据
+		List<CreateTaskRequestIds> rids = ids.get("2");
+		// TODO 对抄送人数据进行生成并显示
+
+		sponsorName = personDao.getPersonInfo(task.getSid()).getUn();
+		taskAttackList = task.getAtt();
 		// 判断是否是本人发起的任务
-		if (String.valueOf(task.getSponsorID()).equals(userID)) {
+		if (String.valueOf(task.getSid()).equals(userID)) {
 			// 隐藏操作overflow按钮
 			isMySponse = true;
 		}
-
 		// 判断是否是已完成的任务和已延误任务
-		if (task.getStatus() == 1) {
+		if (task.getCt() != null && !task.getCt().isEmpty()) {
 			// 隐藏反馈和操作按钮，仅供查看
 			isDoing = true;
 		}
@@ -351,13 +361,13 @@ public class TaskDetail extends BaseActivity {
 
 	private void initView() {
 		task_title = (EditText) findViewById(R.id.td_title);
-		task_title.setText(task.getTitle());
+		task_title.setText(task.getTopic());
 		starter = (EditText) findViewById(R.id.td_starter);
 		starter.setText(sponsorName);
 		participator = (EditText) findViewById(R.id.td_participator);
 		participator.setText(podName);
 		end_time = (EditText) findViewById(R.id.td_deadline);
-		end_time.setText(task.getEndTime());
+		end_time.setText(task.getEt());
 		btn_calendar = (ImageButton) findViewById(R.id.td_btn_deadline);
 		btn_calendar.setOnClickListener(new OnClickListener() {
 
@@ -370,7 +380,7 @@ public class TaskDetail extends BaseActivity {
 		btn_calendar.setVisibility(View.GONE);
 
 		content = (EditText) findViewById(R.id.td_content);
-		content.setText(task.getDescription());
+		content.setText(task.getD());
 
 		attachLayout = (LinearLayout) findViewById(R.id.td_showAttathLayout);
 		if (taskAttackList.size() == 0) {
@@ -395,8 +405,8 @@ public class TaskDetail extends BaseActivity {
 		int mediaType;
 
 		for (int i = 0; i < taskAttackList.size(); i++) {
-			mediaName = taskAttackList.get(i).getAttachmentURL();
-			mediaType = taskAttackList.get(i).getAttachmentType();
+			mediaName = taskAttackList.get(i).getU();
+			mediaType = Integer.parseInt(taskAttackList.get(i).getAt());
 			final String mediaPath = path.toString() + mediaName;
 			if (mediaPath != null && !mediaPath.equalsIgnoreCase("")) {
 
@@ -640,7 +650,7 @@ public class TaskDetail extends BaseActivity {
 
 	// 选择截止时间 对年月日进行判断
 	private void showDateTimePicker() {
-		String originalEndTime = task.getEndTime();
+		String originalEndTime = task.getEt();
 		int year = Integer.parseInt(originalEndTime.substring(0, 4));
 		int month = Integer.parseInt(originalEndTime.substring(5, 7));
 		int day = Integer.parseInt(originalEndTime.substring(8, 10));

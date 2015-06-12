@@ -5,6 +5,7 @@ import java.util.List;
 
 import nercms.schedule.R;
 import nercms.schedule.activity.TaskDetail;
+import nercms.schedule.utils.Utils;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.dao.PersonOnDutyDao;
 import android.wxapp.service.jerry.model.affair.CreateTaskRequestIds;
 import android.wxapp.service.jerry.model.affair.QueryAffairListResponseAffairs;
+import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.model.PersonOnDutyModel;
 import android.wxapp.service.model.StructuredStaffModel;
@@ -100,10 +102,14 @@ public class TaskListViewAdapter extends BaseAdapter {
 		// 获取负责人的名字
 		String podsString = "";
 		for (CreateTaskRequestIds item : mList.get(position).getPod()) {
-			podsString += (personDao.getOrgPersonInfo(item.getRid()).getUn() + "/");
+			GetPersonInfoResponse temp = personDao.getPersonInfo(item.getRid());
+			if (temp != null)
+				podsString += (temp.getUn() + "/");
+			else
+				continue;
 		}
 		holder.mParticipatorText.setText(podsString);
-		holder.mDeadlineText.setText(mList.get(position).getEt());
+		holder.mDeadlineText.setText(Utils.formatDataMs(mList.get(position).getEt()));
 		// holder.mReplyText.setText(Integer.toString(1));// 回复条数数据如何取
 
 		if (!affairDao.getAffairIsReadByID(mList.get(position).getAid())) {

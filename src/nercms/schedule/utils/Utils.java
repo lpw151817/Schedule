@@ -35,6 +35,11 @@ public class Utils {
 	public static final int EC_PWD_ERROR = 2;
 	public static final int EC_USERNAME_ERROR = 3;
 
+	public static String formatDataMs(String ms) {
+		SimpleDateFormat format = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
+		return format.format(new Date(Long.parseLong(ms)));
+	}
+
 	public static String getErrorMsg(String ec) {
 
 		try {

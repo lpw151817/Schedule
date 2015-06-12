@@ -84,8 +84,6 @@ public class TaskAdd extends BaseActivity {
 	private PersonDao personDao;
 	// 本用户ID
 	private String userID;
-	// 本用户人员
-	private StructuredStaffModel userSSM = null;
 
 	private Handler handler;
 
@@ -172,7 +170,6 @@ public class TaskAdd extends BaseActivity {
 		// 准备用户信息
 		userID = MySharedPreference.get(TaskAdd.this, MySharedPreference.USER_ID, "");
 		personDao = daoFactory.getPersonDao(TaskAdd.this);
-		userSSM = personDao.getSSMByID(userID);
 
 		// 初始化ActionBar
 		initActionBar();
@@ -199,7 +196,7 @@ public class TaskAdd extends BaseActivity {
 		tvUploadStatus = (TextView) findViewById(R.id.upload_status_textview);
 		// 发起人显示
 		etSponsor.setEnabled(false);
-		etSponsor.setText(userSSM.getName());
+		etSponsor.setText(personDao.getCustomer().getUn());
 
 		btnPodPicker.setOnClickListener(new OnClickListener() {
 			@Override
