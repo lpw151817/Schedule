@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 import nercms.schedule.R;
+import nercms.schedule.adapter.SimpleTreeListViewAdapter;
 import nercms.schedule.adapter.SuperTreeViewAdapter;
 import nercms.schedule.adapter.TreeViewAdapter;
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -22,13 +24,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ExpandableListView;
+import android.widget.ListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.Toast;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.person.Org;
 import android.wxapp.service.jerry.model.person.OrgInfo;
 import android.wxapp.service.model.CustomerModel;
 import android.wxapp.service.model.OrgNodeModel;
@@ -37,6 +43,8 @@ import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockFragment;
+import com.imooc.treeview.utils.Node;
+import com.imooc.treeview.utils.adapter.TreeListViewAdapter.OnTreeNodeClickListener;
 
 /**
  * @author jiaocuina@gmail.com
@@ -51,8 +59,8 @@ public class Contact extends SherlockFragment {
 	private static final String TAG = "ContactFragment";
 
 	// 控件相关
-	ExpandableListView expandableListView;
-	// View mContainerView;
+	ListView listView;
+	List<Org> data = new ArrayList<Org>();
 	TreeViewAdapter adapter;
 	SuperTreeViewAdapter superAdapter;
 
@@ -77,11 +85,12 @@ public class Contact extends SherlockFragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.contact_fragment, null);
-
+		dao = new PersonDao(getActivity().getApplicationContext());
 		personalBtn = (Button) view.findViewById(R.id.btn_contacts_personal);
 		enterpriseBtn = (Button) view.findViewById(R.id.btn_contacts_company);
-		expandableListView = (ExpandableListView) view.findViewById(R.id.expandablelistview);
-		// mContainerView=(View)view.findViewById(R.id.container);
+		listView = (ListView) view.findViewById(R.id.id_tree);
+		// expandableListView = (ExpandableListView)
+		// view.findViewById(R.id.expandablelistview);
 		personalBtn.setOnClickListener(listener);
 		enterpriseBtn.setOnClickListener(listener);
 		// jiaocuina 0528添加参数 来区分select页面和contact页面所用adapter
@@ -120,15 +129,19 @@ public class Contact extends SherlockFragment {
 		}
 
 		private void initPersonData() {
-			List<TreeViewAdapter.TreeNode> treeNode = adapter.getTreeNode();
-			for (int i = 0; i < groups.length; i++) {
-				TreeViewAdapter.TreeNode node = new TreeViewAdapter.TreeNode();
-				node.parent = groups[i];
+			try {
+				data.clear();
+				int i = 1;
+				for (String item : groups) {
+					data.add(new Org(i + "", 0 + "", item));
+					i++;
+				}
 				Cursor cursor = selectPersonalContact(getActivity(),
 						android.provider.ContactsContract.Contacts.CONTENT_URI, null);
 				Log.d(TAG, "下载本机个人通讯录");
 				if (cursor.getCount() == 0) {
-					node.childs.add(new StructuredStaffModel("", "", null, null, "无数据", null, null));
+					data.add(new Org(i + "", 1 + "", "无数据"));
+					i++;
 				} else {
 					while (cursor.moveToNext()) {
 						// 本地通讯录 联系人ID
@@ -137,100 +150,57 @@ public class Contact extends SherlockFragment {
 						// 本地通讯录 联系人姓名
 						String _name_ = cursor.getString(cursor
 								.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-						node.childs.add(new StructuredStaffModel(_id, "P", null, null, _name_, null,
-								null));
+						data.add(new Org("p" + _id, 1 + "", _name_));
 					}
 				}
-				treeNode.add(node);
-			}
-			adapter.updateTreeNode(treeNode);
-			expandableListView.setAdapter(adapter);
+				SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(listView,
+						getActivity().getApplicationContext(), data, 0);
+				listView.setAdapter(adapter);
+				adapter.setOnTreeNodeClickListener(new OnTreeNodeClickListener() {
 
-			// 个人默认展开
-			int groupCount = expandableListView.getCount();
-			for (int i = 0; i < groupCount; i++) {
-				expandableListView.expandGroup(i);
+					@Override
+					public void onClick(Node node, int position) {
+						if (node.isLeaf()) {
+							String tempId = node.getId();
+							String id = tempId.substring(1, tempId.length());
+							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
+									.parse("content://contacts/people/" + id));
+							intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+							getActivity().getApplicationContext().startActivity(intent);
+						}
+					}
+				});
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
 			}
 
 		}
 	};
 
 	private void initEnterpriseData() {
+		try {
+			data.clear();
+			data = dao.getOrg2();
+			SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(listView,
+					getActivity().getApplicationContext(), data, 0);
+			listView.setAdapter(adapter);
+			adapter.setOnTreeNodeClickListener(new OnTreeNodeClickListener() {
 
-//		userID = MySharedPreference.get(getActivity(), MySharedPreference.USER_ID, "");
-//		// 组织机构树数据准备
-//		adapter.removeAll();
-//		adapter.notifyDataSetChanged();
-//		superAdapter.RemoveAll();
-//		superAdapter.notifyDataSetChanged();
-//
-//		dao = daoFactory.getPersonDao(getActivity());
-//		List<OrgInfo> orgNodeSecondList = dao.getOrgCodeInfosFirst();
-//		// bigTreeMap = new HashMap<String, Map<String,
-//		// ArrayList<StructuredStaffModel>>>();
-//
-//		List<SuperTreeViewAdapter.SuperTreeNode> superNodeTree = superAdapter.GetTreeNode();
-//
-//		// // 添加客户分组二级节点
-//		// OrgNodeModel customerOrgNode = new OrgNodeModel(String.valueOf(20),
-//		// "客户");
-//		// orgNodeSecondList.add(customerOrgNode);
-//
-//		for (int i = 0; i < orgNodeSecondList.size(); i++) {
-//			// if (i != orgNodeSecondList.size() - 1) {
-//
-//			SuperTreeViewAdapter.SuperTreeNode superNode = new SuperTreeViewAdapter.SuperTreeNode();
-//			String orgNodeSecondName = orgNodeSecondList.get(i).getD();
-//			superNode.parent = orgNodeSecondName;
-//
-//			List<OrgInfo> children = dao.getOrgCodeInfos(orgNodeSecondList.get(i).getOc());
-//			ArrayList<OrgNodeModel> orgNodeThirdList = dao.getThirdOrgNode(orgNodeSecondList.get(i)
-//					.getOrgCode());
-//
-//			for (int j = 0; j < orgNodeThirdList.size(); j++) {
-//				String orgNodeThirdName = orgNodeThirdList.get(j).getDescription();
-//				String orgNodeThirdCode = orgNodeThirdList.get(j).getOrgCode();
-//
-//				ArrayList<StructuredStaffModel> ssmList = dao.getSSMFromOrgCode(orgNodeThirdCode);
-//				// 叶子节点
-//				TreeViewAdapter.TreeNode node = new TreeViewAdapter.TreeNode();
-//				node.parent = orgNodeThirdName;
-//				// 添加群组节点
-//				String firstLeafID = "Group" + orgNodeThirdCode;// 群组节点ID
-//				String firstLeaf_name = orgNodeThirdName + "群组";
-//				StructuredStaffModel firstLeaf = new StructuredStaffModel(firstLeafID, orgNodeThirdCode,
-//						orgNodeThirdName, "", firstLeaf_name, "", "");
-//				node.childs.add(firstLeaf);
-//
-//				for (int k = 0; k < ssmList.size(); k++) {
-//					node.childs.add(ssmList.get(k));
-//				}
-//				superNode.childs.add(node);
-//			}
-//			superNodeTree.add(superNode);
-//			// } else {
-//			// // 2014-6-19
-//			// // 客户节点
-//			// SuperTreeViewAdapter.SuperTreeNode customerNode = new
-//			// SuperTreeViewAdapter.SuperTreeNode();
-//			// customerNode.parent = "客户";
-//			// ArrayList<CustomerModel> customerList =
-//			// dao.getCustomersByUserID(userID);
-//			// TreeViewAdapter.TreeNode node = new TreeViewAdapter.TreeNode();
-//			// node.parent = "我的客户";
-//			// CustomerModel customer;
-//			// for (int j = 0; j < customerList.size(); j++) {
-//			// customer = customerList.get(j);
-//			// node.childs.add(new
-//			// StructuredStaffModel(customer.getCustomerID(), "C", null, null,
-//			// customer.getName(), null, null));
-//			// }
-//			// customerNode.childs.add(node);
-//			// superNodeTree.add(customerNode);
-//			// }
-//		}
-//		superAdapter.UpdateTreeNode(superNodeTree);
-//		expandableListView.setAdapter(superAdapter);
+				@Override
+				public void onClick(Node node, int position) {
+					if (node.isLeaf()) {
+
+					}
+				}
+			});
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	// 查找本机通讯录

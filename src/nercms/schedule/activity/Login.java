@@ -34,6 +34,7 @@ import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.normal.NormalServerResponse;
 import android.wxapp.service.jerry.model.person.GetOrgCodePersonResponse;
 import android.wxapp.service.jerry.model.person.GetOrgCodeResponse;
+import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.jerry.model.person.LoginResponse;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
@@ -81,9 +82,9 @@ public class Login extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login);
 
-		// 用户测试使用，直接跳过本Activity
-		startActivity(Main.class);
-		return;
+		 // 用户测试使用，直接跳过本Activity
+		 startActivity(Main.class);
+		 return;
 
 //		Log.v("Login", "Login onCreate");
 //		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
@@ -169,6 +170,8 @@ public class Login extends BaseActivity {
 
 					// ///Jerry 6.3
 					dismissProgressDialog();
+
+					// TODO 界面跳转需要等到下载完数据才能进去 6.12
 					// 5.跳转到主界面
 					startActivity(new Intent(Login.this, Main.class));
 					Login.this.finish();
@@ -176,6 +179,14 @@ public class Login extends BaseActivity {
 					// TODO 写一个Timer定时请求服务器是否有更新数据
 					getOrgInfoUpdate();
 					getAffairUpdate();
+
+					// 获取个人信息数据
+					GetPersonInfoResponse mPersonInfo = DAOFactory.getInstance()
+							.getPersonDao(Login.this).getCustomer();
+					// 如果没有数据，则先进行网络请求
+					if (mPersonInfo == null) {
+						webRequestManager.GetPersonInfo(getUserId());
+					}
 
 					// ////////////////
 

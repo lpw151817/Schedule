@@ -196,6 +196,7 @@ public class TaskAdd extends BaseActivity {
 		tvUploadStatus = (TextView) findViewById(R.id.upload_status_textview);
 		// 发起人显示
 		etSponsor.setEnabled(false);
+		// TODO 这里的保存个人信息逻辑问题
 		etSponsor.setText(personDao.getCustomer().getUn());
 
 		btnPodPicker.setOnClickListener(new OnClickListener() {

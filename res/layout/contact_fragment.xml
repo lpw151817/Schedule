@@ -3,10 +3,10 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@android:color/white"
-    android:orientation="vertical" 
-    android:paddingTop="4dp"
+    android:orientation="vertical"
     android:paddingLeft="2dp"
-    android:paddingRight="2dp" >
+    android:paddingRight="2dp"
+    android:paddingTop="4dp" >
 
     <LinearLayout
         android:id="@+id/linearLayout1"
@@ -14,31 +14,28 @@
         android:layout_height="35dp"
         android:layout_gravity="center"
         android:gravity="center" >
+
         <Button
             android:id="@+id/btn_contacts_company"
             android:layout_width="100dip"
             android:layout_height="wrap_content"
-            android:text="企业" 
-            android:background="@drawable/btn_left_header_contacts"/>
-        <Button           android:id="@+id/btn_contacts_personal"
+            android:background="@drawable/btn_left_header_contacts"
+            android:text="企业" />
+
+        <Button
+            android:id="@+id/btn_contacts_personal"
             android:layout_width="100dip"
             android:layout_height="wrap_content"
-            android:text="个人"
-            android:background="@drawable/btn_right_header_contacts"/>
+            android:background="@drawable/btn_right_header_contacts"
+            android:text="个人" />
     </LinearLayout>
 
-    
-    <ExpandableListView
-        android:id="@+id/expandablelistview"
+    <ListView
+        android:id="@+id/id_tree"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        >
-    </ExpandableListView>
-    
-    <!--
-         <View android:id="@+id/container"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"/>
-    -->
+        android:divider="#aaa"
+        android:dividerHeight="1px" >
+    </ListView>
 
 </LinearLayout>
