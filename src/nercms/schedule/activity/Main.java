@@ -365,7 +365,7 @@ public class Main extends SherlockFragmentActivity {
 
 				return true;
 			case 2:
-				// 发起会话
+				// 发起消息
 				Intent intent2 = new Intent(this, ContactSelect.class);
 				intent2.putExtra("entrance_flag", 2);
 

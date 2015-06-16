@@ -13,11 +13,19 @@
         android:paddingTop="10dp"
         android:orientation="vertical">
         
-     <ExpandableListView
+     <!-- <ExpandableListView
         android:id="@+id/expandablelistview1"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
         
-    </ExpandableListView> 
+    </ExpandableListView>  -->
+    
+     <ListView
+        android:id="@+id/id_tree"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:divider="#aaa"
+        android:dividerHeight="1px" >
+    </ListView>
     </LinearLayout>
 </LinearLayout>

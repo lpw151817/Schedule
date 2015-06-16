@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import nercms.schedule.R;
 import nercms.schedule.dateSelect.NumericWheelAdapter;
@@ -39,6 +40,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Thumbnails;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -58,11 +60,16 @@ import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.affair.CreateTaskRequestAttachment;
+import android.wxapp.service.jerry.model.affair.CreateTaskRequestIds;
+import android.wxapp.service.jerry.model.affair.QueryAffairInfoResponse;
+import android.wxapp.service.jerry.model.person.Org;
 import android.wxapp.service.model.AffairAttachModel;
 import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.model.PersonOnDutyModel;
 import android.wxapp.service.model.StructuredStaffModel;
 import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.thread.SaveAffairThread;
 import android.wxapp.service.thread.ThreadManager;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.HttpUploadTask;
@@ -71,10 +78,13 @@ import android.wxapp.service.util.MySharedPreference;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.imooc.treeview.utils.Node;
 
 public class TaskAdd extends BaseActivity {
 
 	private static final String TAG = "TaskAddActivity";
+
+	List<Node> selectedPerson;
 
 	// 网络请求入口
 	private WebRequestManager webRequestManager;
@@ -95,7 +105,11 @@ public class TaskAdd extends BaseActivity {
 	private EditText etEndTime; // 截止时间
 	private EditText etContent; // 任务内容
 	private ImageButton btnPodPicker; // 责任人选取按钮
+	private List<Node> lsSelectedPod;
+	private List<Node> lsSelectedReceiver;
 	private ImageButton btnCCPicker; // 抄送选取按钮
+	private EditText etReceiver;
+	private ImageButton btnReceiverPicker;
 
 	private LinearLayout attachPickLayout;
 
@@ -109,8 +123,8 @@ public class TaskAdd extends BaseActivity {
 	// 附件添加按钮
 	private ImageButton btnAttachPicker;
 	private AffairModel affairModel;
-	private ArrayList<AffairAttachModel> attachmentList;// 附件
 	private PersonOnDutyModel personModel;
+	private boolean isAllAttachmentUpload = false;
 
 	// 显示大图对话框
 	private Dialog imageDialog;
@@ -145,17 +159,11 @@ public class TaskAdd extends BaseActivity {
 	// 任务ID，在onCreate()中进行初始化
 	private String taskID;
 
-	// 该任务模型
-	private AffairModel task;
-
 	// 附件上传、下载异步类
 	private HttpUploadTask uploadTask;
 
 	// 附件上传成功计数器
 	private int successCounter = 0;
-
-	private String podName = "";
-	private int podID = 0; // 默认为零
 
 	// 保存mediaIndex与layout地址的映射
 	// private HashMap<Integer, RelativeLayout> index_layout_Map = new
@@ -192,12 +200,26 @@ public class TaskAdd extends BaseActivity {
 		btnPodPicker = (ImageButton) findViewById(R.id.btn_pod_picker);
 		btnCCPicker = (ImageButton) findViewById(R.id.btn_cc_picker);
 		btn_calendar = (ImageButton) findViewById(R.id.select_time);
+		etReceiver = (EditText) findViewById(R.id.task_receiver_et);
+		btnReceiverPicker = (ImageButton) findViewById(R.id.btn_receiver_picker);
 
 		tvUploadStatus = (TextView) findViewById(R.id.upload_status_textview);
 		// 发起人显示
 		etSponsor.setEnabled(false);
-		// TODO 这里的保存个人信息逻辑问题
 		etSponsor.setText(personDao.getCustomer().getUn());
+
+		btnReceiverPicker.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent();
+				intent.setClass(TaskAdd.this, ContactSelect.class);
+				intent.putExtra("entrance_flag", 1);
+				intent.putExtra("type", 2);
+				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				startActivityForResult(intent, LocalConstant.TASK_POD_SELECT_REQUEST_CODE);
+			}
+		});
 
 		btnPodPicker.setOnClickListener(new OnClickListener() {
 			@Override
@@ -205,6 +227,7 @@ public class TaskAdd extends BaseActivity {
 				Intent intent = new Intent();
 				intent.setClass(TaskAdd.this, ContactSelect.class);
 				intent.putExtra("entrance_flag", 1);
+				intent.putExtra("type", 1);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				startActivityForResult(intent, LocalConstant.TASK_POD_SELECT_REQUEST_CODE);
 			}
@@ -274,7 +297,24 @@ public class TaskAdd extends BaseActivity {
 			backDetect();
 			break;
 		case 1: // 保存（发送）任务
-			createTask();
+			String title = etTitle.getText().toString();
+			String taskContent = etContent.getText().toString();
+			String pod = etPod.getText().toString();
+			String r = etReceiver.getText().toString();
+			String time = etEndTime.getText().toString();
+			if (title.isEmpty() || taskContent.isEmpty() || pod.isEmpty() || r.isEmpty()
+					|| time.isEmpty()) {
+				new AlertDialog.Builder(TaskAdd.this).setTitle("请填写完整信息").setPositiveButton("确定", null)
+						.show();
+			} else {
+				if (mediaList.size() == 0)
+					createTask();
+				else {
+					// 首先上传附件
+					attachmentUploadRequest();
+				}
+			}
+
 			break;
 		default:
 			break;
@@ -309,69 +349,69 @@ public class TaskAdd extends BaseActivity {
 		}
 	}
 
+	QueryAffairInfoResponse tempSave;
+
 	// 2014-5-19 WeiHao 创建新任务方法
 	private void createTask() {
 
 		String title = etTitle.getText().toString();
 		int sponsorID = Integer.parseInt(userID);
-		PersonOnDutyModel pod = new PersonOnDutyModel(taskID, podID);
-		String beginTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
-				.currentTimeMillis()));
+		// PersonOnDutyModel pod = new PersonOnDutyModel(taskID, getUserId());
 		String endTime = etEndTime.getText().toString();
 		String taskContent = etContent.getText().toString();
 
-		// 判断是否为空
-		if (title.isEmpty() || podID == 0 || taskContent.isEmpty()) {
-			new AlertDialog.Builder(TaskAdd.this).setTitle("无法发起新任务").setMessage("请重新检查任务是否填写完整")
-					.setPositiveButton("确定", null).create().show();
+		if (lsSelectedPod == null || lsSelectedReceiver == null)
 			return;
+
+		List<String> tempReiceverIds = new ArrayList<String>();
+		List<CreateTaskRequestIds> tempRids = new ArrayList<CreateTaskRequestIds>();
+		for (Node item : lsSelectedReceiver) {
+			String tempId = item.getId();
+			tempReiceverIds.add(tempId.substring(1, tempId.length()));
+			tempRids.add(new CreateTaskRequestIds(tempId.substring(1, tempId.length())));
 		}
 
-		task = new AffairModel(taskID, 1, sponsorID, title, taskContent, beginTime, endTime, null, 1,
-				beginTime, Constant.READ, 1);
-		// 添加责任人
-		task.setPerson(pod);
-		// 判断附件
-		if (mediaIndex != 0) { // 有附件
-			// uploadTask = new HttpUploadTask(tvUploadStatus, this);
-
-			attachmentList = new ArrayList<AffairAttachModel>();
-			AffairAttachModel attach;
-			TaskAdd.Media media;
-			for (int i = 0; i < mediaIndex; i++) {
-				media = mediaList.get(i);
-				attach = new AffairAttachModel(taskID, media.getMediaType(), media.getMediaName());
-
-				String mediaPath = media.getMediaUrl();// 媒体文件的本地路径，用户附件上传时
-				String uploadUrl = LocalConstant.FILE_SERVER_ATTACH_URL;
-
-				// 开启上传
-				new HttpUploadTask(tvUploadStatus, this).execute(mediaPath, uploadUrl);
-
-				attachmentList.add(attach);
-			}
-
-			task.setAttachments(attachmentList);
-
-		} else { // 无附件
-			task.setAttachments(null);
-			// 联网发送任务到服务器
-			sendAffair(task);
+		List<String> tempPodIds = new ArrayList<String>();
+		List<CreateTaskRequestIds> tempPods = new ArrayList<CreateTaskRequestIds>();
+		for (Node item : lsSelectedPod) {
+			String tempId = item.getId();
+			tempPodIds.add(tempId.substring(1, tempId.length()));
+			tempPods.add(new CreateTaskRequestIds(tempId.substring(1, tempId.length())));
 		}
+
+		List<String> tempAttachmentTypes = new ArrayList<String>();
+		List<String> tempAttachmentUrls = new ArrayList<String>();
+		List<CreateTaskRequestAttachment> tempAttachments = new ArrayList<CreateTaskRequestAttachment>();
+		for (Media item : mediaList) {
+			tempAttachmentTypes.add(item.getMediaType() + "");
+			tempAttachmentUrls.add(LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+					+ item.getMediaName());
+			tempAttachments.add(new CreateTaskRequestAttachment(item.getMediaType() + "", item
+					.getMediaUrl()));
+		}
+		String tempNow = System.currentTimeMillis() + "";
+		// 进行网络请求
+		webRequestManager.sendAffair("1", taskContent, title, tempNow, Utils.parseDateInFormat(endTime),
+				tempNow, "1", tempNow, null, tempAttachmentTypes, tempAttachmentUrls, tempReiceverIds,
+				tempPodIds);
+
+		tempSave = new QueryAffairInfoResponse("", "", "1", getUserId(), taskContent, title, tempNow,
+				Utils.parseDateInFormat(endTime), tempNow, "1", tempNow, null, tempAttachments,
+				tempRids, tempPods);
 	}
 
-	private void sendAffair(AffairModel task) {
-		List<String> ats = new ArrayList<String>();
-		List<String> us = new ArrayList<String>();
-		for (AffairAttachModel at : attachmentList) {
-			ats.add(at.getAttachmentType() + "");
-			us.add(at.getAttachmentURL());
-		}
+	private void attachmentUploadRequest() {
+		AffairAttachModel attach;
+		TaskAdd.Media media;
+		for (int i = 0; i < mediaIndex; i++) {
+			media = mediaList.get(i);
+			attach = new AffairAttachModel(taskID, media.getMediaType(), media.getMediaName());
 
-		webRequestManager.sendAffair("", this.task.getType() + "", task.getSponsorID() + "",
-				task.getDescription(), task.getTitle(), task.getBeginTime(), task.getEndTime(),
-				task.getCompleteTime(), task.getLastOperateType() + "", task.getLastOperateTime(), "",
-				ats, us, new String[] { task.getPerson().getPersonID() + "" });
+			String mediaPath = media.getMediaUrl();// 媒体文件的本地路径，用户附件上传时
+			String uploadUrl = LocalConstant.FILE_SERVER_ATTACH_URL;
+			// 开启上传
+			new HttpUploadTask(tvUploadStatus, this).execute(mediaPath, uploadUrl);
+		}
 	}
 
 	// 2014-5-21 WeiHao
@@ -385,26 +425,41 @@ public class TaskAdd extends BaseActivity {
 				switch (msg.what) {
 				case Constant.CREATE_AFFAIR_REQUEST_SUCCESS:
 					// 任务保存到本地数据库
-					ArrayList<AffairModel> affairs = new ArrayList<AffairModel>(1);
-					affairs.add(task);
-					ThreadManager.getInstance().startSaveAffairThread(affairs, true, TaskAdd.this);
-					Utils.showShortToast(TaskAdd.this, "新建任务成功");
-					TaskAdd.this.finish();
+					if (tempSave != null) {
+						new SaveAffairThread(TaskAdd.this, tempSave).run();
+						Utils.showShortToast(TaskAdd.this, "新建任务成功");
+						TaskAdd.this.finish();
+					} else {
+						Utils.showShortToast(TaskAdd.this, "新建任务失败");
+					}
 					break;
 				case Constant.CREATE_AFFAIR_REQUEST_FAIL:
-					// 新建任务请求失败，显示失败信息
+					new AlertDialog.Builder(TaskAdd.this).setTitle("新建任务失败").setMessage("是否重新发送?")
+							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									createTask();
+								}
+							}).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									// TODO Auto-generated method stub
+
+								}
+							}).create().show();
+
 					String failedMsg = (String) msg.obj;
-					Utils.showShortToast(TaskAdd.this, "新建任务失败：" + failedMsg + "，重新发送中...");
-					sendAffair(task);
+					Log.e("TaskAdd", "新建任务失败：" + failedMsg);
+
 					break;
 				case Constant.FILE_UPLOAD_SUCCESS:
 					successCounter++;
 					if (successCounter == mediaIndex) {
 						// 附件全部上传成功，联网发送任务到服务器
-						sendAffair(task);
-						successCounter = 0; // 计数器归零
+						createTask();
 					}
-
 					break;
 				case Constant.FILE_UPLOAD_FAIL:
 					successCounter = 0; // 计数器归零
@@ -437,6 +492,7 @@ public class TaskAdd extends BaseActivity {
 		String originalUri;
 
 		switch (requestCode) {
+		// 拍照
 		case LocalConstant.CAPTURE_IMAGE_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
 
@@ -475,6 +531,7 @@ public class TaskAdd extends BaseActivity {
 			}
 
 			break;
+		// 录像
 		case LocalConstant.CAPTURE_VIDEO_REQUEST_CODE:
 			originalUri = videoPath;
 			// 判断文件是否存在,不存在直接跳过
@@ -498,6 +555,7 @@ public class TaskAdd extends BaseActivity {
 			index_originalPath_Map.put(mediaID, originalUri);
 
 			break;
+		// 选择图片
 		case LocalConstant.SELECT_IMAGE_REQUEST_CODE:
 
 			thumbnailUri = Utils.getAttachThumbnailDir();
@@ -554,12 +612,25 @@ public class TaskAdd extends BaseActivity {
 			}
 
 			break;
-		// 2014-5-29
+		// 人员选择
 		case LocalConstant.TASK_POD_SELECT_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
-				etPod.setText(data.getStringExtra("selected_name"));
-
-				podID = Integer.parseInt(data.getExtras().getString("selected_id"));
+				int type = data.getExtras().getInt("type");
+				List<Node> selectedPerson = (List<Node>) data.getSerializableExtra("data");
+				String name = "";
+				for (Node node : selectedPerson) {
+					name += node.getName() + "/";
+				}
+				// pod
+				if (type == 1) {
+					etPod.setText(name);
+					lsSelectedPod = selectedPerson;
+				}
+				// receiver
+				else if (type == 2) {
+					etReceiver.setText(name);
+					lsSelectedReceiver = selectedPerson;
+				}
 			}
 			break;
 
@@ -572,6 +643,7 @@ public class TaskAdd extends BaseActivity {
 	 * 附件上传按钮响应事件方法
 	 */
 	private void initAttachPickBtn() {
+		successCounter = 0;
 		AlertDialog.Builder builder = new AlertDialog.Builder(TaskAdd.this);
 		builder.setTitle("选择附件类型").setItems(new String[] { "图库", "拍照", "摄像" },
 				new DialogInterface.OnClickListener() {
@@ -581,10 +653,11 @@ public class TaskAdd extends BaseActivity {
 						switch (which) {
 						case 0:
 							Utils.showShortToast(TaskAdd.this, "图库");
-							Intent getAlbum = new Intent();
+							Intent getAlbum = new Intent(Intent.ACTION_PICK,
+									android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 							// 开启Pictures画面Type设定为image
 							getAlbum.setType("image/*");
-							getAlbum.setAction(Intent.ACTION_GET_CONTENT);
+							// getAlbum.setAction(Intent.ACTION_GET_CONTENT);
 							startActivityForResult(getAlbum, LocalConstant.SELECT_IMAGE_REQUEST_CODE);
 							break;
 						case 1:

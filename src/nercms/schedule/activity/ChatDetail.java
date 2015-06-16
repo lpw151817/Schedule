@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import nercms.schedule.R;
 import nercms.schedule.adapter.FeedbackListAdapter;
@@ -39,10 +40,13 @@ import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.FeedbackDao;
 import android.wxapp.service.dao.MessageDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.message.QueryContactPersonMessageResponseIds;
+import android.wxapp.service.jerry.model.message.ReceiveMessageResponse;
 import android.wxapp.service.model.FeedbackAttachModel;
 import android.wxapp.service.model.FeedbackModel;
 import android.wxapp.service.model.MessageModel;
 import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.thread.SaveMessageThread;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.HttpUploadTask;
 import android.wxapp.service.util.MySharedPreference;
@@ -50,6 +54,7 @@ import android.wxapp.service.util.MySharedPreference;
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.imooc.treeview.utils.Node;
 
 /**
  * 
@@ -70,7 +75,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 	private String taskID;
 	private String userID;// 本人ID
-	private int personID; // 对方的ID
+	private String personID; // 对方的ID
 	private String personName;// 对方姓名
 
 	private Handler handler;
@@ -84,7 +89,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	private MessageDao msgDao;
 	private MessageListAdapter msgAdapter = null;
 	private MessageModel msg = null;
-	private ArrayList<MessageModel> msgList = new ArrayList<MessageModel>();
+	private List<ReceiveMessageResponse> msgList;
 
 	// 入口：1-消息；2-反馈
 	private int entranceType;
@@ -113,6 +118,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	private int taskStatus;
 	private RelativeLayout operationLayout;
 
+	List<Node> selectedPerson;
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_detail);
@@ -135,11 +142,14 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			taskID = getIntent().getExtras().getString("task_id");
 			taskStatus = getIntent().getExtras().getInt("task_status");
 		} else if (entranceType == 1) {// 判断为消息
-			personID = getIntent().getExtras().getInt("selected_id");
-			personName = getIntent().getExtras().getString("selected_name");
 
+			selectedPerson = (List<Node>) getIntent().getExtras().get("data");
+			if (selectedPerson.size() == 1) {
+				personID = selectedPerson.get(0).getId().substring(1);
+				personName = selectedPerson.get(0).getName();
+			}
 			// 标志是群消息
-			if (String.valueOf(personID).length() != 6) {
+			else if (selectedPerson.size() > 1) {
 				isGroup = 1;
 			}
 		}
@@ -251,25 +261,31 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			mListView.setAdapter(fbAdapter);
 
 		} else { // 消息
-			getSupportActionBar().setTitle(personName);
-			msgDao = daoFactory.getMessageDao(ChatDetail.this);
-			msgList = msgDao.getMessageListByID(userID, String.valueOf(personID));
-			msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
-			mListView.setAdapter(msgAdapter);
-			mListView.setSelection(mListView.getCount() - 1);
+			if (isGroup == 0) {
+				getSupportActionBar().setTitle(personName);
+				msgDao = daoFactory.getMessageDao(ChatDetail.this);
+				msgList = msgDao.getMessageBySidAndRid(userID, personID);
+
+				msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
+				mListView.setAdapter(msgAdapter);
+				mListView.setSelection(mListView.getCount() - 1);
+			}
 		}
 	}
 
 	@Override
 	public void onClick(View v) {
-		// TODO Auto-generated method stub
 		switch (v.getId()) {
 
 		case R.id.btn_send:
-			if (entranceType == 1) {
-				sendMessage();
+			if (mEditTextContent.getText().toString().length() > 0) {
+				if (entranceType == 1) {
+					sendMessage();
+				} else {
+					sendFeedback();
+				}
 			} else {
-				sendFeedback();
+				showShortToast("请填写消息内容");
 			}
 			break;
 
@@ -374,8 +390,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
 							.currentTimeMillis()));
 					String imageName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, null,
-							LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
+					msg = new MessageModel(msgID, Integer.parseInt(userID), Integer.parseInt(personID),
+							sendTime, null, LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
 
 				} else { // 反馈（附件）
 					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
@@ -410,8 +426,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					String sendTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
 							System.currentTimeMillis()));
 					String videoName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime1, null,
-							LocalConstant.VIDEO_TYPE, videoName, isGroup, Constant.READ);
+					msg = new MessageModel(msgID, Integer.parseInt(userID), Integer.parseInt(personID),
+							sendTime1, null, LocalConstant.VIDEO_TYPE, videoName, isGroup, Constant.READ);
 				} else {
 					String feedbackTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
 							System.currentTimeMillis()));
@@ -466,8 +482,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
 							.currentTimeMillis()));
 					String imageName = imagePath.substring(imagePath.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, null,
-							LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
+					msg = new MessageModel(msgID, Integer.parseInt(userID), Integer.parseInt(personID),
+							sendTime, null, LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
 				} else {
 					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
 							System.currentTimeMillis()));
@@ -527,37 +543,32 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				System.currentTimeMillis() + "", new String[] {});
 	}
 
-	private void sendMsg(MessageModel msg) {
-		webRequestManager.sendMessage("", "", msg.getSenderID() + "", new String[] {},
-				msg.getSendTime(), msg.getDescription(), msg.getAttachmentType() + "",
-				msg.getAttachmentURL(), System.currentTimeMillis() + "");
+	private void sendMsg(ReceiveMessageResponse data) {
+		webRequestManager.sendMessage(data.getT(), data.getSid(), new String[] { personID },
+				data.getSt(), data.getC(), data.getAt(), data.getAu(), data.getUt());
 	}
 
 	// 发送消息
 	private void sendMessage() {
 		String contString = mEditTextContent.getText().toString();
-		if (!contString.isEmpty()) { // 文本反馈
-			msgID = Utils.produceMessageID(userID);
-			String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
-					.currentTimeMillis()));
-			msg = new MessageModel(msgID, Integer.parseInt(userID), personID, sendTime, contString, 0,
-					"", isGroup, Constant.READ);
-			// 发送消息到服务器
-			// webRequestManager.sendMessage(msg);
-			sendMsg(msg);
-			// 保存本地数据库
-			msg.save(ChatDetail.this);
-			// 刷新显示
-			hideInput();
-			msgList.add(msg);
-			msgAdapter.notifyDataSetChanged();
+		msgID = Utils.produceMessageID(userID);
+		List<QueryContactPersonMessageResponseIds> tempID = new ArrayList<QueryContactPersonMessageResponseIds>();
+		tempID.add(new QueryContactPersonMessageResponseIds(personID));
+		ReceiveMessageResponse msg = new ReceiveMessageResponse("", "0", userID, tempID,
+				System.currentTimeMillis() + "", contString, null, null, null, null);
 
-			mEditTextContent.setText("");
-			mListView.setSelection(mListView.getCount() - 1);
-		} else { // 空消息发送提示
-			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白消息").setPositiveButton("确定", null)
-					.create().show();
-		}
+		// 发送消息到服务器
+		// webRequestManager.sendMessage(msg);
+		sendMsg(msg);
+
+		// 刷新显示
+		hideInput();
+		msgList.add(msg);
+		msgAdapter.notifyDataSetChanged();
+
+		mEditTextContent.setText("");
+		mListView.setSelection(mListView.getCount() - 1);
+
 	}
 
 	@SuppressLint("HandlerLeak")
@@ -577,11 +588,11 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 						if (msg == null) {
 							Toast.makeText(ChatDetail.this, "msg为空,不保存此反馈", Toast.LENGTH_SHORT).show();
 						} else {
-							// webRequestManager.sendMessage(msg);
-							sendMsg(msg);
-							msg.save(ChatDetail.this);
-
-							msgList.add(msg);
+							// // webRequestManager.sendMessage(msg);
+							// sendMsg(msg);
+							// msg.save(ChatDetail.this);
+							//
+							// msgList.add(msg);
 							msgAdapter.notifyDataSetChanged();
 						}
 
@@ -613,7 +624,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					// 取出消息体
 					Log.v("ChatDetail", "消息保存完成，刷新界面");
 					MessageModel newMsg = (MessageModel) handlerMsg.obj;
-					msgList.add(newMsg);
+					// msgList.add(newMsg);
 					// 更新数据库，标示该消息已读
 					msgDao.updateMessageIsRead(newMsg.getMessageID());
 

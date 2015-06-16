@@ -43,6 +43,6 @@ public class LocalConstant {
 	// 附件的服务器地址
 	// public static final String FILE_SERVER_ATTACH_URL =
 	// "http://192.168.1.100:15005/HFSFileServer";
-	public static final String FILE_SERVER_ATTACH_URL = APP_SERVER_IP + ":15005/HFSFileServer";
+	public static final String FILE_SERVER_ATTACH_URL = "http://202.114.66.77:3000/ScheduleFileServer";
 
 }

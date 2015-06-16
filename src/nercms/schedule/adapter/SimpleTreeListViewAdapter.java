@@ -22,15 +22,20 @@ public class SimpleTreeListViewAdapter<T> extends TreeListViewAdapter<T> {
 	@Override
 	public View getConvertView(Node node, int position, View convertView, ViewGroup parent) {
 		ViewHolder holder = null;
-		if (convertView == null) {
-			convertView = mInflater.inflate(R.layout.list_item, parent, false);
-			holder = new ViewHolder();
-			holder.mIcon = (ImageView) convertView.findViewById(R.id.id_treenode_icon);
-			holder.mText = (TextView) convertView.findViewById(R.id.id_treenode_label);
-			convertView.setTag(holder);
-		} else {
-			holder = (ViewHolder) convertView.getTag();
-		}
+		// if (convertView == null) {
+		convertView = mInflater.inflate(R.layout.list_item, parent, false);
+		holder = new ViewHolder();
+		holder.mIcon = (ImageView) convertView.findViewById(R.id.id_treenode_icon);
+		holder.mPic = (ImageView) convertView.findViewById(R.id.id_treednode_pic);
+		if (node.getId().startsWith("p"))
+			holder.mPic.setImageResource(R.drawable.orgperson);
+		else
+			holder.mPic.setImageResource(R.drawable.org);
+		holder.mText = (TextView) convertView.findViewById(R.id.id_treenode_label);
+		convertView.setTag(holder);
+		// } else {
+		// holder = (ViewHolder) convertView.getTag();
+		// }
 		if (node.getIcon() == -1) {
 			holder.mIcon.setVisibility(View.INVISIBLE);
 		} else {
@@ -45,6 +50,7 @@ public class SimpleTreeListViewAdapter<T> extends TreeListViewAdapter<T> {
 
 	private class ViewHolder {
 		ImageView mIcon;
+		ImageView mPic;
 		TextView mText;
 	}
 

@@ -45,12 +45,12 @@ public class Meeting extends SherlockFragment{
 	}
 
 	private void initData() {
-		conferenceDao = daoFactory.getConferenceDao(getActivity());
-		ArrayList<ConferenceModel> conferenceList = conferenceDao
-				.getConferenceListByID(userID);
-		meetingAdapter = new MeetingListViewAdapter(getActivity(),
-				conferenceList);
-		meetingListView.setAdapter(meetingAdapter);
+//		conferenceDao = daoFactory.getConferenceDao(getActivity());
+//		ArrayList<ConferenceModel> conferenceList = conferenceDao
+//				.getConferenceListByID(userID);
+//		meetingAdapter = new MeetingListViewAdapter(getActivity(),
+//				conferenceList);
+//		meetingListView.setAdapter(meetingAdapter);
 	}
 	
 	@Override

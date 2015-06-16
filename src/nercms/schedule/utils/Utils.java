@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
@@ -35,9 +36,24 @@ public class Utils {
 	public static final int EC_PWD_ERROR = 2;
 	public static final int EC_USERNAME_ERROR = 3;
 
-	public static String formatDataMs(String ms) {
-		SimpleDateFormat format = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
+	public static String formatDateMs(String ms) {
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		return format.format(new Date(Long.parseLong(ms)));
+	}
+
+	public static String formatDateMs(long ms) {
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		return format.format(ms);
+	}
+
+	public static String parseDateInFormat(String fotmatTime) {
+		try {
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			return format.parse(fotmatTime).getTime() + "";
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return "";
+		}
 	}
 
 	public static String getErrorMsg(String ec) {
@@ -88,9 +104,9 @@ public class Utils {
 
 	// 2014-5-16 WeiHao 新增 ---------------------------------------------------
 
-	public static final int MEDIA_TYPE_IMAGE = 111;
-	public static final int MEDIA_TYPE_VIDEO = 112;
-	public static final int MEDIA_TYPE_AUDIO = 113;
+	public static final int MEDIA_TYPE_IMAGE = 2;
+	public static final int MEDIA_TYPE_VIDEO = 3;
+	public static final int MEDIA_TYPE_AUDIO = 4;
 
 	// 生成随机字符
 	public static String getRandomString(int length) { // length表示生成字符串的长度

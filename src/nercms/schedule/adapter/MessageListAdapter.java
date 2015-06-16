@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import nercms.schedule.R;
 import nercms.schedule.utils.LocalConstant;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
+import android.wxapp.service.jerry.model.message.ReceiveMessageResponse;
 import android.wxapp.service.model.MessageModel;
 import android.wxapp.service.util.HttpDownloadTask;
 import android.wxapp.service.util.MySharedPreference;
@@ -49,7 +51,7 @@ public class MessageListAdapter extends BaseAdapter {
 	public static final int LEFT_ITEM = 1;
 
 	private Context context;
-	private ArrayList<MessageModel> msglist;
+	private List<ReceiveMessageResponse> msglist;
 	private LayoutInflater mInflater;
 
 	// 显示大图对话框
@@ -65,7 +67,7 @@ public class MessageListAdapter extends BaseAdapter {
 	private DAOFactory daoFactory;
 	private PersonDao personDao;
 
-	public MessageListAdapter(Context context, ArrayList<MessageModel> msglist) {
+	public MessageListAdapter(Context context, List<ReceiveMessageResponse> msglist) {
 		this.context = context;
 		this.msglist = msglist;
 		this.mInflater = LayoutInflater.from(context);
@@ -113,7 +115,7 @@ public class MessageListAdapter extends BaseAdapter {
 	@Override
 	public int getItemViewType(int position) {
 		// 根据发送人ID设置消息的位置在左端还是右端
-		String senderID = String.valueOf(((MessageModel) msglist.get(position)).getSenderID());
+		String senderID = String.valueOf(((ReceiveMessageResponse) msglist.get(position)).getSid());
 
 		String userID = MySharedPreference.get(context, MySharedPreference.USER_ID, "");
 
@@ -127,7 +129,7 @@ public class MessageListAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		final ViewHolder holder;
 
-		final MessageModel msg = (MessageModel) msglist.get(position);
+		final ReceiveMessageResponse msg = (ReceiveMessageResponse) msglist.get(position);
 
 		if (getItemViewType(position) == RIGHT_ITEM) { // 自己发出的消息
 			if (convertView == null) {
@@ -146,10 +148,9 @@ public class MessageListAdapter extends BaseAdapter {
 
 			// 2014-7-31
 			holder.userName = (TextView) convertView.findViewById(R.id.tv_username);
-			if (msg.getIsGroup() == 1) {// 判断为群消息，显示左边发送者名字
+			if (msg.getRids().size() > 1) {// 判断为群消息，显示左边发送者名字
 				holder.userName.setVisibility(View.VISIBLE);
-				holder.userName.setText(personDao.getPersonInfo(String.valueOf(msg.getSenderID()))
-						.getUn());
+				holder.userName.setText(personDao.getPersonInfo(String.valueOf(msg.getSid())).getUn());
 			} else { // 个人消息，隐藏名字显示
 				holder.userName.setVisibility(View.GONE);
 			}
@@ -162,16 +163,16 @@ public class MessageListAdapter extends BaseAdapter {
 		holder.media = (ImageView) convertView.findViewById(R.id.iv_chat_media);
 		convertView.setTag(holder);
 
-		holder.time.setText(msg.getSendTime());
+		holder.time.setText(msg.getSt());
 
-		if (msg.getAttachmentURL() == null || msg.getAttachmentURL().equalsIgnoreCase("")) { // 文本消息
+		if (msg.getAu() == null || msg.getAu().equalsIgnoreCase("")) { // 文本消息
 			holder.text.setVisibility(View.VISIBLE);
-			holder.text.setText(msg.getDescription());
+			holder.text.setText(msg.getC());
 			holder.media.setVisibility(View.GONE);
 		} else { // 附件消息
 			holder.text.setVisibility(View.GONE);
 			holder.media.setVisibility(View.VISIBLE);
-			int type = msg.getAttachmentType();
+			int type = Integer.parseInt(msg.getAt());
 
 			File sdcardDir = Environment.getExternalStorageDirectory();
 			String path = sdcardDir.getPath() + "/nercms-Schedule/Attachments/";
@@ -180,7 +181,7 @@ public class MessageListAdapter extends BaseAdapter {
 			switch (type) {
 			case LocalConstant.IAMGE_TYPE:
 
-				String picName = msg.getAttachmentURL();
+				String picName = msg.getAu();
 				final String picPath = path.toString() + picName;
 				if (picPath != null && !picPath.equalsIgnoreCase("")) {
 					holder.text.setVisibility(View.GONE);
@@ -235,7 +236,7 @@ public class MessageListAdapter extends BaseAdapter {
 
 			case LocalConstant.VIDEO_TYPE:
 
-				String videoName = msg.getAttachmentURL();
+				String videoName = msg.getAu();
 				String videoPath = path.toString() + videoName;
 				if (videoPath != null && !videoPath.equalsIgnoreCase("")) {
 					holder.text.setVisibility(View.GONE);
@@ -274,19 +275,17 @@ public class MessageListAdapter extends BaseAdapter {
 
 			@Override
 			public void onClick(View arg0) {
-				if (msg.getAttachmentType() == LocalConstant.IAMGE_TYPE) {
+				if (Integer.parseInt(msg.getAt()) == LocalConstant.IAMGE_TYPE) {
 					Intent intent = new Intent(Intent.ACTION_VIEW);
 					intent.setDataAndType(
 							Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath()
-									+ "/nercms-Schedule/Attachments/" + msg.getAttachmentURL()),
-							"image/*");
+									+ "/nercms-Schedule/Attachments/" + msg.getAu()), "image/*");
 					context.startActivity(intent);
-				} else if (msg.getAttachmentType() == LocalConstant.VIDEO_TYPE) {
+				} else if (Integer.parseInt(msg.getAt()) == LocalConstant.VIDEO_TYPE) {
 					Intent intent = new Intent(Intent.ACTION_VIEW);
 					intent.setDataAndType(
 							Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath()
-									+ "/nercms-Schedule/Attachments/" + msg.getAttachmentURL()),
-							"video/*");
+									+ "/nercms-Schedule/Attachments/" + msg.getAu()), "video/*");
 					context.startActivity(intent);
 				}
 

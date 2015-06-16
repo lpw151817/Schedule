@@ -109,7 +109,7 @@ public class TaskListViewAdapter extends BaseAdapter {
 				continue;
 		}
 		holder.mParticipatorText.setText(podsString);
-		holder.mDeadlineText.setText(Utils.formatDataMs(mList.get(position).getEt()));
+		holder.mDeadlineText.setText(Utils.formatDateMs(mList.get(position).getEt()));
 		// holder.mReplyText.setText(Integer.toString(1));// 回复条数数据如何取
 
 		if (!affairDao.getAffairIsReadByID(mList.get(position).getAid())) {
