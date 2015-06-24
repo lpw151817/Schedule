@@ -195,7 +195,7 @@ public class Main extends SherlockFragmentActivity {
 				case Constant.MQTT_NEW_MESSAGE:
 					Log.i("Chat", "Chat收到新消息");
 					// //////TODO 需要更改请求参数
-					webRequestManager.getMessageUpdate("", "");
+					webRequestManager.getMessageUpdate("");
 					break;
 				case Constant.SHOW_TASK_NOTIFICATION:
 					// AffairModel affair = (AffairModel) msg.obj;
@@ -224,7 +224,12 @@ public class Main extends SherlockFragmentActivity {
 				case Constant.LOGOUT_REQUEST_SUCCESS:
 					// 注销mqtt
 					MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, "");
-					MQTT.get_instance().close();
+					try {
+						MQTT.get_instance().close();
+					} catch (Exception e) {
+						e.printStackTrace();
+						Toast.makeText(getApplicationContext(), "MQTT连接失败", Toast.LENGTH_LONG).show();
+					}
 					// 停止服务
 					stopService(new Intent(Main.this, SDCardService.class));
 					// 跳转到登录界面
@@ -483,7 +488,13 @@ public class Main extends SherlockFragmentActivity {
 						// 注销mqtt
 						MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID,
 								"");
-						MQTT.get_instance().close();
+						try {
+							MQTT.get_instance().close();
+						} catch (Exception e) {
+							e.printStackTrace();
+							Toast.makeText(getApplicationContext(), "MQTT连接失败", Toast.LENGTH_LONG)
+									.show();
+						}
 						// 停止服务
 						stopService(new Intent(Main.this, SDCardService.class));
 						// 杀死进程，程序退出

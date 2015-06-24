@@ -367,7 +367,7 @@ public class TaskDetail extends BaseActivity {
 		participator = (EditText) findViewById(R.id.td_participator);
 		participator.setText(podName);
 		end_time = (EditText) findViewById(R.id.td_deadline);
-		end_time.setText(task.getEt());
+		end_time.setText(Utils.formatDateMs(task.getEt()));
 		btn_calendar = (ImageButton) findViewById(R.id.td_btn_deadline);
 		btn_calendar.setOnClickListener(new OnClickListener() {
 

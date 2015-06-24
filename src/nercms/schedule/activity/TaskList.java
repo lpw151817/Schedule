@@ -80,11 +80,11 @@ public class TaskList extends BaseActivity {
 
 		initActionBar();
 
-		// 初始化控件和数据
-		initViewAndData();
-
-		// 初始化列表适配器
-		initAdapter();
+		// onResume中已经调用过
+		// // 初始化控件和数据
+		// initViewAndData();
+		// // 初始化列表适配器
+		// initAdapter();
 
 	}
 

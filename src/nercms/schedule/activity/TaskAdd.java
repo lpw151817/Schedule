@@ -63,11 +63,13 @@ import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.affair.CreateTaskRequestAttachment;
 import android.wxapp.service.jerry.model.affair.CreateTaskRequestIds;
 import android.wxapp.service.jerry.model.affair.QueryAffairInfoResponse;
+import android.wxapp.service.jerry.model.normal.NormalServerResponse;
 import android.wxapp.service.jerry.model.person.Org;
 import android.wxapp.service.model.AffairAttachModel;
 import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.model.PersonOnDutyModel;
 import android.wxapp.service.model.StructuredStaffModel;
+import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.thread.SaveAffairThread;
 import android.wxapp.service.thread.ThreadManager;
@@ -349,7 +351,7 @@ public class TaskAdd extends BaseActivity {
 		}
 	}
 
-	QueryAffairInfoResponse tempSave;
+	// QueryAffairInfoResponse tempSave;
 
 	// 2014-5-19 WeiHao 创建新任务方法
 	private void createTask() {
@@ -392,12 +394,14 @@ public class TaskAdd extends BaseActivity {
 		String tempNow = System.currentTimeMillis() + "";
 		// 进行网络请求
 		webRequestManager.sendAffair("1", taskContent, title, tempNow, Utils.parseDateInFormat(endTime),
-				tempNow, "1", tempNow, null, tempAttachmentTypes, tempAttachmentUrls, tempReiceverIds,
+				"", "1", tempNow, "", tempAttachmentTypes, tempAttachmentUrls, tempReiceverIds,
 				tempPodIds);
 
-		tempSave = new QueryAffairInfoResponse("", "", "1", getUserId(), taskContent, title, tempNow,
-				Utils.parseDateInFormat(endTime), tempNow, "1", tempNow, null, tempAttachments,
-				tempRids, tempPods);
+		// tempSave = new QueryAffairInfoResponse("", "", "1", getUserId(),
+		// taskContent, title, tempNow,
+		// Utils.parseDateInFormat(endTime), tempNow, "1", tempNow, "",
+		// tempAttachments,
+		// tempRids, tempPods);
 	}
 
 	private void attachmentUploadRequest() {
@@ -425,13 +429,13 @@ public class TaskAdd extends BaseActivity {
 				switch (msg.what) {
 				case Constant.CREATE_AFFAIR_REQUEST_SUCCESS:
 					// 任务保存到本地数据库
-					if (tempSave != null) {
-						new SaveAffairThread(TaskAdd.this, tempSave).run();
-						Utils.showShortToast(TaskAdd.this, "新建任务成功");
-						TaskAdd.this.finish();
-					} else {
-						Utils.showShortToast(TaskAdd.this, "新建任务失败");
-					}
+					// if (tempSave != null) {
+					// new SaveAffairThread(TaskAdd.this, tempSave).run();
+					Utils.showShortToast(TaskAdd.this, "新建任务成功");
+					TaskAdd.this.finish();
+					// } else {
+					// Utils.showShortToast(TaskAdd.this, "新建任务失败");
+					// }
 					break;
 				case Constant.CREATE_AFFAIR_REQUEST_FAIL:
 					new AlertDialog.Builder(TaskAdd.this).setTitle("新建任务失败").setMessage("是否重新发送?")
@@ -441,17 +445,10 @@ public class TaskAdd extends BaseActivity {
 								public void onClick(DialogInterface dialog, int which) {
 									createTask();
 								}
-							}).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+							}).setNegativeButton("取消", null).create().show();
 
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									// TODO Auto-generated method stub
-
-								}
-							}).create().show();
-
-					String failedMsg = (String) msg.obj;
-					Log.e("TaskAdd", "新建任务失败：" + failedMsg);
+					NormalServerResponse failedMsg = (NormalServerResponse) msg.obj;
+					Log.e("TaskAdd", "新建任务失败：" + failedMsg.getEc());
 
 					break;
 				case Constant.FILE_UPLOAD_SUCCESS:
@@ -474,9 +471,9 @@ public class TaskAdd extends BaseActivity {
 		};
 
 		MessageHandlerManager.getInstance().register(handler, Constant.CREATE_AFFAIR_REQUEST_SUCCESS,
-				"TaskAdd");
+				Contants.METHOD_AFFAIRS_ADDAFFAIR);
 		MessageHandlerManager.getInstance().register(handler, Constant.CREATE_AFFAIR_REQUEST_FAIL,
-				"TaskAdd");
+				Contants.METHOD_AFFAIRS_ADDAFFAIR);
 		MessageHandlerManager.getInstance().register(handler, Constant.FILE_UPLOAD_FAIL, "TaskAdd");
 		MessageHandlerManager.getInstance().register(handler, Constant.FILE_UPLOAD_SUCCESS, "TaskAdd");
 
@@ -1206,9 +1203,10 @@ public class TaskAdd extends BaseActivity {
 	@Override
 	protected void onDestroy() {
 		// 注销handler
-		MessageHandlerManager.getInstance()
-				.unregister(Constant.CREATE_AFFAIR_REQUEST_SUCCESS, "TaskAdd");
-		MessageHandlerManager.getInstance().unregister(Constant.CREATE_AFFAIR_REQUEST_FAIL, "TaskAdd");
+		MessageHandlerManager.getInstance().unregister(Constant.CREATE_AFFAIR_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_ADDAFFAIR);
+		MessageHandlerManager.getInstance().unregister(Constant.CREATE_AFFAIR_REQUEST_FAIL,
+				Contants.METHOD_AFFAIRS_ADDAFFAIR);
 		MessageHandlerManager.getInstance().unregister(Constant.FILE_UPLOAD_FAIL, "TaskAdd");
 		MessageHandlerManager.getInstance().unregister(Constant.FILE_UPLOAD_SUCCESS, "TaskAdd");
 

@@ -38,6 +38,9 @@ import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.jerry.model.person.LoginResponse;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.thread.SaveAffairThread;
+import android.wxapp.service.thread.SaveAffairUpdateThread;
+import android.wxapp.service.thread.SaveMessageUpdateThread;
 import android.wxapp.service.thread.SaveOrgCodePersonThread;
 import android.wxapp.service.thread.SaveOrgCodeThread;
 import android.wxapp.service.util.Constant;
@@ -82,30 +85,30 @@ public class Login extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login);
 
-		 // 用户测试使用，直接跳过本Activity
-		 startActivity(Main.class);
-		 return;
+		// // 用户测试使用，直接跳过本Activity
+		// startActivity(Main.class);
+		// return;
 
-//		Log.v("Login", "Login onCreate");
-//		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
-//
-//		initActionBar();
-//
-//		etUserName = (EditText) findViewById(R.id.login_user_edit);
-//		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
-//
-//		// 默认显示上次登录的用户ID
-//		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
-//
-//		btnLogin = (Button) findViewById(R.id.login_login_btn);
-//		btnLogin.setOnClickListener(new OnClickListener() {
-//
-//			@Override
-//			public void onClick(View arg0) {
-//				MyLog.i(TAG, "登录按钮点击");
-//				login_mainschedule();
-//			}
-//		});
+		Log.v("Login", "Login onCreate");
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
+
+		initActionBar();
+
+		etUserName = (EditText) findViewById(R.id.login_user_edit);
+		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
+
+		// 默认显示上次登录的用户ID
+		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
+
+		btnLogin = (Button) findViewById(R.id.login_login_btn);
+		btnLogin.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				MyLog.i(TAG, "登录按钮点击");
+				login_mainschedule();
+			}
+		});
 
 	}
 
@@ -161,24 +164,33 @@ public class Login extends BaseActivity {
 					// 保存用户密码
 					MySharedPreference.save(Login.this, MySharedPreference.USER_IC, inputPassword);
 
-					// 2014-6-24 WeiHao
-					// 2.mqtt订阅
-					Log.v("Login", "id:" + userID);
-					MQTT.CLIENT_ID = userID;
-					MQTT mqtt = MQTT.get_instance();
-					mqtt.publish_message(MQTT.SUBSCRIBE_TOPIC_PREFIX + MQTT.CLIENT_ID, "Registration", 0);
+					// 新建线程去进行MQTT连接
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							// 2014-6-24 WeiHao
+							// 2.mqtt订阅
+							try {
+								Log.v("Login", "id:" + getUserId());
+								MQTT.CLIENT_ID = getUserId();
+								MQTT mqtt = MQTT.get_instance();
+								mqtt.publish_message(MQTT.SUBSCRIBE_TOPIC_PREFIX + MQTT.CLIENT_ID,
+										"Registration", 0);
+							} catch (Exception e) {
+								e.printStackTrace();
+								showLongToast("MQTT连接失败");
+							}
+						}
+					}).start();
 
-					// ///Jerry 6.3
-					dismissProgressDialog();
-
-					// TODO 界面跳转需要等到下载完数据才能进去 6.12
-					// 5.跳转到主界面
-					startActivity(new Intent(Login.this, Main.class));
-					Login.this.finish();
+					// 尝试跳转到主界面
+					startInMain();
 
 					// TODO 写一个Timer定时请求服务器是否有更新数据
 					getOrgInfoUpdate();
 					getAffairUpdate();
+					// TODO
+					// getMessageUpdate();
 
 					// 获取个人信息数据
 					GetPersonInfoResponse mPersonInfo = DAOFactory.getInstance()
@@ -187,33 +199,6 @@ public class Login extends BaseActivity {
 					if (mPersonInfo == null) {
 						webRequestManager.GetPersonInfo(getUserId());
 					}
-
-					// ////////////////
-
-					// // 3.请求下载所有联系人（如果数据表为空）
-					// if (personDao.isDBTNull()) {
-					// // webRequestManager.getAllPerson();
-					// // 从第一个orgcode开始获取
-					//
-					// getOrgInfo();
-					// } else {
-					// lastUserID = MySharedPreference
-					// .get(Login.this, MySharedPreference.USER_ID, null);
-					// if (lastUserID != null &&
-					// lastUserID.equalsIgnoreCase(userID)) {
-					// // 4.取消进度显示
-					// progressDialog.dismiss();
-					// // 5.跳转到主界面
-					// startActivity(new Intent(Login.this, Main.class));
-					// Login.this.finish();
-					// } else {
-					// // 切换登陆用户，重新下载联系人
-					// // webRequestManager.getAllPerson();
-					// // 从第一个orgcode开始获取
-					//
-					// getOrgInfo();
-					// }
-					// }
 
 					// 写日志
 					MyLog.i(TAG, "用户：" + userID + " 登陆成功");
@@ -239,6 +224,8 @@ public class Login extends BaseActivity {
 				// 保存orgcode成功
 				case Constant.SAVE_ORG_CODE_SUCCESS:
 					MyLog.e(TAG, "保存orgcode成功");
+					isGetOrgCode = true;
+					startInMain();
 					break;
 				// 获取组织结点失败
 				case Constant.QUERY_ORG_NODE_REQUEST_FAIL:
@@ -251,6 +238,8 @@ public class Login extends BaseActivity {
 				// 存储orgperson成功
 				case Constant.SAVE_ORG_PERSON_SUCCESS:
 					MyLog.e(TAG, "保存orgperson成功");
+					isGetOrgPerson = true;
+					startInMain();
 					break;
 				// 存储orgperson失败
 				case Constant.SAVE_ORG_PERSON_FAIL:
@@ -264,12 +253,20 @@ public class Login extends BaseActivity {
 					break;
 				// 保存联系人完成
 				case Constant.SAVE_ALL_PERSON_SUCCESS:
-					// 4.取消进度显示
-					dismissProgressDialog();
 					// 5.跳转到主界面
-					startActivity(new Intent(Login.this, Main.class));
-					Login.this.finish();
+					startInMain();
 					break;
+				// 保存事务成功
+				case Constant.SAVE_TASK_SUCCESS:
+					isGetAffair = true;
+					startInMain();
+					break;
+				// 保存消息成功
+				case Constant.SAVE_MESSAGE_SUCCESS:
+					isGetMessage = true;
+					startInMain();
+					break;
+
 				default:
 					Log.e("LoginActivity", msg.what + "<<<<未处理");
 					break;
@@ -281,18 +278,54 @@ public class Login extends BaseActivity {
 		registHandler();
 	}
 
+	// TODO 验证需要更改
+	private void startInMain() {
+		if (isGetAffair /* && isGetMessage */&& isGetOrgCode && isGetOrgPerson) {
+			dismissProgressDialog();
+			startActivity(new Intent(Login.this, Main.class));
+			Login.this.finish();
+		}
+	}
+
+	boolean isGetOrgCode = false;
+	boolean isGetOrgPerson = false;
+	boolean isGetAffair = false;
+	boolean isGetMessage = false;
+
 	// 获取组织相关信息并存入数据库
 	private void getOrgInfoUpdate() {
 		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGCODE_TIMESTAMP, null) == null)
 			webRequestManager.getOrgCodeUpdate();
+		else {
+
+			isGetOrgCode = true;
+			startInMain();
+		}
 		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGPERSON_TIMESTAMP, null) == null)
 			webRequestManager.getOrgPersonUpdate();
+		else {
+			isGetOrgPerson = true;
+			startInMain();
+		}
 	}
 
 	private void getAffairUpdate() {
 		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_TASK_TIMESTAMP, null) == null) {
 			// 获取全部数据
 			webRequestManager.getAffairUpdate("1");
+		} else {
+			isGetAffair = true;
+			startInMain();
+		}
+	}
+
+	private void getMessageUpdate() {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_MESSAGE_TIMESTAMP, null) == null)
+			// 获取全部数据
+			webRequestManager.getMessageUpdate("1");
+		else {
+			isGetMessage = true;
+			startInMain();
 		}
 	}
 
@@ -432,23 +465,29 @@ public class Login extends BaseActivity {
 				SaveOrgCodePersonThread.TAG);
 		MessageHandlerManager.getInstance().unregister(Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
 				Contants.METHOD_PERSON_GET_ORG_PERSON);
-		// MessageHandlerManager.getInstance().unregisterAll();
+		MessageHandlerManager.getInstance().unregister(Constant.UPDATE_TASK_LIST_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_UPDATE_LIST);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_TASK_SUCCESS,
+				SaveAffairUpdateThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_MESSAGE_SUCCESS,
+				SaveMessageUpdateThread.TAG);
 		Log.v("Login", "onDestroy,注册Handler");
 		super.onDestroy();
 	}
 
 	// 注册Handler
 	private void registHandler() {
+		// 登陆失败
 		MessageHandlerManager.getInstance().register(handler, Constant.LOGIN_REQUEST_FAIL,
 				Contants.METHOD_PERSON_LOGIN);
+		// 登陆成功
 		MessageHandlerManager.getInstance().register(handler, Constant.LOGIN_REQUEST_SUCCESS,
 				Contants.METHOD_PERSON_LOGIN);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ALL_PERSON_SUCCESS,
 				Contants.METHOD_PERSON_LOGIN);
 
-		// MessageHandlerManager.getInstance().register(handler,
-		// Constant.QUERY_ORG_NODE_REQUEST_SUCCESS,
-		// Contants.METHOD_PERSON_GET_ORG_CODE);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_NODE_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_GET_ORG_CODE);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_CODE_SUCCESS,
 				SaveOrgCodeThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_CODE_FAIL,
@@ -456,14 +495,20 @@ public class Login extends BaseActivity {
 		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_NODE_REQUEST_FAIL,
 				Contants.METHOD_PERSON_GET_ORG_CODE);
 
-		// MessageHandlerManager.getInstance().register(handler,
-		// Constant.QUERY_ORG_PERSON_REQUEST_SUCCESS,
-		// Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_PERSON_REQUEST_SUCCESS,
+				Contants.METHOD_PERSON_GET_ORG_PERSON);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_PERSON_SUCCESS,
 				SaveOrgCodePersonThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_PERSON_FAIL,
 				SaveOrgCodePersonThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
 				Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().register(handler, Constant.UPDATE_TASK_LIST_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_UPDATE_LIST);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_TASK_SUCCESS,
+				SaveAffairUpdateThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS,
+				SaveMessageUpdateThread.TAG);
+
 	}
 }

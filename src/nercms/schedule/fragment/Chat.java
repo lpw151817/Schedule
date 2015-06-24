@@ -25,8 +25,8 @@ import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockFragment;
 
-public class Chat extends SherlockFragment{
-	
+public class Chat extends SherlockFragment {
+
 	private DAOFactory daoFactory = DAOFactory.getInstance();
 
 	private ListView recentMsgListView;
@@ -41,25 +41,22 @@ public class Chat extends SherlockFragment{
 
 	private WebRequestManager webRequestManager;
 
-	public static Chat newInstance(){
+	public static Chat newInstance() {
 		Chat chatFragment = new Chat();
 		return chatFragment;
 	}
-	
+
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.chat_fragment, null);
 
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				getActivity());
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), getActivity());
 
-		userID = MySharedPreference.get(getActivity(),
-				MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(getActivity(), MySharedPreference.USER_ID, "");
 
 		recentMsgListView = (ListView) v.findViewById(R.id.chat_list);
-		
-//		initData();
+
+		initData();
 
 		initHandler();
 
@@ -69,8 +66,7 @@ public class Chat extends SherlockFragment{
 	private void initData() {
 //		// 查询最新消息
 //		msgDao = daoFactory.getMessageDao(getActivity());
-//		ArrayList<MessageModel> recentMsgList = msgDao
-//				.getRecentMessageListByUserID(userID);
+//		ArrayList<MessageModel> recentMsgList = msgDao.getRecentMessageListByUserID(userID);
 //
 //		// 对最新消息列表按照发送时间进行重新排序
 //		for (int i = 0; i < recentMsgList.size(); i++) {
@@ -85,12 +81,11 @@ public class Chat extends SherlockFragment{
 //		}
 //
 //		// 填充
-//		recentMsgAdapter = new ChatFragmentListAdapter(getActivity(),
-//				recentMsgList);
+//		recentMsgAdapter = new ChatFragmentListAdapter(getActivity(), recentMsgList);
 //
 //		recentMsgListView.setAdapter(recentMsgAdapter);
 	}
-	
+
 	@SuppressLint("HandlerLeak")
 	private void initHandler() {
 		handler = new Handler() {
@@ -112,8 +107,7 @@ public class Chat extends SherlockFragment{
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler,
-				Constant.SAVE_MESSAGE_SUCCESS, "Main");
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS, "Main");
 	}
 
 	@Override
