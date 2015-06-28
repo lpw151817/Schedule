@@ -150,7 +150,7 @@ public class TaskDetail extends BaseActivity {
 	private MenuItem fbItem;
 	private SubMenu subMenu;
 	private MenuItem menuItem;
-	private boolean isMySponse = false;
+	// private boolean isMySponse = false;
 	private boolean isDoing = false;
 
 	// 时间选择控件，选中时间的全局变量
@@ -229,7 +229,7 @@ public class TaskDetail extends BaseActivity {
 		fbItem.setIcon(R.drawable.ic_action_chat);
 		fbItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
-		if (isMySponse && entranceStatus != 2) {
+		if (entranceType == 1 && entranceStatus != 2) {
 			// 操作按钮
 			subMenu = menu.addSubMenu("操作");
 			subMenu.add(0, 2, 0, "截止时间修改").setIcon(R.drawable.ofm_task_modify);
@@ -237,7 +237,7 @@ public class TaskDetail extends BaseActivity {
 
 			menuItem = subMenu.getItem();
 			menuItem.setIcon(R.drawable.ic_action_overflow);
-			menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+			menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		}
 		// }
 		return super.onCreateOptionsMenu(menu);
@@ -308,11 +308,6 @@ public class TaskDetail extends BaseActivity {
 
 		sponsorName = personDao.getPersonInfo(task.getSid()).getUn();
 		taskAttackList = task.getAtt();
-		// 判断是否是本人发起的任务
-		if (String.valueOf(task.getSid()).equals(userID)) {
-			// 隐藏操作overflow按钮
-			isMySponse = true;
-		}
 		// 判断是否是已完成的任务和已延误任务
 		if (task.getCt() != null && !task.getCt().isEmpty()) {
 			// 隐藏反馈和操作按钮，仅供查看

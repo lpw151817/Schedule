@@ -16,6 +16,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.util.Log;
 import android.wxapp.service.AppApplication;
 import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.normal.NormalServerResponse;
@@ -41,16 +42,17 @@ public class UpdateService extends Service {
 
 	@Override
 	public void onCreate() {
+		Log.e(TAG, "OnCreate");
 		super.onCreate();
-
+		// 初始化各种变量
 		ini();
+		// 执行Timer
+		this.mTimer.schedule(mTask, 0, TASK_PERIOD);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (mTimer == null || mTask == null)
-			ini();
-		this.mTimer.schedule(mTask, 0, TASK_PERIOD);
+		Log.e(TAG, "onStartCommand");
 		return super.onStartCommand(intent, flags, startId);
 	}
 
@@ -62,6 +64,7 @@ public class UpdateService extends Service {
 			this.mTask = new TimerTask() {
 				@Override
 				public void run() {
+					Log.e(TAG, "start update!");
 					// 获取组织相关信息并存入数据库
 					webRequestManager.getOrgCodeUpdate();
 					webRequestManager.getOrgPersonUpdate();
@@ -96,10 +99,7 @@ public class UpdateService extends Service {
 					break;
 				// 获取组织结点失败
 				case Constant.QUERY_ORG_NODE_REQUEST_FAIL:
-					MyLog.i(TAG, "获取结点失败");
-					showAlterDialog("获取结点失败",
-							Utils.getErrorMsg(((NormalServerResponse) msg.obj).getEc()),
-							R.drawable.login_error_icon);
+					MyLog.e(TAG, "获取结点失败");
 					break;
 				// 存储orgperson成功
 				case Constant.SAVE_ORG_PERSON_SUCCESS:
@@ -111,12 +111,16 @@ public class UpdateService extends Service {
 					break;
 				// 获取orgperson失败
 				case Constant.QUERY_ORG_PERSON_REQUEST_FAIL:
-					showAlterDialog("获取orgperson失败",
-							Utils.getErrorMsg(((NormalServerResponse) msg.obj).getEc()),
-							R.drawable.login_error_icon);
+					Log.e(TAG, "获取orgperson失败");
 					break;
 				// 保存联系人完成
 				case Constant.SAVE_ALL_PERSON_SUCCESS:
+					break;
+				case Constant.UPDATE_TASK_LIST_REQUEST_FAIL:
+					Log.e(TAG, "获取TaskList失败");
+					break;
+				case Constant.UPDATE_MESSAGE_REQUEST_FAIL:
+					Log.e(TAG, "获取Message失败");
 					break;
 				default:
 					break;
@@ -128,10 +132,17 @@ public class UpdateService extends Service {
 		// handler的注册
 		MessageHandlerManager.getInstance().register(mHandler, Constant.QUERY_ORG_NODE_REQUEST_FAIL,
 				Contants.METHOD_PERSON_GET_ORG_CODE);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.UPDATE_TASK_LIST_REQUEST_FAIL,
+				Contants.METHOD_AFFAIRS_UPDATE_LIST);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.UPDATE_MESSAGE_REQUEST_FAIL,
+				Contants.METHOD_MESSAGE_UPDATE);
 	}
 
 	@Override
 	public void onDestroy() {
+		Log.e(TAG, "onDestroy");
 		super.onDestroy();
 
 		this.mTask.cancel();
@@ -142,38 +153,11 @@ public class UpdateService extends Service {
 		// handler的销毁
 		MessageHandlerManager.getInstance().unregister(Constant.QUERY_ORG_NODE_REQUEST_FAIL,
 				Contants.METHOD_PERSON_GET_ORG_CODE);
-	}
-
-	// ///////////////////内部显示dialog的方法
-	private void showAlterDialog(String title, String content, Integer icon, String pB,
-			OnClickListener pbListener, String nB, OnClickListener nbListener) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-		builder.setTitle(title);
-		if (content != null)
-			builder.setMessage(content);
-		if (icon != null)
-			builder.setIcon(icon);
-		if (pB != null && pbListener != null)
-			builder.setPositiveButton(pB, pbListener);
-		if (nB != null && nbListener != null)
-			builder.setNegativeButton(nB, nbListener);
-		builder.create().show();
-	}
-
-	protected void showAlterDialog(String title, String content, int icon, String pB,
-			OnClickListener pbListener) {
-		showAlterDialog(title, content, icon, pB, pbListener, null, null);
-	}
-
-	protected void showAlterDialog(String title, String content, int icon) {
-		showAlterDialog(title, content, icon, null, null, null, null);
-	}
-
-	protected void showAlterDialog(String title, String content) {
-		showAlterDialog(title, content, null, null, null, null, null);
-	}
-
-	protected void showAlterDialog(String title) {
-		showAlterDialog(title, null, null, null, null, null, null);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
+				Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().unregister(Constant.UPDATE_TASK_LIST_REQUEST_FAIL,
+				Contants.METHOD_AFFAIRS_UPDATE_LIST);
+		MessageHandlerManager.getInstance().unregister(Constant.UPDATE_MESSAGE_REQUEST_FAIL,
+				Contants.METHOD_MESSAGE_UPDATE);
 	}
 }

@@ -3,6 +3,7 @@ package nercms.schedule.activity;
 import java.io.File;
 
 import nercms.schedule.R;
+import nercms.schedule.service.UpdateService;
 import nercms.schedule.utils.LocalConstant;
 import nercms.schedule.utils.MyLog;
 import nercms.schedule.utils.Utils;
@@ -190,7 +191,7 @@ public class Login extends BaseActivity {
 					getOrgInfoUpdate();
 					getAffairUpdate();
 					// TODO
-					// getMessageUpdate();
+					getMessageUpdate();
 
 					// 获取个人信息数据
 					GetPersonInfoResponse mPersonInfo = DAOFactory.getInstance()
@@ -266,7 +267,10 @@ public class Login extends BaseActivity {
 					isGetMessage = true;
 					startInMain();
 					break;
-
+				case Constant.UPDATE_MESSAGE_REQUEST_FAIL:
+					dismissProgressDialog();
+					Toast.makeText(Login.this, "Message Update Failed", Toast.LENGTH_LONG).show();
+					break;
 				default:
 					Log.e("LoginActivity", msg.what + "<<<<未处理");
 					break;
@@ -283,6 +287,9 @@ public class Login extends BaseActivity {
 		if (isGetAffair /* && isGetMessage */&& isGetOrgCode && isGetOrgPerson) {
 			dismissProgressDialog();
 			startActivity(new Intent(Login.this, Main.class));
+			// 打开定时更新的service
+			// // TODO 总是返回所有数据，而不是根据时间来返回
+			// startService(new Intent(Login.this, UpdateService.class));
 			Login.this.finish();
 		}
 	}
@@ -471,6 +478,8 @@ public class Login extends BaseActivity {
 				SaveAffairUpdateThread.TAG);
 		MessageHandlerManager.getInstance().unregister(Constant.SAVE_MESSAGE_SUCCESS,
 				SaveMessageUpdateThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.UPDATE_MESSAGE_REQUEST_FAIL,
+				Contants.METHOD_MESSAGE_UPDATE);
 		Log.v("Login", "onDestroy,注册Handler");
 		super.onDestroy();
 	}
@@ -509,6 +518,8 @@ public class Login extends BaseActivity {
 				SaveAffairUpdateThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS,
 				SaveMessageUpdateThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.UPDATE_MESSAGE_REQUEST_FAIL,
+				Contants.METHOD_MESSAGE_UPDATE);
 
 	}
 }

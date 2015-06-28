@@ -1,6 +1,7 @@
 package nercms.schedule.activity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import nercms.schedule.R;
 import nercms.schedule.adapter.SuperTreeViewAdapter;
@@ -14,6 +15,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
+import android.wxapp.service.jerry.model.person.Contacts;
+import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
+import android.wxapp.service.jerry.model.person.Contacts.CONTACT_ITEM;
 import android.wxapp.service.model.ContactModel;
 import android.wxapp.service.model.StructuredStaffModel;
 import android.wxapp.service.util.MySharedPreference;
@@ -55,8 +59,6 @@ public class ContactDetail extends BaseActivity {
 	private String userID;// 本人ID
 	private String contactID = null; // 联系人ID
 	private String contactName = null;
-	private StructuredStaffModel contactSSM;// 包含客户id 姓名 部门，描述，所述联系人id
-	private ArrayList<ContactModel> contactList;
 	public static final String TAG = "ContactDetail";
 	private SuperTreeViewAdapter superTree;
 	public TreeViewAdapter treeViewAdapter;
@@ -80,8 +82,7 @@ public class ContactDetail extends BaseActivity {
 			isGroup = false;
 			contactID = getIntent().getExtras().getString("CONTACT_ID");
 		}
-		userID = MySharedPreference.get(ContactDetail.this,
-				MySharedPreference.USER_ID, null);
+		userID = MySharedPreference.get(ContactDetail.this, MySharedPreference.USER_ID, null);
 
 		// 初始化控件
 		initView();
@@ -107,7 +108,7 @@ public class ContactDetail extends BaseActivity {
 
 		btn_chat = (Button) findViewById(R.id.btn_start_chat);
 		btn_phone = (Button) findViewById(R.id.btn_start_phone);
-//		btn_meeting = (Button) findViewById(R.id.btn_start_meeting);
+		// btn_meeting = (Button) findViewById(R.id.btn_start_meeting);
 
 		if (isGroup) {
 			contactLayout.setVisibility(View.GONE);
@@ -119,7 +120,7 @@ public class ContactDetail extends BaseActivity {
 			if (contactID.equalsIgnoreCase(userID)) {
 				btn_chat.setVisibility(View.INVISIBLE);
 				btn_phone.setVisibility(View.INVISIBLE);
-//				btn_meeting.setVisibility(View.INVISIBLE);
+				// btn_meeting.setVisibility(View.INVISIBLE);
 
 			}
 		}
@@ -128,16 +129,14 @@ public class ContactDetail extends BaseActivity {
 			public void onClick(View v) {
 				if (isGroup) {
 					// 与orgID对应的群组发起一个群聊
-					Intent intent = new Intent(ContactDetail.this,
-							ChatDetail.class);
+					Intent intent = new Intent(ContactDetail.this, ChatDetail.class);
 					intent.putExtra("entrance_type", 1);
 					intent.putExtra("selected_id", Integer.parseInt(orgCode));
 					intent.putExtra("selected_name", orgName);
 					startActivity(intent);
 				} else {
 					// 与contactID对应的人发起一个聊天
-					Intent intent = new Intent(ContactDetail.this,
-							ChatDetail.class);
+					Intent intent = new Intent(ContactDetail.this, ChatDetail.class);
 					intent.putExtra("entrance_type", 1);
 					intent.putExtra("selected_id", Integer.parseInt(contactID));
 					intent.putExtra("selected_name", contactName);
@@ -162,8 +161,7 @@ public class ContactDetail extends BaseActivity {
 					// Toast.LENGTH_SHORT).show();
 
 					// 2014-8-5
-					Intent intent = new Intent(ContactDetail.this,
-							VoiceCall.class);
+					Intent intent = new Intent(ContactDetail.this, VoiceCall.class);
 					intent.putExtra("callee_id", contactID);
 					intent.putExtra("callee_name", contactName);
 					intent.putExtra("call_type", 2);
@@ -172,39 +170,32 @@ public class ContactDetail extends BaseActivity {
 				}
 			}
 		});
-/*		btn_meeting.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				// 2014-7-18 WeiHao
-				// 测试---------------------------------------------------------------
-				boolean started_schedule_process = false;
-				List<RunningAppProcessInfo> processes = ((ActivityManager) getSystemService(ACTIVITY_SERVICE))
-						.getRunningAppProcesses();
-
-				for (RunningAppProcessInfo ra : processes) {
-					if (ra.processName.equalsIgnoreCase("com.nercms.schedule")) {
-						started_schedule_process = true;
-						break;
-					}
-				}
-
-				String participants = "{\"t\":\"external_convene\",\"p\":[{\"id\":\""
-						+ IMSI
-						+ "\",\"n\":\""
-						+ contactName
-						+ "\",\"r\":\"1\"}],\"v\":\"" + IMSI + "\"}";
-				Intent convene_schedule = new Intent();
-				convene_schedule
-						.setAction((true == started_schedule_process) ? "com.nercms.schedule.External_Convene_Schedule"
-								: "com.nercms.schedule.External_Start_Schedule");
-				convene_schedule.putExtra("participants", participants);
-
-				Log.v("ContactDetail", "发起会议 name:" + contactName + ",id:"
-						+ contactID + ",imsi:" + IMSI);
-
-				Utils.showShortToast(ContactDetail.this, IMSI);
-				startActivity(convene_schedule);
-			}
-		});*/
+		/*
+		 * btn_meeting.setOnClickListener(new OnClickListener() { public void
+		 * onClick(View v) { // 2014-7-18 WeiHao //
+		 * 测试---------------------------------------------------------------
+		 * boolean started_schedule_process = false; List<RunningAppProcessInfo>
+		 * processes = ((ActivityManager) getSystemService(ACTIVITY_SERVICE))
+		 * .getRunningAppProcesses();
+		 * 
+		 * for (RunningAppProcessInfo ra : processes) { if
+		 * (ra.processName.equalsIgnoreCase("com.nercms.schedule")) {
+		 * started_schedule_process = true; break; } }
+		 * 
+		 * String participants = "{\"t\":\"external_convene\",\"p\":[{\"id\":\""
+		 * + IMSI + "\",\"n\":\"" + contactName + "\",\"r\":\"1\"}],\"v\":\"" +
+		 * IMSI + "\"}"; Intent convene_schedule = new Intent();
+		 * convene_schedule .setAction((true == started_schedule_process) ?
+		 * "com.nercms.schedule.External_Convene_Schedule" :
+		 * "com.nercms.schedule.External_Start_Schedule");
+		 * convene_schedule.putExtra("participants", participants);
+		 * 
+		 * Log.v("ContactDetail", "发起会议 name:" + contactName + ",id:" +
+		 * contactID + ",imsi:" + IMSI);
+		 * 
+		 * Utils.showShortToast(ContactDetail.this, IMSI);
+		 * startActivity(convene_schedule); } });
+		 */
 	}
 
 	private void initData() {
@@ -223,7 +214,7 @@ public class ContactDetail extends BaseActivity {
 				for (int i = 0; i < memberSSMList.size(); i++) {
 					memberSSM = memberSSMList.get(i);
 					if (i != memberSSMList.size() - 1) { // 非最后一项
-					// if (i % 2 != 0) { // 偶数项时（i为奇）加换行，保证每行显示两项
+						// if (i % 2 != 0) { // 偶数项时（i为奇）加换行，保证每行显示两项
 						// memberNameString += memberSSM.getName() + ";"
 						// + "\n";
 						// } else { // 奇数项时
@@ -237,44 +228,41 @@ public class ContactDetail extends BaseActivity {
 			}
 
 		} else {
-			contactSSM = personDao.getSSMByID(contactID);
-			String _name = contactSSM.getName();
+			GetPersonInfoResponse personInfo = personDao.getPersonInfo(contactID);
+			String _name = personInfo.getUn();
 			contactName = _name;
 			name.setText(_name);
-			String _orgDesc = contactSSM.getOrgDescription();
+			String _orgDesc = personDao.getOrgByPersonId(contactID);
 			orgDesc.setText(_orgDesc);
-			String _position = contactSSM.getPosition();
+			String _position = personInfo.getD();
 			position.setText(_position);
-			String _rank = contactSSM.getRank();
-			rank.setText(_rank);
-
-			contactList = personDao.getContactListByID(contactID);
-			// 2-手机号码；3-座机号码；5-邮箱；6-通信地址
-			if (contactList != null) {
-				for (int i = 0; i < contactList.size(); i++) {
-					ContactModel cm = contactList.get(i);
-					switch (cm.getType()) {
-					case 1:
-						IMSI = cm.getContent();
-						break;
-					case 2:
-						String _mobile = cm.getContent();
+			// String _rank = contactSSM.getRank();
+			// rank.setText(_rank);
+			List<Contacts> contacts = personInfo.getContacts();
+			try {
+				for (Contacts item : contacts) {
+					if (item.getT() == CONTACT_ITEM.MOBILE) {
+						IMSI = item.getC();
+					} else if (item.getT() == CONTACT_ITEM.PHONE) {
+						String _mobile = item.getC();
 						mobile.setText(_mobile);
-						break;
-					case 5:
-						String _email = cm.getContent();
+					} else if (item.getT() == CONTACT_ITEM.SIMI) {
+
+					} else if (item.getT() == CONTACT_ITEM.HAND) {
+
+					} else if (item.getT() == CONTACT_ITEM.EMAIL) {
+						String _email = item.getC();
 						email.setText(_email);
-						break;
-					case 6:
-						String _address = cm.getContent();
-						address.setText(_address);
-						break;
-					default:
-						break;
 					}
-					cm.getType();
+					// else if (item.getT().equals("6")) {
+					// String _address = item.getC();
+					// address.setText(_address);
+					// }
 				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+
 		}
 
 	}
@@ -290,7 +278,6 @@ public class ContactDetail extends BaseActivity {
 
 	// 保存按钮点击时 判断输入+数据保存到本地
 	public boolean onOptionsItemSelected(MenuItem item) {
-
 		switch (item.getItemId()) {
 		case android.R.id.home:
 			// 左键返回主页

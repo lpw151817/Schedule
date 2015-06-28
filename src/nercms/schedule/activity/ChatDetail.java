@@ -64,7 +64,6 @@ import com.imooc.treeview.utils.Node;
  * 
  */
 public class ChatDetail extends BaseActivity implements OnClickListener {
-	/** Called when the activity is first created. */
 
 	private Button mBtnSend;// 发送按钮
 	private EditText mEditTextContent;// 消息编辑域
@@ -144,16 +143,21 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		} else if (entranceType == 1) {// 判断为消息
 
 			selectedPerson = (List<Node>) getIntent().getExtras().get("data");
-			if (selectedPerson.size() == 1) {
-				personID = selectedPerson.get(0).getId().substring(1);
-				personName = selectedPerson.get(0).getName();
+			if (selectedPerson != null) {
+				if (selectedPerson.size() == 1) {
+					personID = selectedPerson.get(0).getId().substring(1);
+					personName = selectedPerson.get(0).getName();
+				}
+				// 标志是群消息
+				else if (selectedPerson.size() > 1) {
+					isGroup = 1;
+				}
+			} else {
+				personID = getIntent().getExtras().getInt("selected_id") + "";
+				personName = getIntent().getExtras().getString("selected_name");
 			}
-			// 标志是群消息
-			else if (selectedPerson.size() > 1) {
-				isGroup = 1;
-			}
-		}
 
+		}
 		initData();
 
 		if (taskStatus == 2) {
@@ -544,21 +548,18 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	}
 
 	private void sendMsg(ReceiveMessageResponse data) {
-		webRequestManager.sendMessage(data.getT(), data.getSid(), new String[] { personID },
-				data.getSt(), data.getC(), data.getAt(), data.getAu(), data.getUt());
+		webRequestManager.sendMessage(data.getT(), data.getSid(), personID, data.getSt(), data.getC(),
+				data.getAt(), data.getAu(), data.getUt());
 	}
 
 	// 发送消息
 	private void sendMessage() {
 		String contString = mEditTextContent.getText().toString();
 		msgID = Utils.produceMessageID(userID);
-		List<QueryContactPersonMessageResponseIds> tempID = new ArrayList<QueryContactPersonMessageResponseIds>();
-		tempID.add(new QueryContactPersonMessageResponseIds(personID));
-		ReceiveMessageResponse msg = new ReceiveMessageResponse("", "0", userID, tempID,
-				System.currentTimeMillis() + "", contString, null, null, null, null);
+		ReceiveMessageResponse msg = new ReceiveMessageResponse("", "0", userID, personID,
+				System.currentTimeMillis() + "", contString, "", "1", "", "");
 
 		// 发送消息到服务器
-		// webRequestManager.sendMessage(msg);
 		sendMsg(msg);
 
 		// 刷新显示

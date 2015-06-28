@@ -1,11 +1,13 @@
 package nercms.schedule.fragment;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import nercms.schedule.R;
+import nercms.schedule.activity.ChatDetail;
 import nercms.schedule.adapter.SimpleTreeListViewAdapter;
 import nercms.schedule.adapter.SuperTreeViewAdapter;
 import nercms.schedule.adapter.TreeViewAdapter;
@@ -61,8 +63,6 @@ public class Contact extends SherlockFragment {
 	// 控件相关
 	ListView listView;
 	List<Org> data = new ArrayList<Org>();
-	TreeViewAdapter adapter;
-	SuperTreeViewAdapter superAdapter;
 
 	private Button enterpriseBtn, personalBtn;
 
@@ -93,9 +93,6 @@ public class Contact extends SherlockFragment {
 		// view.findViewById(R.id.expandablelistview);
 		personalBtn.setOnClickListener(listener);
 		enterpriseBtn.setOnClickListener(listener);
-		// jiaocuina 0528添加参数 来区分select页面和contact页面所用adapter
-		adapter = new TreeViewAdapter(getActivity(), 38, 1);
-		superAdapter = new SuperTreeViewAdapter(getActivity(), null, 1);
 		// 默认选中 企业
 		enterpriseBtn.performClick();
 
@@ -110,10 +107,6 @@ public class Contact extends SherlockFragment {
 	public OnClickListener listener = new OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			adapter.removeAll();
-			adapter.notifyDataSetChanged();
-			superAdapter.RemoveAll();
-			superAdapter.notifyDataSetChanged();
 			// 点击个人联系人
 			if (v == personalBtn) {
 				// 按钮背景色设置
@@ -121,7 +114,6 @@ public class Contact extends SherlockFragment {
 				enterpriseBtn.setBackgroundResource(R.drawable.qb_group_header_lefttab_normal);
 				initPersonData();
 			} else if (v == enterpriseBtn) { // 点击企业联系人
-
 				personalBtn.setBackgroundResource(R.drawable.qb_group_header_righttab_normal);
 				enterpriseBtn.setBackgroundResource(R.drawable.qb_group_header_lefttab_pressed);
 				initEnterpriseData();
@@ -191,7 +183,14 @@ public class Contact extends SherlockFragment {
 				@Override
 				public void onClick(Node node, int position) {
 					if (node.isLeaf()) {
-
+						List<Node> temp = new ArrayList<Node>();
+						temp.add(node);
+						Intent intent = new Intent(Contact.this.getActivity(), ChatDetail.class);
+						Bundle bundle = new Bundle();
+						bundle.putInt("entrance_type", 1);
+						bundle.putSerializable("data", (Serializable) temp);
+						intent.putExtras(bundle);
+						Contact.this.startActivity(intent);
 					}
 				}
 			});

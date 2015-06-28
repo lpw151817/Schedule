@@ -148,7 +148,7 @@ public class MessageListAdapter extends BaseAdapter {
 
 			// 2014-7-31
 			holder.userName = (TextView) convertView.findViewById(R.id.tv_username);
-			if (msg.getRids().size() > 1) {// 判断为群消息，显示左边发送者名字
+			if (msg.getT().equals("1") || msg.getT().equals("2")) {// 判断为群消息，显示左边发送者名字
 				holder.userName.setVisibility(View.VISIBLE);
 				holder.userName.setText(personDao.getPersonInfo(String.valueOf(msg.getSid())).getUn());
 			} else { // 个人消息，隐藏名字显示
@@ -163,7 +163,7 @@ public class MessageListAdapter extends BaseAdapter {
 		holder.media = (ImageView) convertView.findViewById(R.id.iv_chat_media);
 		convertView.setTag(holder);
 
-		holder.time.setText(msg.getSt());
+		holder.time.setText(Utils.formatDateMs(msg.getSt()));
 
 		if (msg.getAu() == null || msg.getAu().equalsIgnoreCase("")) { // 文本消息
 			holder.text.setVisibility(View.VISIBLE);
