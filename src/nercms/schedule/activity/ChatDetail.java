@@ -268,7 +268,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			if (isGroup == 0) {
 				getSupportActionBar().setTitle(personName);
 				msgDao = daoFactory.getMessageDao(ChatDetail.this);
-				msgList = msgDao.getMessageBySidAndRid(userID, personID);
+				msgList = msgDao.getMessageBySidAndRid(userID, personID, "0");
 
 				msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
 				mListView.setAdapter(msgAdapter);

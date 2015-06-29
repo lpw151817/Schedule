@@ -64,6 +64,7 @@ import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.model.AffairAttachModel;
 import android.wxapp.service.model.AffairModel;
 import android.wxapp.service.model.PersonOnDutyModel;
+import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.HttpDownloadTask;
@@ -232,7 +233,8 @@ public class TaskDetail extends BaseActivity {
 		if (entranceType == 1 && entranceStatus != 2) {
 			// 操作按钮
 			subMenu = menu.addSubMenu("操作");
-			subMenu.add(0, 2, 0, "截止时间修改").setIcon(R.drawable.ofm_task_modify);
+			// subMenu.add(0, 2, 0,
+			// "截止时间修改").setIcon(R.drawable.ofm_task_modify);
 			subMenu.add(0, 3, 0, "任务置完成").setIcon(R.drawable.ofm_task_end);
 
 			menuItem = subMenu.getItem();
@@ -269,9 +271,7 @@ public class TaskDetail extends BaseActivity {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							// 发送网络请求
-							// ////TODO 参数需要更改
 							webRequestManager.endAffair(taskID + "");
-							// 修改本地数据库（已包含在网络请求接口的成功返回情况里）...
 
 						}
 					}).setNegativeButton("取消", null).create().show();
@@ -352,6 +352,8 @@ public class TaskDetail extends BaseActivity {
 				"TaskDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.MODIFY_TASK_REQUEST_SUCCESS,
 				"TaskDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.END_TASK_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_END_TASK);
 	}
 
 	private void initView() {
@@ -639,6 +641,8 @@ public class TaskDetail extends BaseActivity {
 		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS, "TaskDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.MODIFY_TASK_REQUEST_SUCCESS,
 				"TaskDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_END_TASK);
 		freeBitmap();
 		super.onDestroy();
 	}

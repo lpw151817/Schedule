@@ -284,7 +284,7 @@ public class Login extends BaseActivity {
 
 	// TODO 验证需要更改
 	private void startInMain() {
-		if (isGetAffair /* && isGetMessage */&& isGetOrgCode && isGetOrgPerson) {
+		if (isGetAffair && isGetMessage && isGetOrgCode && isGetOrgPerson) {
 			dismissProgressDialog();
 			startActivity(new Intent(Login.this, Main.class));
 			// 打开定时更新的service
