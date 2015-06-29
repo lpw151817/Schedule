@@ -159,6 +159,8 @@ public class Profile extends BaseActivity {
 			id.setText(getUserId());
 			name.setText(mPersonInfo.getN());
 			orgDesc.setText(mPersonInfo.getD());
+			position.setText(mPersonInfo.getR());
+			// rank.setText(mySSM.getRank());
 
 			List<Contacts> contants = mPersonInfo.getContacts();
 			for (Contacts contact : contants) {

@@ -172,7 +172,11 @@ public class MessageListAdapter extends BaseAdapter {
 		} else { // ¸½¼þÏûÏ¢
 			holder.text.setVisibility(View.GONE);
 			holder.media.setVisibility(View.VISIBLE);
-			int type = Integer.parseInt(msg.getAt());
+			int type;
+			if (msg == null || msg.getAt().equals(""))
+				type = 0;
+			else
+				type = Integer.parseInt(msg.getAt());
 
 			File sdcardDir = Environment.getExternalStorageDirectory();
 			String path = sdcardDir.getPath() + "/nercms-Schedule/Attachments/";

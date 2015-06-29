@@ -39,12 +39,14 @@ import android.wxapp.service.dao.AttachmentDao;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.FeedbackDao;
 import android.wxapp.service.dao.MessageDao;
+import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.message.QueryContactPersonMessageResponseIds;
 import android.wxapp.service.jerry.model.message.ReceiveMessageResponse;
 import android.wxapp.service.model.FeedbackAttachModel;
 import android.wxapp.service.model.FeedbackModel;
 import android.wxapp.service.model.MessageModel;
+import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.thread.SaveMessageThread;
 import android.wxapp.service.util.Constant;
@@ -86,6 +88,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 	private String msgID;
 	private MessageDao msgDao;
+	private PersonDao personDao;
 	private MessageListAdapter msgAdapter = null;
 	private MessageModel msg = null;
 	private List<ReceiveMessageResponse> msgList;
@@ -122,7 +125,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_detail);
-
+		this.personDao = new PersonDao(this);
 		entranceType = getIntent().getExtras().getInt("entrance_type");
 
 		// 启动activity时不自动弹出软键盘
@@ -146,7 +149,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			if (selectedPerson != null) {
 				if (selectedPerson.size() == 1) {
 					personID = selectedPerson.get(0).getId().substring(1);
-					personName = selectedPerson.get(0).getName();
+					personName = personDao.getPersonInfo(personID).getN();
 				}
 				// 标志是群消息
 				else if (selectedPerson.size() > 1) {
@@ -552,23 +555,17 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				data.getAt(), data.getAu(), data.getUt());
 	}
 
+	ReceiveMessageResponse tempMsg;
+
 	// 发送消息
 	private void sendMessage() {
 		String contString = mEditTextContent.getText().toString();
 		msgID = Utils.produceMessageID(userID);
-		ReceiveMessageResponse msg = new ReceiveMessageResponse("", "0", userID, personID,
-				System.currentTimeMillis() + "", contString, "", "1", "", "");
+		tempMsg = new ReceiveMessageResponse("", "0", userID, personID, System.currentTimeMillis() + "",
+				contString, "1", "", "", "");
 
 		// 发送消息到服务器
-		sendMsg(msg);
-
-		// 刷新显示
-		hideInput();
-		msgList.add(msg);
-		msgAdapter.notifyDataSetChanged();
-
-		mEditTextContent.setText("");
-		mListView.setSelection(mListView.getCount() - 1);
+		sendMsg(tempMsg);
 
 	}
 
@@ -640,7 +637,15 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					fbAdapter.notifyDataSetChanged();
 					mListView.setSelection(mListView.getCount() - 1);
 					break;
+				case Constant.SEND_MESSAGE_REQUEST_SUCCESS:
+					// 刷新显示
+					hideInput();
+					msgList.add(tempMsg);
+					msgAdapter.notifyDataSetChanged();
 
+					mEditTextContent.setText("");
+					mListView.setSelection(mListView.getCount() - 1);
+					break;
 				default:
 					break;
 				}
@@ -657,6 +662,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				"ChatDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_FEEDBACK_SUCCESS,
 				"ChatDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.SEND_MESSAGE_REQUEST_SUCCESS,
+				Contants.METHOD_MESSAGE_SEND);
 	}
 
 	private String getDate() {
@@ -695,7 +702,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		MessageHandlerManager.getInstance().unregister(Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.SAVE_MESSAGE_SUCCESS, "ChatDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.SAVE_FEEDBACK_SUCCESS, "ChatDetail");
-
+		MessageHandlerManager.getInstance().unregister(Constant.SEND_MESSAGE_REQUEST_SUCCESS,
+				Contants.METHOD_MESSAGE_SEND);
 		System.out.println("ChatDetail onDestroy");
 		// 回收图片内存
 		if (fbAdapter != null) {

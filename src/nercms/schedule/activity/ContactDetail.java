@@ -229,30 +229,29 @@ public class ContactDetail extends BaseActivity {
 
 		} else {
 			GetPersonInfoResponse personInfo = personDao.getPersonInfo(contactID);
-			String _name = personInfo.getUn();
+			String _name = personInfo.getN();
 			contactName = _name;
 			name.setText(_name);
 			String _orgDesc = personDao.getOrgByPersonId(contactID);
 			orgDesc.setText(_orgDesc);
-			String _position = personInfo.getD();
+			String _position = personInfo.getR();
 			position.setText(_position);
 			// String _rank = contactSSM.getRank();
 			// rank.setText(_rank);
 			List<Contacts> contacts = personInfo.getContacts();
 			try {
 				for (Contacts item : contacts) {
+					// (1：手机号2：座机号3：SIM号4：手台号码5：邮箱)
 					if (item.getT() == CONTACT_ITEM.MOBILE) {
-						IMSI = item.getC();
+						mobile.setText(item.getC());
 					} else if (item.getT() == CONTACT_ITEM.PHONE) {
-						String _mobile = item.getC();
-						mobile.setText(_mobile);
+
 					} else if (item.getT() == CONTACT_ITEM.SIMI) {
 
 					} else if (item.getT() == CONTACT_ITEM.HAND) {
 
 					} else if (item.getT() == CONTACT_ITEM.EMAIL) {
-						String _email = item.getC();
-						email.setText(_email);
+						email.setText(item.getC());
 					}
 					// else if (item.getT().equals("6")) {
 					// String _address = item.getC();
