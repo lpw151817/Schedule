@@ -2,6 +2,7 @@ package nercms.schedule.activity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import nercms.schedule.R;
 import nercms.schedule.adapter.TaskListViewAdapter;
@@ -58,7 +59,8 @@ public class TaskList extends BaseActivity {
 
 	// 数据
 	private AffairDao affairdao;
-	private List<QueryAffairListResponseAffairs> mList;// 任务列表
+	// private List<QueryAffairListResponseAffairs> mList;// 任务列表
+	private List<Map<String, Object>> mList;// 任务列表
 
 	// 控件
 	ListView taskListView;

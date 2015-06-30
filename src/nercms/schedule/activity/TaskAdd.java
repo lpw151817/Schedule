@@ -309,6 +309,7 @@ public class TaskAdd extends BaseActivity {
 				new AlertDialog.Builder(TaskAdd.this).setTitle("请填写完整信息").setPositiveButton("确定", null)
 						.show();
 			} else {
+
 				if (mediaList.size() == 0)
 					createTask();
 				else {
@@ -355,7 +356,7 @@ public class TaskAdd extends BaseActivity {
 
 	// 2014-5-19 WeiHao 创建新任务方法
 	private void createTask() {
-
+		showProgressDialog("loading...");
 		String title = etTitle.getText().toString();
 		int sponsorID = Integer.parseInt(userID);
 		// PersonOnDutyModel pod = new PersonOnDutyModel(taskID, getUserId());
@@ -431,6 +432,7 @@ public class TaskAdd extends BaseActivity {
 					// 任务保存到本地数据库
 					// if (tempSave != null) {
 					// new SaveAffairThread(TaskAdd.this, tempSave).run();
+					dismissProgressDialog();
 					Utils.showShortToast(TaskAdd.this, "新建任务成功");
 					TaskAdd.this.finish();
 					// } else {

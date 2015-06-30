@@ -2,6 +2,7 @@ package nercms.schedule.adapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import nercms.schedule.R;
 import nercms.schedule.activity.TaskDetail;
@@ -45,11 +46,12 @@ public class TaskListViewAdapter extends BaseAdapter {
 	private int entranceType;
 	private int entraceStatus;
 
-	private List<QueryAffairListResponseAffairs> mList; // 任务列表
+	private List<Map<String, Object>> mList;// 任务列表
+	// private List<QueryAffairListResponseAffairs> mList; // 任务列表
 	private Context mContext;
 
-	public TaskListViewAdapter(List<QueryAffairListResponseAffairs> list, Context context,
-			int entranceType, int entranceStatus) {
+	public TaskListViewAdapter(List<Map<String, Object>> list, Context context, int entranceType,
+			int entranceStatus) {
 		this.mList = list;
 		this.mContext = context;
 		podDao = daoFactory.getPersonOnDutyDao(mContext);
@@ -59,7 +61,7 @@ public class TaskListViewAdapter extends BaseAdapter {
 		this.entraceStatus = entranceStatus;
 	}
 
-	public void refresh(ArrayList<QueryAffairListResponseAffairs> list) {
+	public void refresh(List<Map<String, Object>> list) {
 		mList = list;
 		notifyDataSetChanged();
 	}
@@ -97,11 +99,13 @@ public class TaskListViewAdapter extends BaseAdapter {
 		} else {
 			holder = (Holder) convertView.getTag();
 		}
-		holder.mTitleText.setText(mList.get(position).getTopic());
-		holder.mContentText.setText(mList.get(position).getD());
+		final QueryAffairListResponseAffairs tempData = (QueryAffairListResponseAffairs) mList.get(
+				position).get("data");
+		holder.mTitleText.setText(tempData.getTopic());
+		holder.mContentText.setText(tempData.getD());
 		// 获取负责人的名字
 		String podsString = "";
-		for (CreateTaskRequestIds item : mList.get(position).getPod()) {
+		for (CreateTaskRequestIds item : tempData.getPod()) {
 			GetPersonInfoResponse temp = personDao.getPersonInfo(item.getRid());
 			if (temp != null)
 				podsString += (temp.getUn() + "/");
@@ -109,10 +113,10 @@ public class TaskListViewAdapter extends BaseAdapter {
 				continue;
 		}
 		holder.mParticipatorText.setText(podsString);
-		holder.mDeadlineText.setText(Utils.formatDateMs(mList.get(position).getEt()));
+		holder.mDeadlineText.setText(Utils.formatDateMs(tempData.getEt()));
 		// holder.mReplyText.setText(Integer.toString(1));// 回复条数数据如何取
 
-		if (!affairDao.getAffairIsReadByID(mList.get(position).getAid())) {
+		if (!affairDao.getAffairIsReadByID(tempData.getAid())) {
 			holder.mNewTips.setVisibility(View.VISIBLE);
 		} else {
 			holder.mNewTips.setVisibility(View.GONE);
@@ -124,10 +128,10 @@ public class TaskListViewAdapter extends BaseAdapter {
 			@Override
 			public void onClick(View arg0) {
 				// 标记未已读
-				affairDao.updateAffairIsRead(mList.get(position).getAid());
+				affairDao.updateAffairIsRead(tempData.getAid());
 
 				intent = new Intent(mContext, TaskDetail.class);
-				intent.putExtra("id", mList.get(position).getAid());
+				intent.putExtra("id", tempData.getAid());
 				intent.putExtra("type", entranceType);
 				intent.putExtra("status", entraceStatus);
 				mContext.startActivity(intent);

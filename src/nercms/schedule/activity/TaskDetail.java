@@ -206,7 +206,7 @@ public class TaskDetail extends BaseActivity {
 		getSupportActionBar().setDisplayShowTitleEnabled(true);
 		getSupportActionBar().setDisplayShowHomeEnabled(true);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		getSupportActionBar().setTitle("任务详情");
+		getSupportActionBar().setTitle("任务详情"); 
 	}
 
 	@Override
@@ -403,6 +403,7 @@ public class TaskDetail extends BaseActivity {
 
 		for (int i = 0; i < taskAttackList.size(); i++) {
 			mediaName = taskAttackList.get(i).getU();
+			mediaName = mediaName.substring(mediaName.lastIndexOf("/") + 1);
 			mediaType = Integer.parseInt(taskAttackList.get(i).getAt());
 			final String mediaPath = path.toString() + mediaName;
 			if (mediaPath != null && !mediaPath.equalsIgnoreCase("")) {
