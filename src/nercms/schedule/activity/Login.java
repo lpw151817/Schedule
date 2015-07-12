@@ -2,6 +2,8 @@ package nercms.schedule.activity;
 
 import java.io.File;
 
+import org.acra.collector.CrashReportData;
+
 import nercms.schedule.R;
 import nercms.schedule.service.UpdateService;
 import nercms.schedule.utils.LocalConstant;
@@ -41,6 +43,7 @@ import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.thread.SaveAffairThread;
 import android.wxapp.service.thread.SaveAffairUpdateThread;
+import android.wxapp.service.thread.SaveConferenceThread;
 import android.wxapp.service.thread.SaveMessageUpdateThread;
 import android.wxapp.service.thread.SaveOrgCodePersonThread;
 import android.wxapp.service.thread.SaveOrgCodeThread;
@@ -86,30 +89,32 @@ public class Login extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login);
 
-		// // 用户测试使用，直接跳过本Activity
-		// startActivity(Main.class);
-		// return;
+		// 用户测试使用，直接跳过本Activity
+		startActivity(Main.class);
+		return;
 
-		Log.v("Login", "Login onCreate");
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
-
-		initActionBar();
-
-		etUserName = (EditText) findViewById(R.id.login_user_edit);
-		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
-
-		// 默认显示上次登录的用户ID
-		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
-
-		btnLogin = (Button) findViewById(R.id.login_login_btn);
-		btnLogin.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				MyLog.i(TAG, "登录按钮点击");
-				login_mainschedule();
-			}
-		});
+		// Log.v("Login", "Login onCreate");
+		// webRequestManager = new
+		// WebRequestManager(AppApplication.getInstance(), Login.this);
+		//
+		// initActionBar();
+		//
+		// etUserName = (EditText) findViewById(R.id.login_user_edit);
+		// etPassword = (EditText) findViewById(R.id.login_passwd_edit);
+		//
+		// // 默认显示上次登录的用户ID
+		// etUserName.setText(MySharedPreference.get(Login.this,
+		// MySharedPreference.USER_NAME, ""));
+		//
+		// btnLogin = (Button) findViewById(R.id.login_login_btn);
+		// btnLogin.setOnClickListener(new OnClickListener() {
+		//
+		// @Override
+		// public void onClick(View arg0) {
+		// MyLog.i(TAG, "登录按钮点击");
+		// login_mainschedule();
+		// }
+		// });
 
 	}
 
@@ -173,7 +178,8 @@ public class Login extends BaseActivity {
 							// 2.mqtt订阅
 							try {
 								Log.v("Login", "id:" + getUserId());
-								MQTT.CLIENT_ID = getUserId();
+								// 订阅mqtt消息
+								MQTT.CLIENT_ID = "m_" + getUserId();
 								MQTT mqtt = MQTT.get_instance();
 								mqtt.publish_message(MQTT.SUBSCRIBE_TOPIC_PREFIX + MQTT.CLIENT_ID,
 										"Registration", 0);
@@ -184,14 +190,12 @@ public class Login extends BaseActivity {
 						}
 					}).start();
 
-					// 尝试跳转到主界面
-					startInMain();
-
-					// TODO 写一个Timer定时请求服务器是否有更新数据
+					// 写一个Timer定时请求服务器是否有更新数据
 					getOrgInfoUpdate();
 					getAffairUpdate();
-					// TODO
 					getMessageUpdate();
+					// conference的更新操作
+					getConferenceUpdate();
 
 					// 获取个人信息数据
 					GetPersonInfoResponse mPersonInfo = DAOFactory.getInstance()
@@ -210,13 +214,7 @@ public class Login extends BaseActivity {
 					dismissProgressDialog();
 					String errorCode = ((NormalServerResponse) msg.obj).getEc();
 					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode), R.drawable.login_error_icon,
-							"确定", new DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									Log.i("Login", "关闭错误对话框");
-								}
-							});
+							"确定", null);
 					break;
 				// 保存orgcode失败
 				case Constant.SAVE_ORG_CODE_FAIL:
@@ -271,6 +269,14 @@ public class Login extends BaseActivity {
 					dismissProgressDialog();
 					Toast.makeText(Login.this, "Message Update Failed", Toast.LENGTH_LONG).show();
 					break;
+				case Constant.CONFERENCE_SAVE_SUCCESS:
+					isGetConference = true;
+					startInMain();
+					break;
+				case Constant.CONFERENCE_SAVE_FAIL:
+					dismissProgressDialog();
+					Toast.makeText(Login.this, "Conference Update Failed", Toast.LENGTH_LONG).show();
+					break;
 				default:
 					Log.e("LoginActivity", msg.what + "<<<<未处理");
 					break;
@@ -284,7 +290,7 @@ public class Login extends BaseActivity {
 
 	// TODO 验证需要更改
 	private void startInMain() {
-		if (isGetAffair && isGetMessage && isGetOrgCode && isGetOrgPerson) {
+		if (isGetAffair && isGetMessage && isGetOrgCode && isGetOrgPerson && isGetConference) {
 			dismissProgressDialog();
 			startActivity(new Intent(Login.this, Main.class));
 			// 打开定时更新的service
@@ -298,6 +304,7 @@ public class Login extends BaseActivity {
 	boolean isGetOrgPerson = false;
 	boolean isGetAffair = false;
 	boolean isGetMessage = false;
+	boolean isGetConference = false;
 
 	// 获取组织相关信息并存入数据库
 	private void getOrgInfoUpdate() {
@@ -332,6 +339,15 @@ public class Login extends BaseActivity {
 			webRequestManager.getMessageUpdate("1");
 		else {
 			isGetMessage = true;
+			startInMain();
+		}
+	}
+
+	private void getConferenceUpdate() {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_CONFERENCE_TIMESTAMP, null) == null) {
+			webRequestManager.updateConference("1");
+		} else {
+			isGetConference = true;
 			startInMain();
 		}
 	}
@@ -480,6 +496,10 @@ public class Login extends BaseActivity {
 				SaveMessageUpdateThread.TAG);
 		MessageHandlerManager.getInstance().unregister(Constant.UPDATE_MESSAGE_REQUEST_FAIL,
 				Contants.METHOD_MESSAGE_UPDATE);
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_SAVE_SUCCESS,
+				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_SAVE_FAIL,
+				SaveConferenceThread.TAG);
 		Log.v("Login", "onDestroy,注册Handler");
 		super.onDestroy();
 	}
@@ -520,6 +540,9 @@ public class Login extends BaseActivity {
 				SaveMessageUpdateThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.UPDATE_MESSAGE_REQUEST_FAIL,
 				Contants.METHOD_MESSAGE_UPDATE);
-
+		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_SAVE_SUCCESS,
+				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_SAVE_FAIL,
+				SaveConferenceThread.TAG);
 	}
 }

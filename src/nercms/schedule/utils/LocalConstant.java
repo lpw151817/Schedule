@@ -1,5 +1,7 @@
 package nercms.schedule.utils;
 
+import android.R.integer;
+
 public class LocalConstant {
 
 	// ±‰¡ø
@@ -14,6 +16,7 @@ public class LocalConstant {
 	public static final int IAMGE_TYPE = 2;
 	public static final int VIDEO_TYPE = 3;
 	public static final int SOUND_TYPE = 4;
+	public static final int GPS_TYPE = 5;
 
 	// ∑µªÿ¬Î
 	public static final int CAPTURE_IMAGE_REQUEST_CODE = 101;

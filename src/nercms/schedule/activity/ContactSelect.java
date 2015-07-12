@@ -78,63 +78,6 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 		// 组织机构树数据准备
 		dao = daoFactory.getPersonDao(ContactSelect.this);
 
-		// expandableListView1 = (ExpandableListView)
-		// findViewById(R.id.expandablelistview1);
-		// adapter = new TreeViewAdapter(this, 38, 2);// 添加adapter类型参数
-		// superAdapter = new SuperTreeViewAdapter(this, stvClickEvent, 2);
-		//
-		// adapter.removeAll();
-		// adapter.notifyDataSetChanged();
-		// superAdapter.RemoveAll();
-		// superAdapter.notifyDataSetChanged();
-
-		// orgNodeSecondList = dao.getSecondOrgNode();
-		// bigTreeMap = new HashMap<String, Map<String,
-		// ArrayList<StructuredStaffModel>>>();
-		//
-		// List<SuperTreeViewAdapter.SuperTreeNode> superNodeTree = superAdapter
-		// .GetTreeNode();
-		// // 第一层
-		// for (int i = 0; i < orgNodeSecondList.size(); i++) {
-		// SuperTreeViewAdapter.SuperTreeNode superNode = new
-		// SuperTreeViewAdapter.SuperTreeNode();
-		// String orgNodeSecondName = orgNodeSecondList.get(i)
-		// .getDescription();
-		// superNode.parent = orgNodeSecondName;
-		// // 第二层
-		// ArrayList<OrgNodeModel> orgNodeThirdList = dao
-		// .getThirdOrgNode(orgNodeSecondList.get(i).getOrgCode());
-		//
-		// for (int j = 0; j < orgNodeThirdList.size(); j++) {
-		// String orgNodeThirdName = orgNodeThirdList.get(j)
-		// .getDescription();
-		// String orgNodeThirdCode = orgNodeThirdList.get(j).getOrgCode();
-		// ArrayList<StructuredStaffModel> ssmList = dao
-		// .getSSMFromOrgCode(orgNodeThirdCode);
-		// // 第三层
-		// TreeViewAdapter.TreeNode node = new TreeViewAdapter.TreeNode();
-		// // 第三层首先添加群组作为第一个叶节点 群组也作为SSM类型
-		// node.parent = orgNodeThirdName;
-		// //添加群组节点
-		// String firstLeafID = "Group" + orgNodeThirdCode ;//群组节点ID "Group1xx"
-		// String firstLeaf_name = orgNodeThirdName + "群组";
-		// StructuredStaffModel firstLeaf = new StructuredStaffModel(
-		// firstLeafID, orgNodeThirdCode,orgNodeThirdName, "", firstLeaf_name,
-		// "", "");
-		// node.childs.add(firstLeaf);
-		//
-		// for (int k = 0; k < ssmList.size(); k++) {
-		// node.childs.add(ssmList.get(k));
-		// }
-		// superNode.childs.remove(dao.getSSMByID(userID));
-		//
-		// superNode.childs.add(node);
-		// }
-		// superNodeTree.add(superNode);
-		// }
-		// superAdapter.UpdateTreeNode(superNodeTree);
-		// expandableListView1.setAdapter(superAdapter);
-
 		try {
 			List<Org> data = new ArrayList<Org>();
 			data = dao.getOrg2();
@@ -244,42 +187,29 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 					intent = new Intent(ContactSelect.this, ChatDetail.class);
 					intent.putExtra("entrance_type", 1); // 消息详情界面入口
 					intent.putExtra("data", (Serializable) selectedPerson);
-//					// 2014-7-15 WeiHao
-//					if (id.contains("Group")) {
-//						intent.putExtra("selected_id", Integer.parseInt(id.substring(5)));
-//					} else {
-//						intent.putExtra("selected_id", Integer.parseInt(id));
-//					}
+					// // 2014-7-15 WeiHao
+					// if (id.contains("Group")) {
+					// intent.putExtra("selected_id",
+					// Integer.parseInt(id.substring(5)));
+					// } else {
+					// intent.putExtra("selected_id", Integer.parseInt(id));
+					// }
 					startActivity(intent);
 					this.finish();
 					break;
-				// case 3: // 发起会议 参与者选择
-				// ArrayList<String> idList = new ArrayList<String>();
-				// ArrayList<String> nameList = new ArrayList<String>();
-				// for (int i = 0; i < check_contact_id_list.size(); i++) {
-				// idList.add(check_contact_id_list.get(i)[0]);
-				// nameList.add(check_contact_id_list.get(i)[1]);
-				// }
-				// intent = new Intent();
-				// intent.putExtra("selected_name_list", nameList);
-				// intent.putExtra("selected_id_list", idList);
-				// setResult(RESULT_OK, intent);
-				// this.finish();
-				// break;
-				// // 2014-8-6
-				// case 4: // 发起会议 发言人选择
-				// ArrayList<String> idList_s = new ArrayList<String>();
-				// ArrayList<String> nameList_s = new ArrayList<String>();
-				// for (int i = 0; i < check_contact_id_list.size(); i++) {
-				// idList_s.add(check_contact_id_list.get(i)[0]);
-				// nameList_s.add(check_contact_id_list.get(i)[1]);
-				// }
-				// intent = new Intent();
-				// intent.putExtra("selected_name_list", nameList_s);
-				// intent.putExtra("selected_id_list", idList_s);
-				// setResult(RESULT_OK, intent);
-				// this.finish();
-				// break;
+				case 3: // 发起会议 参与者选择
+					intent = new Intent();
+					intent.putExtra("data", (Serializable) selectedPerson);
+					setResult(RESULT_OK, intent);
+					this.finish();
+					break;
+				// 2014-8-6
+				case 4: // 发起会议 发言人选择
+					intent = new Intent();
+					intent.putExtra("data", (Serializable) selectedPerson);
+					setResult(RESULT_OK, intent);
+					this.finish();
+					break;
 
 				default:
 					break;

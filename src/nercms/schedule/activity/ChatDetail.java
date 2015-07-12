@@ -84,7 +84,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	private FeedbackDao fbDao;
 	private AttachmentDao attachDao;
 	private FeedbackListAdapter fbAdapter = null;
-	private ArrayList<FeedbackModel> fbList = new ArrayList<FeedbackModel>();
+	// private ArrayList<FeedbackModel> fbList = new ArrayList<FeedbackModel>();
+	private List<ReceiveMessageResponse> fbList = new ArrayList<ReceiveMessageResponse>();
 
 	private String msgID;
 	private MessageDao msgDao;
@@ -149,7 +150,17 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			if (selectedPerson != null) {
 				if (selectedPerson.size() == 1) {
 					personID = selectedPerson.get(0).getId().substring(1);
-					personName = personDao.getPersonInfo(personID).getN();
+					// 群聊
+					if (selectedPerson.get(0).getId().startsWith("o")) {
+						isGroup = 1;
+						// TODO personName 赋值！
+
+					}
+					// 私聊
+					else if (selectedPerson.get(0).getId().startsWith("p")) {
+						isGroup = 0;
+						personName = personDao.getPersonInfo(personID).getN();
+					}
 				}
 				// 标志是群消息
 				else if (selectedPerson.size() > 1) {
@@ -159,7 +170,6 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				personID = getIntent().getExtras().getInt("selected_id") + "";
 				personName = getIntent().getExtras().getString("selected_name");
 			}
-
 		}
 		initData();
 
@@ -249,21 +259,30 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	public void initData() {
 		if (entranceType == 2) { // 反馈
 			getSupportActionBar().setTitle("任务反馈");
-			fbDao = daoFactory.getFeedbackDao(ChatDetail.this);
-			attachDao = daoFactory.getAttachmentDao(ChatDetail.this);
-			fbList = fbDao.getFeedbackByAffairID(taskID);
+
+			if (this.msgDao == null)
+				this.msgDao = new MessageDao(this);
+
+			fbList = this.msgDao.getFeedback(taskID);
+
+			// fbDao = daoFactory.getFeedbackDao(ChatDetail.this);
+			// attachDao = daoFactory.getAttachmentDao(ChatDetail.this);
+			// fbList = fbDao.getFeedbackByAffairID(taskID);
 			// 查询附件
-			ArrayList<FeedbackAttachModel> fbAttachList = new ArrayList<FeedbackAttachModel>(0);
-			for (int i = 0; i < fbList.size(); i++) {
-				FeedbackModel tempFb = fbList.get(i);
-				fbAttachList = attachDao.getAttachByFeedbackID(tempFb.getFeedbackID());
-				if (fbAttachList.size() > 0) {
-					for (int j = 0; j < fbAttachList.size(); j++) {
-						tempFb.setAttachment(fbAttachList.get(j));
-						fbList.set(i, tempFb);
-					}
-				}
-			}
+			// ArrayList<FeedbackAttachModel> fbAttachList = new
+			// ArrayList<FeedbackAttachModel>(0);
+			// for (int i = 0; i < fbList.size(); i++) {
+			// FeedbackModel tempFb = fbList.get(i);
+			// fbAttachList =
+			// attachDao.getAttachByFeedbackID(tempFb.getFeedbackID());
+			// if (fbAttachList.size() > 0) {
+			// for (int j = 0; j < fbAttachList.size(); j++) {
+			// tempFb.setAttachment(fbAttachList.get(j));
+			// fbList.set(i, tempFb);
+			// }
+			// }
+			// }
+
 			fbAdapter = new FeedbackListAdapter(ChatDetail.this, fbList);
 			mListView.setAdapter(fbAdapter);
 
@@ -517,24 +536,12 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		String contString = mEditTextContent.getText().toString();
 		if (!contString.isEmpty()) { // 文本反馈
 			feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-			String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
-					.currentTimeMillis()));
-			FeedbackModel fbModel = new FeedbackModel(feedbackID, taskID, Integer.valueOf(userID),
-					feedbackTime, contString, Constant.READ);
+
+			tempMsg = new ReceiveMessageResponse("", "4", userID, taskID, System.currentTimeMillis()
+					+ "", contString, "1", "", "", "");
 
 			// 发送到服务器
-			// webRequestManager.sendFeedback(fbModel);
-			sendFb(fbModel);
-			// 保存本地
-			fbModel.save(ChatDetail.this);
-
-			// 刷新列表
-			hideInput();
-			fbList.add(fbModel);
-			fbAdapter.notifyDataSetChanged();
-
-			mEditTextContent.setText("");
-			mListView.setSelection(mListView.getCount() - 1);
+			sendFb(tempMsg);
 
 		} else { // 空消息发送提示
 			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白反馈").setPositiveButton("确定", null)
@@ -542,12 +549,9 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		}
 	}
 
-	// TODO 传入参数需要更改！！！！
-	private void sendFb(FeedbackModel fdM) {
-		webRequestManager.sendFeedback(ChatDetail.this, fdM.getPersonID() + "",
-				System.currentTimeMillis() + "", fdM.getContent(), fdM.getAttachment()
-						.getAttachmentType() + "", fdM.getAttachment().getAttachmentURL(),
-				System.currentTimeMillis() + "", new String[] {});
+	private void sendFb(ReceiveMessageResponse data) {
+		webRequestManager.sendFeedback(data.getSid(), data.getRid(), data.getSt(), data.getC(),
+				data.getAt(), data.getAu(), data.getUt());
 	}
 
 	private void sendMsg(ReceiveMessageResponse data) {
@@ -560,7 +564,6 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	// 发送消息
 	private void sendMessage() {
 		String contString = mEditTextContent.getText().toString();
-		msgID = Utils.produceMessageID(userID);
 		tempMsg = new ReceiveMessageResponse("", "0", userID, personID, System.currentTimeMillis() + "",
 				contString, "1", "", "", "");
 
@@ -577,44 +580,43 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			public void handleMessage(Message handlerMsg) {
 
 				switch (handlerMsg.what) {
-				case Constant.SEND_FEEDBACK_REQUEST_SUCCESS:
-					mEditTextContent.setText("");
-					Toast.makeText(ChatDetail.this, "发送反馈成功", Toast.LENGTH_SHORT).show();
-					break;
+
 				case Constant.FILE_UPLOAD_SUCCESS:
-					if (entranceType == 1) {
-						if (msg == null) {
-							Toast.makeText(ChatDetail.this, "msg为空,不保存此反馈", Toast.LENGTH_SHORT).show();
-						} else {
-							// // webRequestManager.sendMessage(msg);
-							// sendMsg(msg);
-							// msg.save(ChatDetail.this);
-							//
-							// msgList.add(msg);
-							msgAdapter.notifyDataSetChanged();
-						}
-
-					} else {
-						// 发送服务器
-						if (fb == null) {
-							Toast.makeText(ChatDetail.this, "fb为空,不保存此反馈", Toast.LENGTH_SHORT).show();
-						} else {
-							// webRequestManager.sendFeedback(fb);
-							sendFb(fb);
-							// 保存本地
-							if (fb.getAttachment() != null) {
-								fb.getAttachment().save(ChatDetail.this);
-							}
-							fb.save(ChatDetail.this);
-							// 刷新列表
-							fbList.add(fb);
-							fbAdapter.notifyDataSetChanged();
-						}
-
-					}
-
-					mEditTextContent.setText("");
-					mListView.setSelection(mListView.getCount() - 1);
+					// if (entranceType == 1) {
+					// if (msg == null) {
+					// Toast.makeText(ChatDetail.this, "msg为空,不保存此反馈",
+					// Toast.LENGTH_SHORT).show();
+					// } else {
+					// // // webRequestManager.sendMessage(msg);
+					// // sendMsg(msg);
+					// // msg.save(ChatDetail.this);
+					// //
+					// // msgList.add(msg);
+					// msgAdapter.notifyDataSetChanged();
+					// }
+					//
+					// } else {
+					// // 发送服务器
+					// if (fb == null) {
+					// Toast.makeText(ChatDetail.this, "fb为空,不保存此反馈",
+					// Toast.LENGTH_SHORT).show();
+					// } else {
+					// // webRequestManager.sendFeedback(fb);
+					// sendFb(fb);
+					// // 保存本地
+					// if (fb.getAttachment() != null) {
+					// fb.getAttachment().save(ChatDetail.this);
+					// }
+					// fb.save(ChatDetail.this);
+					// // 刷新列表
+					// fbList.add(fb);
+					// fbAdapter.notifyDataSetChanged();
+					// }
+					//
+					// }
+					//
+					// mEditTextContent.setText("");
+					// mListView.setSelection(mListView.getCount() - 1);
 
 					break;
 				// 2014-6-9 接收到消息保存线程的通知，直接刷新对话界面
@@ -629,22 +631,23 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					msgAdapter.notifyDataSetChanged();
 					mListView.setSelection(mListView.getCount() - 1);
 					break;
-				// 2014-6-24
-				case Constant.SAVE_FEEDBACK_SUCCESS:
-					FeedbackModel newFb = (FeedbackModel) handlerMsg.obj;
-					fbList.add(newFb);
-
-					fbAdapter.notifyDataSetChanged();
-					mListView.setSelection(mListView.getCount() - 1);
-					break;
 				case Constant.SEND_MESSAGE_REQUEST_SUCCESS:
 					// 刷新显示
 					hideInput();
 					msgList.add(tempMsg);
 					msgAdapter.notifyDataSetChanged();
-
 					mEditTextContent.setText("");
 					mListView.setSelection(mListView.getCount() - 1);
+					Toast.makeText(ChatDetail.this, "发送消息成功", Toast.LENGTH_SHORT).show();
+
+					break;
+				case Constant.SEND_FEEDBACK_REQUEST_SUCCESS:
+					hideInput();
+					fbList.add(tempMsg);
+					fbAdapter.notifyDataSetChanged();
+					mEditTextContent.setText("");
+					mListView.setSelection(mListView.getCount() - 1);
+					Toast.makeText(ChatDetail.this, "发送反馈成功", Toast.LENGTH_SHORT).show();
 					break;
 				default:
 					break;
@@ -654,8 +657,6 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler, Constant.SEND_FEEDBACK_REQUEST_SUCCESS,
-				"ChatDetail");
 		MessageHandlerManager.getInstance()
 				.register(handler, Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS,
@@ -664,6 +665,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				"ChatDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.SEND_MESSAGE_REQUEST_SUCCESS,
 				Contants.METHOD_MESSAGE_SEND);
+		MessageHandlerManager.getInstance().register(handler, Constant.SEND_FEEDBACK_REQUEST_SUCCESS,
+				Contants.METHOD_FEEDBACK_SEND);
 	}
 
 	private String getDate() {
@@ -704,6 +707,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		MessageHandlerManager.getInstance().unregister(Constant.SAVE_FEEDBACK_SUCCESS, "ChatDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.SEND_MESSAGE_REQUEST_SUCCESS,
 				Contants.METHOD_MESSAGE_SEND);
+		MessageHandlerManager.getInstance().unregister(Constant.SEND_FEEDBACK_REQUEST_SUCCESS,
+				Contants.METHOD_FEEDBACK_SEND);
 		System.out.println("ChatDetail onDestroy");
 		// 回收图片内存
 		if (fbAdapter != null) {

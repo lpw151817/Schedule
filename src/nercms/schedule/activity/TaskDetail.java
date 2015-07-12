@@ -298,7 +298,7 @@ public class TaskDetail extends BaseActivity {
 		for (CreateTaskRequestIds createTaskRequestIds : pods) {
 			GetPersonInfoResponse temp = personDao.getPersonInfo(createTaskRequestIds.getRid());
 			if (temp != null)
-				podName += personDao.getPersonInfo(createTaskRequestIds.getRid()).getUn() + "/";
+				podName += personDao.getPersonInfo(createTaskRequestIds.getRid()).getN() + "/";
 			else
 				continue;
 		}

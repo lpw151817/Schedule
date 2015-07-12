@@ -72,6 +72,8 @@ public class UpdateService extends Service {
 					webRequestManager.getAffairUpdate("1");
 					// 获取消息更新
 					webRequestManager.getMessageUpdate("1");
+					// 更新会议
+					webRequestManager.updateConference("1");
 				}
 			};
 		}

@@ -222,7 +222,7 @@ public class Contact extends SherlockFragment {
 			adapter.setOnTreeNodeLongClickListener(new onTreeNodeLongClickListener() {
 
 				@Override
-				public void onLongClick(Node node, int position) {
+				public void onLongClick(final Node node,  int position) {
 					if (myself != null) {
 						if (myself.isThisParent(node)) {
 							new AlertDialog.Builder(getActivity()).setTitle("是否进入基本群组聊天?")
@@ -230,8 +230,15 @@ public class Contact extends SherlockFragment {
 
 										@Override
 										public void onClick(DialogInterface dialog, int which) {
-											// TODO 跳转聊天
-
+											// 跳转聊天
+											Intent intent = new Intent(getActivity(), ChatDetail.class);
+											Bundle bundle = new Bundle();
+											//标志为消息
+											bundle.putInt("entrance_type", 1);
+											List<Node> tempData=new ArrayList<Node>();
+											tempData.add(node);
+											bundle.putSerializable("data", (Serializable) tempData);
+											getActivity().startActivity(intent);
 										}
 									}).setNegativeButton("取消", null).create().show();
 

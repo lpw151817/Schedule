@@ -39,7 +39,6 @@ public class TaskListViewAdapter extends BaseAdapter {
 	private PersonDao personDao;
 	private PersonOnDutyDao podDao;
 	private AffairDao affairDao;
-	private PersonOnDutyModel pod;
 
 	private Intent intent;
 
@@ -108,7 +107,7 @@ public class TaskListViewAdapter extends BaseAdapter {
 		for (CreateTaskRequestIds item : tempData.getPod()) {
 			GetPersonInfoResponse temp = personDao.getPersonInfo(item.getRid());
 			if (temp != null)
-				podsString += (temp.getUn() + "/");
+				podsString += (temp.getN() + "/");
 			else
 				continue;
 		}

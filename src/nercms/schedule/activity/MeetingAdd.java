@@ -10,6 +10,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import com.imooc.treeview.utils.Node;
+
 import nercms.schedule.R;
 import nercms.schedule.dateSelect.NumericWheelAdapter;
 import nercms.schedule.dateSelect.OnWheelChangedListener;
@@ -23,6 +25,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -38,9 +41,12 @@ import android.wxapp.service.dao.ConferenceDao;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.conference.ConferenceUpdateQueryResponseRids;
+import android.wxapp.service.jerry.model.normal.NormalServerResponse;
 import android.wxapp.service.model.ConferenceModel;
 import android.wxapp.service.model.ConferencePersonModel;
 import android.wxapp.service.model.StructuredStaffModel;
+import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.MySharedPreference;
@@ -61,17 +67,15 @@ public class MeetingAdd extends BaseActivity {
 	// 本用户ID
 	private String userID;
 	// 本用户人员
-	private StructuredStaffModel userSSM = null;
+	// private StructuredStaffModel userSSM = null;
 	private Handler handler;
 	private String _meetingID;
 
 	// 选择的会议参与者 ID和名字列表
-	private ArrayList<String> participatorIDList = new ArrayList<String>();
-	private ArrayList<String> participatorNameList = new ArrayList<String>();
+	private List<Node> participator = new ArrayList<Node>();
 
 	// 选择的会议发言人 ID和名字列表
-	private ArrayList<String> speakerIDList = new ArrayList<String>();
-	private ArrayList<String> speakerNameList = new ArrayList<String>();
+	private List<Node> speaker = new ArrayList<Node>();
 
 	// 控件
 	private EditText meeting_title;// 会议主题
@@ -88,25 +92,19 @@ public class MeetingAdd extends BaseActivity {
 	private EditText meeting_speaker;
 	private ImageButton select_speaker;
 
-	private ArrayList<ConferencePersonModel> _personList = new ArrayList<ConferencePersonModel>();//
 	private Dialog dialog;
 	private static int START_YEAR = 2010, END_YEAR = 2020;
-	private ConferenceModel thisConference;// 当前会议
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.meeting_add);
 
-		webRequestManager = new WebRequestManager(AppApplication.getInstance(),
-				this);
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), this);
 
 		// 当前登录用户信息
-		userID = MySharedPreference.get(MeetingAdd.this,
-				MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(MeetingAdd.this, MySharedPreference.USER_ID, "");
 		personDao = daoFactory.getPersonDao(MeetingAdd.this);
-		userSSM = personDao.getSSMByID(userID);
-
 		// 初始化ActionBar
 		initActionBar();
 
@@ -130,17 +128,16 @@ public class MeetingAdd extends BaseActivity {
 		meeting_time = (EditText) findViewById(R.id.add_meeting_time);
 		select_time = (ImageButton) findViewById(R.id.meeting_add_select_time);// 选择时间控件
 		// 监听 单选按钮
-		meeting_type
-				.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-					public void onCheckedChanged(RadioGroup group, int checkedId) {
-						// 选择即时会议 隐藏时间选择布局 选择预约会议 显示时间选择布局
-						if (type1_select.getId() == checkedId) {
-							timePickerLayout.setVisibility(View.VISIBLE);
-						} else {
-							timePickerLayout.setVisibility(View.GONE);
-						}
-					}
-				});
+		meeting_type.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+			public void onCheckedChanged(RadioGroup group, int checkedId) {
+				// 选择即时会议 隐藏时间选择布局 选择预约会议 显示时间选择布局
+				if (type1_select.getId() == checkedId) {
+					timePickerLayout.setVisibility(View.VISIBLE);
+				} else {
+					timePickerLayout.setVisibility(View.GONE);
+				}
+			}
+		});
 		// 监听 责任人选择
 		select_participator.setOnClickListener(new OnClickListener() {
 			@Override
@@ -149,8 +146,7 @@ public class MeetingAdd extends BaseActivity {
 				intent.setClass(MeetingAdd.this, ContactSelect.class);
 				intent.putExtra("entrance_flag", 3);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				startActivityForResult(intent,
-						LocalConstant.MEETING_PARTICIPATOR_SELECT_REQUEST_CODE);
+				startActivityForResult(intent, LocalConstant.MEETING_PARTICIPATOR_SELECT_REQUEST_CODE);
 			}
 		});
 		// 监听 时间选择
@@ -170,17 +166,52 @@ public class MeetingAdd extends BaseActivity {
 				intent.setClass(MeetingAdd.this, ContactSelect.class);
 				intent.putExtra("entrance_flag", 4);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				startActivityForResult(intent,
-						LocalConstant.MEETING_SPEAKER_SELECT_REQUEST_CODE);
+				startActivityForResult(intent, LocalConstant.MEETING_SPEAKER_SELECT_REQUEST_CODE);
 			}
 		});
 
 		meeting_starter.setEnabled(false);// 会议发起人 不可编辑
-		meeting_starter.setText(userSSM.getName());
+		meeting_starter.setText(personDao.getCustomer().getN());
 		meeting_time.setEnabled(false);// 预约会议时间默认显示为当前系统时间
+
+		handler = new Handler() {
+
+			@Override
+			public void handleMessage(Message msg) {
+				switch (msg.what) {
+				// 创建会议成功
+				case Constant.CONFERENCE_CREATE_SECCESS:
+					Toast.makeText(MeetingAdd.this, "创建会议成功", Toast.LENGTH_LONG).show();
+					MeetingAdd.this.finish();
+					break;
+				// 创建会议失败
+				case Constant.CONFERENCE_CREATE_FAIL:
+					String errorCode = ((NormalServerResponse) msg.obj).getEc();
+					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode), R.drawable.login_error_icon,
+							"确定", null);
+					break;
+				default:
+					break;
+				}
+			}
+
+		};
+
+		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_CREATE_SECCESS,
+				Contants.METHOD_CONFERENCE_CREATE);
+		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_CREATE_FAIL,
+				Contants.METHOD_CONFERENCE_CREATE);
 	}
 
-	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_CREATE_SECCESS,
+				Contants.METHOD_CONFERENCE_CREATE);
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_CREATE_FAIL,
+				Contants.METHOD_CONFERENCE_CREATE);
+	}
+
 	private void initActionBar() {
 		getSupportActionBar().setDisplayShowCustomEnabled(false);
 		getSupportActionBar().setDisplayShowTitleEnabled(true);
@@ -205,7 +236,6 @@ public class MeetingAdd extends BaseActivity {
 			break;
 		case 1: // 右键保存会议
 			createMeeting();
-			MeetingAdd.this.finish();
 			break;
 		default:
 			break;
@@ -215,7 +245,7 @@ public class MeetingAdd extends BaseActivity {
 
 	private void createMeeting() {
 
-		String _title = meeting_title.getText().toString().trim();
+		String _title = meeting_title.getText().toString();
 
 		int _type; // 1-手机发起即时会议；3-手机发起预约会议
 		int _status;// 会议状态：1-会议进行中；2-会议结束；3-预约中（等待开始）
@@ -226,49 +256,27 @@ public class MeetingAdd extends BaseActivity {
 			_type = 1;
 			_status = 2;
 		}
-		String _createTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")// 创建时间
-				.format(new Date(System.currentTimeMillis()));
+		String _createTime = System.currentTimeMillis() + "";// 创建时间
 		String _reservedTime = meeting_time.getText().toString();// 预约时间
-		// conferencePersonModelList用于构造ConferenceModel
-		for (int i = 0; i < participatorIDList.size(); i++) {
-			_personList.add(new ConferencePersonModel(_meetingID, Integer
-					.parseInt(participatorIDList.get(i)), 0, 0, 0, "", ""));
+
+		List<ConferenceUpdateQueryResponseRids> rids = new ArrayList<ConferenceUpdateQueryResponseRids>();
+
+		for (int i = 0; i < participator.size(); i++) {
+			rids.add(new ConferenceUpdateQueryResponseRids(participator.get(i).getId().substring(1), "2"));
 		}
-		String _startTime = "";
-		String _endTime = "";
+		for (int i = 0; i < speaker.size(); i++) {
+			rids.add(new ConferenceUpdateQueryResponseRids(speaker.get(i).getId().substring(1), "1"));
+		}
 
 		// 输入检测
-		if (_title.isEmpty() || _personList.size() == 0) {
-			// ..
-			if (_type == 3 && _reservedTime.isEmpty()) { // 预约会议，预约时间不能为空
-				new AlertDialog.Builder(MeetingAdd.this)
-						.setTitle("无法发起会议")
-						.setMessage("请重新检查会议是否填写完整")
-						.setPositiveButton("确定",
-								new DialogInterface.OnClickListener() {
-
-									@Override
-									public void onClick(DialogInterface arg0,
-											int arg1) {
-										MeetingAdd.this.finish();
-									}
-								}).create().show();
-			}
-
+		if (_title.isEmpty() || participator.size() == 0 || speaker.size() == 0
+				|| (_type == 3 && _reservedTime.isEmpty())) {
+			new AlertDialog.Builder(MeetingAdd.this).setTitle("无法发起会议").setMessage("请重新检查会议是否填写完整")
+					.setPositiveButton("确定", null).create().show();
 			return;
 		}
-		// 调用MeetingModel构造函数 （实际开始时间 实际结束时间 状态）
-		thisConference = new ConferenceModel(_meetingID, _title, _type,
-				Integer.parseInt(userID), _createTime, _reservedTime,
-				_startTime, _endTime, _status);
-		thisConference.setPersonList(_personList);
 
-		// 保存 将创建的meeting 添加到数据库
-		for (int i = 0; i < _personList.size(); i++) {
-			_personList.get(i).save(MeetingAdd.this);
-		}
-		thisConference.save(MeetingAdd.this);
-
+		webRequestManager.createConference(_title, getUserId(), _reservedTime, "4", "", rids);
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -276,22 +284,12 @@ public class MeetingAdd extends BaseActivity {
 		case LocalConstant.MEETING_PARTICIPATOR_SELECT_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
 
-				participatorIDList = data
-						.getStringArrayListExtra("selected_id_list");
-				participatorNameList = data
-						.getStringArrayListExtra("selected_name_list");
-
+				List<Node> selectedPeople = (List<Node>) data.getExtras().get("data");
+				participator = selectedPeople;
 				String names = "";
-
-				for (int i = 0; i < participatorNameList.size(); i++) {
-
-					if (i != participatorNameList.size() - 1) {
-						names += participatorNameList.get(i).toString() + ";";
-					} else {
-						names += participatorNameList.get(i).toString();
-					}
+				for (Node item : selectedPeople) {
+					names += personDao.getPersonInfo(item.getId().substring(1)).getN() + "/";
 				}
-
 				meeting_participator.setText(names);
 			}
 
@@ -299,21 +297,12 @@ public class MeetingAdd extends BaseActivity {
 
 		case LocalConstant.MEETING_SPEAKER_SELECT_REQUEST_CODE:
 			if (resultCode == RESULT_OK) {
-				speakerIDList = data
-						.getStringArrayListExtra("selected_id_list");
-				speakerNameList = data
-						.getStringArrayListExtra("selected_name_list");
-				
-				String names="";
-				for (int i = 0; i < speakerNameList.size(); i++) {
-
-					if (i != speakerNameList.size() - 1) {
-						names += speakerNameList.get(i).toString() + ";";
-					} else {
-						names += speakerNameList.get(i).toString();
-					}
+				List<Node> selectedPeople = (List<Node>) data.getExtras().get("data");
+				speaker = selectedPeople;
+				String names = "";
+				for (Node item : selectedPeople) {
+					names += personDao.getPersonInfo(item.getId().substring(1)).getN() + "/";
 				}
-
 				meeting_speaker.setText(names);
 			}
 
@@ -324,7 +313,6 @@ public class MeetingAdd extends BaseActivity {
 		}
 	}
 
-	
 	private void showDateTimePicker() {
 		Calendar calendar = Calendar.getInstance();
 		int year = calendar.get(Calendar.YEAR);
@@ -389,15 +377,12 @@ public class MeetingAdd extends BaseActivity {
 			public void onChanged(WheelView wheel, int oldValue, int newValue) {
 				int year_num = newValue + START_YEAR;
 				// 判断大小月及是否闰年,用来确定"日"的数据
-				if (list_big
-						.contains(String.valueOf(wv_month.getCurrentItem() + 1))) {
+				if (list_big.contains(String.valueOf(wv_month.getCurrentItem() + 1))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 31));
-				} else if (list_little.contains(String.valueOf(wv_month
-						.getCurrentItem() + 1))) {
+				} else if (list_little.contains(String.valueOf(wv_month.getCurrentItem() + 1))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if ((year_num % 4 == 0 && year_num % 100 != 0)
-							|| year_num % 400 == 0)
+					if ((year_num % 4 == 0 && year_num % 100 != 0) || year_num % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else
 						wv_day.setAdapter(new NumericWheelAdapter(1, 28));
@@ -414,8 +399,7 @@ public class MeetingAdd extends BaseActivity {
 				} else if (list_little.contains(String.valueOf(month_num))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year
-							.getCurrentItem() + START_YEAR) % 100 != 0)
+					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
 							|| (wv_year.getCurrentItem() + START_YEAR) % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else
@@ -434,8 +418,7 @@ public class MeetingAdd extends BaseActivity {
 		wv_month.TEXT_SIZE = textSize;
 		wv_year.TEXT_SIZE = textSize;
 		Button btn_sure = (Button) view.findViewById(R.id.btn_datetime_sure);
-		Button btn_cancel = (Button) view
-				.findViewById(R.id.btn_datetime_cancel);
+		Button btn_cancel = (Button) view.findViewById(R.id.btn_datetime_cancel);
 		// 确定按钮
 		btn_sure.setOnClickListener(new OnClickListener() {
 			@Override
@@ -449,14 +432,10 @@ public class MeetingAdd extends BaseActivity {
 				String _nowTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")// 创建时间
 						.format(new Date(System.currentTimeMillis()));
 
-				String currentSelectTime = (wv_year.getCurrentItem() + START_YEAR)
-						+ "-"
-						+ decimal.format((wv_month.getCurrentItem() + 1))
-						+ "-"
-						+ decimal.format((wv_day.getCurrentItem() + 1))
-						+ " "
-						+ decimal.format(wv_hours.getCurrentItem())
-						+ ":"
+				String currentSelectTime = (wv_year.getCurrentItem() + START_YEAR) + "-"
+						+ decimal.format((wv_month.getCurrentItem() + 1)) + "-"
+						+ decimal.format((wv_day.getCurrentItem() + 1)) + " "
+						+ decimal.format(wv_hours.getCurrentItem()) + ":"
 						+ decimal.format(wv_mins.getCurrentItem()) + ":00";
 
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -472,8 +451,7 @@ public class MeetingAdd extends BaseActivity {
 
 				long mins = (selectTime.getTime() - nowTime.getTime()) / 6000;
 				if (mins < 3) {
-					Toast.makeText(MeetingAdd.this, "选择时间小于当前时间，请重新选择",
-							Toast.LENGTH_SHORT).show();
+					Toast.makeText(MeetingAdd.this, "选择时间小于当前时间，请重新选择", Toast.LENGTH_SHORT).show();
 				} else {
 					// 设置日期的显示
 					meeting_time.setText(currentSelectTime);
@@ -492,5 +470,5 @@ public class MeetingAdd extends BaseActivity {
 		dialog.setContentView(view);
 		dialog.show();
 	}
-		
+
 }

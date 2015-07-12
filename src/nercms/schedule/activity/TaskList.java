@@ -53,7 +53,6 @@ public class TaskList extends BaseActivity {
 	private TextView tvActivityTitle;
 	private Button btnBack;
 	private ListView mListView;
-	private TaskListViewAdapter mAdapter;
 	private Handler mHandler;
 	private TextView mName, mContent, mParticipator, mDeadline, mReply;
 
