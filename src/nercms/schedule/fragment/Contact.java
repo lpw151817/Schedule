@@ -38,6 +38,7 @@ import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.Toast;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
+import android.wxapp.service.dao.*;
 import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.person.Org;
 import android.wxapp.service.jerry.model.person.OrgInfo;
@@ -74,6 +75,7 @@ public class Contact extends SherlockFragment {
 	// 获取数据相关
 	private static DAOFactory daoFactory = DAOFactory.getInstance();
 	private PersonDao dao;
+	private GroupDao groupDao;
 	// public ArrayList<OrgNodeModel> orgNodeSecondList;
 	// public Map<String, Map<String, ArrayList<StructuredStaffModel>>>
 	// bigTreeMap;
@@ -92,6 +94,7 @@ public class Contact extends SherlockFragment {
 		userID = MySharedPreference.get(getActivity(), MySharedPreference.USER_ID, null);
 		View view = inflater.inflate(R.layout.contact_fragment, null);
 		dao = new PersonDao(getActivity().getApplicationContext());
+		groupDao = new GroupDao(getActivity().getApplicationContext());
 		personalBtn = (Button) view.findViewById(R.id.btn_contacts_personal);
 		enterpriseBtn = (Button) view.findViewById(R.id.btn_contacts_company);
 		listView = (ListView) view.findViewById(R.id.id_tree);
@@ -194,6 +197,8 @@ public class Contact extends SherlockFragment {
 				return;
 			}
 
+			data.addAll(groupDao.queryMyAllGroups2("", userID));
+
 			SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(listView,
 					getActivity().getApplicationContext(), data, 0);
 			listView.setAdapter(adapter);
@@ -222,7 +227,7 @@ public class Contact extends SherlockFragment {
 			adapter.setOnTreeNodeLongClickListener(new onTreeNodeLongClickListener() {
 
 				@Override
-				public void onLongClick(final Node node,  int position) {
+				public void onLongClick(final Node node, int position) {
 					if (myself != null) {
 						if (myself.isThisParent(node)) {
 							new AlertDialog.Builder(getActivity()).setTitle("是否进入基本群组聊天?")
@@ -233,9 +238,9 @@ public class Contact extends SherlockFragment {
 											// 跳转聊天
 											Intent intent = new Intent(getActivity(), ChatDetail.class);
 											Bundle bundle = new Bundle();
-											//标志为消息
+											// 标志为消息
 											bundle.putInt("entrance_type", 1);
-											List<Node> tempData=new ArrayList<Node>();
+											List<Node> tempData = new ArrayList<Node>();
 											tempData.add(node);
 											bundle.putSerializable("data", (Serializable) tempData);
 											getActivity().startActivity(intent);

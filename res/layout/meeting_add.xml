@@ -35,8 +35,7 @@
                     android:layout_height="wrap_content"
                     android:text=" 主    题  :"
                     android:textColor="@android:color/black"
-                    android:textSize="17.0dip"
-                    />
+                    android:textSize="17.0dip" />
 
                 <EditText
                     android:id="@+id/meeting_title"
@@ -44,9 +43,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dip"
                     android:layout_weight="1"
-                    android:textSize="15.0dip"
                     android:background="@drawable/edit_text"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:textSize="15.0dip" />
             </LinearLayout>
 
             <LinearLayout
@@ -74,9 +73,9 @@
                     android:layout_marginLeft="5dip"
                     android:layout_weight="1"
                     android:background="@drawable/edit_text"
-                    android:textSize="15.0dip"
+                    android:singleLine="true"
                     android:textColor="@color/black"
-                    android:singleLine="true" />
+                    android:textSize="15.0dip" />
             </LinearLayout>
 
             <LinearLayout
@@ -109,11 +108,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true"
+                        android:checked="true"
                         android:text="预约会议"
                         android:textColor="@android:color/holo_blue_dark"
                         android:textSize="14sp" >
                     </RadioButton>
 
+                    <!--
                     <RadioButton
                         android:id="@+id/radio_meeting_type2"
                         android:layout_width="wrap_content"
@@ -123,6 +124,7 @@
                         android:textColor="@android:color/holo_blue_dark"
                         android:textSize="14sp" >
                     </RadioButton>
+                    -->
                 </RadioGroup>
             </LinearLayout>
 
@@ -150,12 +152,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dip"
                     android:layout_weight="1"
-                    android:editable="false"
-                    android:textSize="15.0dip"
-                    android:hint="至多三人"
                     android:background="@drawable/edit_text"
+                    android:editable="false"
                     android:inputType="textMultiLine"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:textSize="15.0dip" />
 
                 <ImageButton
                     android:id="@+id/meeting_speaker_picker_ib"
@@ -169,7 +170,7 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/mm_title_btn_contact_normal" />
             </LinearLayout>
-            
+
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -194,12 +195,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dip"
                     android:layout_weight="1"
-                    android:editable="false"
-                    android:hint="非必选"
-                    android:textSize="15.0dip"
                     android:background="@drawable/edit_text"
+                    android:editable="false"
                     android:inputType="textMultiLine"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:textSize="15.0dip" />
 
                 <ImageButton
                     android:id="@+id/meeting_participator_picker_ib"
@@ -239,10 +239,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dp"
                     android:layout_weight="1"
-                    android:textSize="15.0dip"
-                    android:editable="false"
                     android:background="@drawable/edit_text"
-                    android:singleLine="true" />
+                    android:editable="false"
+                    android:singleLine="true"
+                    android:textSize="15.0dip" />
 
                 <ImageButton
                     android:id="@+id/meeting_add_select_time"

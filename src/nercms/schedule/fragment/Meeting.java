@@ -16,26 +16,22 @@ import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockFragment;
 
-public class Meeting extends SherlockFragment{
-	
-	private DAOFactory daoFactory = DAOFactory.getInstance();
+public class Meeting extends SherlockFragment {
+
 	private MeetingListViewAdapter meetingAdapter;
 	private ListView meetingListView;
-	private ConferenceDao conferenceDao;
 	private String userID;
 
-	public static Meeting newInstance(){
+	public static Meeting newInstance() {
 		Meeting meetingFragment = new Meeting();
 		return meetingFragment;
 	}
-	
+
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.meeting_fragment, null);
 
-		userID = MySharedPreference.get(getActivity(),
-				MySharedPreference.USER_ID, "");
+		userID = MySharedPreference.get(getActivity(), MySharedPreference.USER_ID, "");
 
 		meetingListView = (ListView) v.findViewById(R.id.meeting_list);
 
@@ -45,18 +41,8 @@ public class Meeting extends SherlockFragment{
 	}
 
 	private void initData() {
-//		conferenceDao = daoFactory.getConferenceDao(getActivity());
-//		ArrayList<ConferenceModel> conferenceList = conferenceDao
-//				.getConferenceListByID(userID);
-//		meetingAdapter = new MeetingListViewAdapter(getActivity(),
-//				conferenceList);
-//		meetingListView.setAdapter(meetingAdapter);
-	}
-	
-	@Override
-	public void onResume() {
-		super.onResume();
-		initData();
+		meetingAdapter = new MeetingListViewAdapter(getActivity(), userID);
+		meetingListView.setAdapter(meetingAdapter);
 	}
 
 }

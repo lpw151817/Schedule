@@ -1,6 +1,7 @@
 package nercms.schedule.activity;
 
 import java.io.File;
+import java.security.acl.Group;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -38,6 +39,7 @@ import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.AttachmentDao;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.FeedbackDao;
+import android.wxapp.service.dao.GroupDao;
 import android.wxapp.service.dao.MessageDao;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
@@ -115,6 +117,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	// 2014-7-30 WeiHao
 	// 群消息标志：0-个人消息；1-群消息
 	private int isGroup = 0;
+	private GroupDao groupDao;
 
 	// 2041-8-9
 	// 任务状态：2-已完成任务，限制反馈编辑发送，仅供查看
@@ -127,6 +130,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_detail);
 		this.personDao = new PersonDao(this);
+		this.groupDao = new GroupDao(this);
 		entranceType = getIntent().getExtras().getInt("entrance_type");
 
 		// 启动activity时不自动弹出软键盘
@@ -151,10 +155,11 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				if (selectedPerson.size() == 1) {
 					personID = selectedPerson.get(0).getId().substring(1);
 					// 群聊
-					if (selectedPerson.get(0).getId().startsWith("o")) {
+					if (selectedPerson.get(0).getId().startsWith("o")
+							|| selectedPerson.get(0).getId().startsWith("g")) {
 						isGroup = 1;
-						// TODO personName 赋值！
-
+						// personName 赋值
+						personName = groupDao.queryGroupById(personID).getN();
 					}
 					// 私聊
 					else if (selectedPerson.get(0).getId().startsWith("p")) {

@@ -22,6 +22,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -80,9 +81,9 @@ public class MeetingAdd extends BaseActivity {
 	// 控件
 	private EditText meeting_title;// 会议主题
 	private EditText meeting_starter;// 会议发起人 即为当前登录用户
-	private RadioGroup meeting_type;// 会议类型
+	// private RadioGroup meeting_type;// 会议类型
 	private RadioButton type1_select;// 预约
-	private RadioButton type2_select;// 即时
+	// private RadioButton type2_select;// 即时
 	private EditText meeting_participator;// 会议参与者
 	private EditText meeting_time;// 预约会议时间
 	private ImageButton select_participator;
@@ -112,32 +113,38 @@ public class MeetingAdd extends BaseActivity {
 		// 初始化控件
 		meeting_title = (EditText) findViewById(R.id.meeting_title);
 		meeting_starter = (EditText) findViewById(R.id.meeting_starter);
-		meeting_type = (RadioGroup) findViewById(R.id.radioGroup_meeting_type);
+		// meeting_type = (RadioGroup)
+		// findViewById(R.id.radioGroup_meeting_type);
 		type1_select = (RadioButton) findViewById(R.id.radio_meeting_type1);
-		type2_select = (RadioButton) findViewById(R.id.radio_meeting_type2);
+		// type2_select = (RadioButton) findViewById(R.id.radio_meeting_type2);
 		timePickerLayout = (LinearLayout) findViewById(R.id.meeting_add_time_ll);
-		type2_select.setChecked(true);
-		timePickerLayout.setVisibility(View.GONE);
+		// type2_select.setChecked(true);
+		timePickerLayout.setVisibility(View.VISIBLE);
 
 		meeting_participator = (EditText) findViewById(R.id.meeting_participator);
+		meeting_participator.setEnabled(false);
+		meeting_participator.setTextColor(Color.BLACK);
 		select_participator = (ImageButton) findViewById(R.id.meeting_participator_picker_ib);
 
 		meeting_speaker = (EditText) findViewById(R.id.meeting_speaker);
+		meeting_speaker.setEnabled(false);
+		meeting_speaker.setTextColor(Color.BLACK);
 		select_speaker = (ImageButton) findViewById(R.id.meeting_speaker_picker_ib);
 
 		meeting_time = (EditText) findViewById(R.id.add_meeting_time);
 		select_time = (ImageButton) findViewById(R.id.meeting_add_select_time);// 选择时间控件
-		// 监听 单选按钮
-		meeting_type.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-			public void onCheckedChanged(RadioGroup group, int checkedId) {
-				// 选择即时会议 隐藏时间选择布局 选择预约会议 显示时间选择布局
-				if (type1_select.getId() == checkedId) {
-					timePickerLayout.setVisibility(View.VISIBLE);
-				} else {
-					timePickerLayout.setVisibility(View.GONE);
-				}
-			}
-		});
+		// // 监听 单选按钮
+		// meeting_type.setOnCheckedChangeListener(new
+		// RadioGroup.OnCheckedChangeListener() {
+		// public void onCheckedChanged(RadioGroup group, int checkedId) {
+		// // 选择即时会议 隐藏时间选择布局 选择预约会议 显示时间选择布局
+		// if (type1_select.getId() == checkedId) {
+		// timePickerLayout.setVisibility(View.VISIBLE);
+		// } else {
+		// timePickerLayout.setVisibility(View.GONE);
+		// }
+		// }
+		// });
 		// 监听 责任人选择
 		select_participator.setOnClickListener(new OnClickListener() {
 			@Override
@@ -173,6 +180,7 @@ public class MeetingAdd extends BaseActivity {
 		meeting_starter.setEnabled(false);// 会议发起人 不可编辑
 		meeting_starter.setText(personDao.getCustomer().getN());
 		meeting_time.setEnabled(false);// 预约会议时间默认显示为当前系统时间
+		meeting_time.setTextColor(Color.BLACK);
 
 		handler = new Handler() {
 
@@ -276,7 +284,8 @@ public class MeetingAdd extends BaseActivity {
 			return;
 		}
 
-		webRequestManager.createConference(_title, getUserId(), _reservedTime, "4", "", rids);
+		webRequestManager.createConference(_title, getUserId(), Utils.parseDateInFormat(_reservedTime),
+				"4", "", "", rids);
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {

@@ -1,8 +1,10 @@
 package nercms.schedule.activity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import nercms.schedule.R;
+import nercms.schedule.utils.Utils;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -10,6 +12,8 @@ import android.wxapp.service.dao.ConferenceDao;
 import android.wxapp.service.dao.ConferencePersonDao;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
+import android.wxapp.service.jerry.model.conference.ConferenceUpdateQueryResponseItem;
+import android.wxapp.service.jerry.model.conference.ConferenceUpdateQueryResponseRids;
 import android.wxapp.service.model.ConferenceModel;
 import android.wxapp.service.model.ConferencePersonModel;
 
@@ -28,17 +32,14 @@ public class MeetingDetail extends BaseActivity {
 	private TextView timeTv;// 会议时间
 
 	private String conferenceID;
-	private DAOFactory daoFactory;
 	private PersonDao personDao;
 	private ConferenceDao conferenceDao;
-	private ConferencePersonDao conferencePersonDao;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.meeting_detail);
 
 		conferenceID = getIntent().getExtras().getString("conference_id");
-		daoFactory = DAOFactory.getInstance();
 
 		initView();
 		initData();
@@ -59,78 +60,37 @@ public class MeetingDetail extends BaseActivity {
 	}
 
 	private void initData() {
-		personDao = daoFactory.getPersonDao(MeetingDetail.this);
-		conferenceDao = daoFactory.getConferenceDao(MeetingDetail.this);
-		conferencePersonDao = daoFactory.getConferencePersonDao(MeetingDetail.this);
-		ConferenceModel conference = conferenceDao.getConferenceByID(conferenceID);
-		ArrayList<ConferencePersonModel> cpList = conferencePersonDao
-				.getConferencePersonListByID(conferenceID);
-
+		personDao = new PersonDao(MeetingDetail.this);
+		conferenceDao = new ConferenceDao(MeetingDetail.this);
+		ConferenceUpdateQueryResponseItem data = conferenceDao.getConferenceByCid(conferenceID);
 		// 发起人姓名
-		String sponsorName = personDao.getPersonInfo(conference.getSponsorID() + "").getUn();
+		String sponsorName = personDao.getPersonInfo(data.getSid()).getN();
 		sponsorTv.setText(sponsorName);
 		// 会议主题
-		titleTv.setText(conference.getConferenceName());
+		titleTv.setText(data.getN());
 
-		// 2014-8-8
 		// 从所有参会人员列表中，提取出发言人列表和参与者（听众）列表
-		ArrayList<ConferencePersonModel> speakerList = new ArrayList<ConferencePersonModel>();
-		ArrayList<ConferencePersonModel> participatorList = new ArrayList<ConferencePersonModel>();
-		for (int i = 0; i < cpList.size(); i++) {
-			if (cpList.get(i).getIsSpeaker() == 1) {
-				speakerList.add(cpList.get(i));
-			} else {
-				participatorList.add(cpList.get(i));
+		String tempSpeaker = "";
+		String tempListener = "";
+		List<ConferenceUpdateQueryResponseRids> rids = data.getRids();
+		for (ConferenceUpdateQueryResponseRids item : rids) {
+			if (item.getT().equals("1")) {// 发言人
+				tempSpeaker += (personDao.getPersonInfo(item.getRid()).getN() + "/");
+			} else if (item.getT().equals("2")) {// 收听人
+				tempListener += (personDao.getPersonInfo(item.getRid()).getN() + "/");
 			}
 		}
-
-		// 发言人姓名字符串
-		// 会议发起人默认为第一个发言人
-		String speakerNameString = sponsorName;
-		if (speakerList != null) {
-			String personID;
-			// speakerNameString += " ; ";
-			for (int i = 0; i < speakerList.size(); i++) {
-				personID = String.valueOf(speakerList.get(i).getPersonID());
-				if (i != speakerList.size() - 1) {
-					speakerNameString += personDao.getPersonInfo(personID).getUn() + " ; ";
-				} else {
-					speakerNameString += personDao.getPersonInfo(personID).getUn();
-				}
-			}
+		speakerTv.setText(tempSpeaker);
+		participatorTv.setText(tempListener);
+		typeTv.setText("预约会议");
+		if (Long.parseLong(data.getCt()) > System.currentTimeMillis()) {
+			statusTv.setText("已预约，等待开始");
+			iconIv.setImageResource(R.drawable.meeting_clock);
+		} else {
+			statusTv.setText("已结束");
+			iconIv.setImageResource(R.drawable.meeting_over);
 		}
-		speakerTv.setText(speakerNameString);
-
-		// 参与者姓名字符串
-		String participatorNameString = "";
-		if (participatorList != null) {
-			String personID;
-			participatorNameString = "";
-			for (int i = 0; i < participatorList.size(); i++) {
-				personID = String.valueOf(participatorList.get(i).getPersonID());
-				if (i != participatorList.size() - 1) { // 非最后一项
-					participatorNameString += personDao.getPersonInfo(personID).getUn() + " ; ";
-				} else { // 最后一项，不显示分号
-					participatorNameString += personDao.getPersonInfo(personID).getUn();
-				}
-			}
-		}
-		participatorTv.setText(participatorNameString);
-
-		if (conference.getType() == 3) { // 预约的会议
-			typeTv.setText("预约会议");
-			if (conference.getStatus() == 3) {
-				statusTv.setText("已预约，等待开始");
-			} else if (conference.getStatus() == 2) {
-				statusTv.setText("已结束");
-			}
-			timeTv.setText(conference.getReservationTime());
-		} else if (conference.getType() == 1) { // 即时会议
-			if (conference.getStatus() == 2) {
-				typeTv.setText("已结束");
-			}
-			timeTv.setText(conference.getStartTime());
-		}
+		timeTv.setText(Utils.formatDateMs(data.getCt()));
 
 	}
 

@@ -22,6 +22,7 @@ import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.normal.NormalServerResponse;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.thread.SaveConferenceThread;
 import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.MySharedPreference;
 
@@ -74,6 +75,10 @@ public class UpdateService extends Service {
 					webRequestManager.getMessageUpdate("1");
 					// 更新会议
 					webRequestManager.updateConference("1");
+					// group
+					webRequestManager.getGroupUpdateRequest("1");
+					// gps
+					webRequestManager.getGpsUpdateRequest("1");
 				}
 			};
 		}
@@ -140,6 +145,20 @@ public class UpdateService extends Service {
 				Contants.METHOD_AFFAIRS_UPDATE_LIST);
 		MessageHandlerManager.getInstance().register(mHandler, Constant.UPDATE_MESSAGE_REQUEST_FAIL,
 				Contants.METHOD_MESSAGE_UPDATE);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.CONFERENCE_SAVE_SUCCESS,
+				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.CONFERENCE_SAVE_FAIL,
+				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.GROUP_SAVE_SECCESS,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.GROUP_SAVE_FAIL,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.SAVE_GPS_SECCESS,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.SAVE_GPS_FAIL,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().register(mHandler, Constant.QUERY_GPSS_REQUEST_FAIL,
+				Contants.METHOD_GPS_UPDAET);
 	}
 
 	@Override
@@ -161,5 +180,19 @@ public class UpdateService extends Service {
 				Contants.METHOD_AFFAIRS_UPDATE_LIST);
 		MessageHandlerManager.getInstance().unregister(Constant.UPDATE_MESSAGE_REQUEST_FAIL,
 				Contants.METHOD_MESSAGE_UPDATE);
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_SAVE_SUCCESS,
+				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_SAVE_FAIL,
+				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.GROUP_SAVE_SECCESS,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().unregister(Constant.GROUP_SAVE_FAIL,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_GPS_SECCESS,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_GPS_FAIL,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_GPSS_REQUEST_FAIL,
+				Contants.METHOD_GPS_UPDAET);
 	}
 }

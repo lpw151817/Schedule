@@ -1,6 +1,7 @@
 package nercms.schedule.activity;
 
 import java.io.File;
+import java.text.BreakIterator;
 
 import org.acra.collector.CrashReportData;
 
@@ -60,7 +61,7 @@ import com.actionbarsherlock.view.MenuItem;
  * @date 2014-03-02
  * @version V1.0
  * @description 输入用户名密码 登录系统
- * 
+ *
  * @version V1.1
  * @author WEIHAO
  * @date 2014-6-25
@@ -89,32 +90,30 @@ public class Login extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login);
 
-		// 用户测试使用，直接跳过本Activity
-		startActivity(Main.class);
-		return;
+		 // 用户测试使用，直接跳过本Activity
+		 startActivity(Main.class);
+		 return;
 
-		// Log.v("Login", "Login onCreate");
-		// webRequestManager = new
-		// WebRequestManager(AppApplication.getInstance(), Login.this);
-		//
-		// initActionBar();
-		//
-		// etUserName = (EditText) findViewById(R.id.login_user_edit);
-		// etPassword = (EditText) findViewById(R.id.login_passwd_edit);
-		//
-		// // 默认显示上次登录的用户ID
-		// etUserName.setText(MySharedPreference.get(Login.this,
-		// MySharedPreference.USER_NAME, ""));
-		//
-		// btnLogin = (Button) findViewById(R.id.login_login_btn);
-		// btnLogin.setOnClickListener(new OnClickListener() {
-		//
-		// @Override
-		// public void onClick(View arg0) {
-		// MyLog.i(TAG, "登录按钮点击");
-		// login_mainschedule();
-		// }
-		// });
+//		Log.v("Login", "Login onCreate");
+//		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
+//
+//		initActionBar();
+//
+//		etUserName = (EditText) findViewById(R.id.login_user_edit);
+//		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
+//
+//		// 默认显示上次登录的用户ID
+//		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
+//
+//		btnLogin = (Button) findViewById(R.id.login_login_btn);
+//		btnLogin.setOnClickListener(new OnClickListener() {
+//
+//			@Override
+//			public void onClick(View arg0) {
+//				MyLog.i(TAG, "登录按钮点击");
+//				login_mainschedule();
+//			}
+//		});
 
 	}
 
@@ -196,6 +195,10 @@ public class Login extends BaseActivity {
 					getMessageUpdate();
 					// conference的更新操作
 					getConferenceUpdate();
+					// group的更新
+					getGroupUpdate();
+					// // TODO gps update
+					// getGpsUpdate();
 
 					// 获取个人信息数据
 					GetPersonInfoResponse mPersonInfo = DAOFactory.getInstance()
@@ -277,6 +280,21 @@ public class Login extends BaseActivity {
 					dismissProgressDialog();
 					Toast.makeText(Login.this, "Conference Update Failed", Toast.LENGTH_LONG).show();
 					break;
+				case Constant.GROUP_SAVE_SECCESS:
+					isGetGroup = true;
+					startInMain();
+					break;
+				case Constant.GROUP_SAVE_FAIL:
+					dismissProgressDialog();
+					Toast.makeText(Login.this, "Group Update Failed", Toast.LENGTH_LONG).show();
+					break;
+				case Constant.SAVE_GPS_SECCESS:
+					isGetGps = true;
+					startInMain();
+					break;
+				case Constant.SAVE_GPS_FAIL:
+					dismissProgressDialog();
+					Toast.makeText(Login.this, "GPS Update Failed", Toast.LENGTH_LONG).show();
 				default:
 					Log.e("LoginActivity", msg.what + "<<<<未处理");
 					break;
@@ -290,7 +308,8 @@ public class Login extends BaseActivity {
 
 	// TODO 验证需要更改
 	private void startInMain() {
-		if (isGetAffair && isGetMessage && isGetOrgCode && isGetOrgPerson && isGetConference) {
+		if (isGetAffair && isGetMessage && isGetOrgCode && isGetOrgPerson && isGetConference
+				&& isGetGroup && isGetGps) {
 			dismissProgressDialog();
 			startActivity(new Intent(Login.this, Main.class));
 			// 打开定时更新的service
@@ -305,6 +324,27 @@ public class Login extends BaseActivity {
 	boolean isGetAffair = false;
 	boolean isGetMessage = false;
 	boolean isGetConference = false;
+	boolean isGetGroup = false;
+	// TODO
+	boolean isGetGps = true;
+
+	private void getGpsUpdate() {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_GPS_TIMESTAMP, null) == null) {
+			webRequestManager.getGpsUpdateRequest("1");
+		} else {
+			isGetGroup = true;
+			startInMain();
+		}
+	}
+
+	private void getGroupUpdate() {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_GROUP_TIMESTAMP, null) == null)
+			webRequestManager.getGroupUpdateRequest("1");
+		else {
+			isGetGroup = true;
+			startInMain();
+		}
+	}
 
 	// 获取组织相关信息并存入数据库
 	private void getOrgInfoUpdate() {
@@ -500,6 +540,16 @@ public class Login extends BaseActivity {
 				SaveConferenceThread.TAG);
 		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_SAVE_FAIL,
 				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().unregister(Constant.GROUP_SAVE_SECCESS,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().unregister(Constant.GROUP_SAVE_FAIL,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_GPS_SECCESS,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_GPS_FAIL,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_GPSS_REQUEST_FAIL,
+				Contants.METHOD_GPS_UPDAET);
 		Log.v("Login", "onDestroy,注册Handler");
 		super.onDestroy();
 	}
@@ -544,5 +594,15 @@ public class Login extends BaseActivity {
 				SaveConferenceThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_SAVE_FAIL,
 				SaveConferenceThread.TAG);
+		MessageHandlerManager.getInstance().register(handler, Constant.GROUP_SAVE_SECCESS,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().register(handler, Constant.GROUP_SAVE_FAIL,
+				Contants.METHOD_GROUP_UPDATE);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_GPS_SECCESS,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_GPS_FAIL,
+				Contants.METHOD_GPS_UPDAET);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_GPSS_REQUEST_FAIL,
+				Contants.METHOD_GPS_UPDAET);
 	}
 }
