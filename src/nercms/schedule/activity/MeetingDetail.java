@@ -1,21 +1,30 @@
 package nercms.schedule.activity;
 
+import java.lang.reflect.InvocationHandler;
 import java.util.ArrayList;
 import java.util.List;
 
 import nercms.schedule.R;
 import nercms.schedule.utils.Utils;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.ConferenceDao;
 import android.wxapp.service.dao.ConferencePersonDao;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
+import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.conference.ConferenceUpdateQueryResponseItem;
 import android.wxapp.service.jerry.model.conference.ConferenceUpdateQueryResponseRids;
+import android.wxapp.service.jerry.model.normal.NormalServerResponse;
 import android.wxapp.service.model.ConferenceModel;
 import android.wxapp.service.model.ConferencePersonModel;
+import android.wxapp.service.request.Contants;
+import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.util.Constant;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
@@ -35,15 +44,81 @@ public class MeetingDetail extends BaseActivity {
 	private PersonDao personDao;
 	private ConferenceDao conferenceDao;
 
+	private WebRequestManager manager;
+	private Handler handler;
+
+	ConferenceUpdateQueryResponseItem data;
+
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.meeting_detail);
+		
+		personDao = new PersonDao(MeetingDetail.this);
+		conferenceDao = new ConferenceDao(MeetingDetail.this);
 
 		conferenceID = getIntent().getExtras().getString("conference_id");
+
+		// 如果是从通知栏点击进来
+		if (getIntent().getBooleanExtra("isNotice", false)) {
+			data = conferenceDao.getConferenceByCid(conferenceID);
+			// 如果本地没有数据
+			if (data == null) {
+				showProgressDialog("loading...");
+				iniHandler();
+				manager = new WebRequestManager(AppApplication.getInstance(), MeetingDetail.this);
+				manager.getConference(conferenceID);
+			} else {
+				iniParams();
+			}
+		} else {
+			iniParams();
+		}
+
+	}
+
+	void iniParams() {
 
 		initView();
 		initData();
 		initActionBar();
+	}
+
+	private void iniHandler() {
+		handler = new Handler() {
+
+			@Override
+			public void handleMessage(Message msg) {
+				// TODO Auto-generated method stub
+				switch (msg.what) {
+				case Constant.CONFERENCE_QUERY_SECCUESS:
+					dismissProgressDialog();
+					MeetingDetail.this.data = (ConferenceUpdateQueryResponseItem) msg.obj;
+					iniParams();
+					break;
+
+				case Constant.CONFERENCE_QUERY_FAIL:
+					dismissProgressDialog();
+					showLongToast("错误代码：" + ((NormalServerResponse) msg.obj).getEc());
+					break;
+				}
+			}
+
+		};
+		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_QUERY_SECCUESS,
+				Contants.METHOD_CONFERENCE_QUERY);
+		MessageHandlerManager.getInstance().register(handler, Constant.CONFERENCE_QUERY_FAIL,
+				Contants.METHOD_CONFERENCE_QUERY);
+
+	}
+
+	@Override
+	protected void onDestroy() {
+
+		super.onDestroy();
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_QUERY_SECCUESS,
+				Contants.METHOD_CONFERENCE_QUERY);
+		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_QUERY_FAIL,
+				Contants.METHOD_CONFERENCE_QUERY);
 	}
 
 	private void initView() {
@@ -60,9 +135,9 @@ public class MeetingDetail extends BaseActivity {
 	}
 
 	private void initData() {
-		personDao = new PersonDao(MeetingDetail.this);
-		conferenceDao = new ConferenceDao(MeetingDetail.this);
-		ConferenceUpdateQueryResponseItem data = conferenceDao.getConferenceByCid(conferenceID);
+		
+		data = conferenceDao.getConferenceByCid(conferenceID);
+
 		// 发起人姓名
 		String sponsorName = personDao.getPersonInfo(data.getSid()).getN();
 		sponsorTv.setText(sponsorName);

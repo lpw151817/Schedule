@@ -206,7 +206,7 @@ public class Contact extends SherlockFragment {
 
 				@Override
 				public void onClick(Node node, int position) {
-					if (node.isLeaf() && node.getId().startsWith("p")) {
+					if (node.isLeaf() && (node.getId().startsWith("p") || node.getId().startsWith("g"))) {
 						if (node.getId().substring(1).equals(userID)) {
 							Toast.makeText(getActivity(), "不能跟自己聊天！", Toast.LENGTH_LONG).show();
 						} else {
@@ -220,7 +220,6 @@ public class Contact extends SherlockFragment {
 							Contact.this.startActivity(intent);
 						}
 					}
-
 				}
 			});
 

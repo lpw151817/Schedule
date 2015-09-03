@@ -13,6 +13,8 @@ import nercms.schedule.adapter.SuperTreeViewAdapter;
 import nercms.schedule.adapter.TreeViewAdapter;
 import nercms.schedule.utils.LocalConstant;
 import nercms.schedule.utils.Utils;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,12 +25,19 @@ import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.wxapp.service.AppApplication;
 import android.wxapp.service.dao.DAOFactory;
+import android.wxapp.service.dao.GroupDao;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
+import android.wxapp.service.jerry.model.group.CreateGroupResponse;
+import android.wxapp.service.jerry.model.group.GroupUpdateQueryRequestIds;
 import android.wxapp.service.jerry.model.person.Org;
 import android.wxapp.service.model.OrgNodeModel;
 import android.wxapp.service.model.StructuredStaffModel;
+import android.wxapp.service.request.Contants;
+import android.wxapp.service.request.WebRequestManager;
+import android.wxapp.service.util.Constant;
 import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockActivity;
@@ -109,7 +118,24 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 				// check_contact_id_list.remove((String[]) msg.obj);
 				// select_ok.setTitle("确定(" + check_count + ")");
 				// break;
+				case Constant.GROUP_CREATE_SECCESS:
+					if (selectedPerson != null) {
+						CreateGroupResponse r = (CreateGroupResponse) msg.obj;
+						Intent intent = new Intent(ContactSelect.this, ChatDetail.class);
+						intent.putExtra("entrance_type", 1); // 消息详情界面入口
+						intent.putExtra("selected_id", Integer.parseInt(r.getGid()));
+						GroupDao dao = new GroupDao(ContactSelect.this);
+						intent.putExtra("selected_name", dao.queryGroupById(r.getGid()).getN());
+						intent.putExtra("isGroup", true);
+						startActivity(intent);
+						ContactSelect.this.finish();
+					} else {
+						showLongToast("创建自定义群组失败");
+					}
+					break;
+				case Constant.GROUP_CREATE_FAIL:
 
+					break;
 				default:
 					break;
 				}
@@ -117,10 +143,19 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler, LocalConstant.SELECT_CONTACT_CHECKED,
-				"ContactSelect");
-		MessageHandlerManager.getInstance().register(handler, LocalConstant.SELECT_CONTACT_UNCHECKED,
-				"ContactSelect");
+		MessageHandlerManager.getInstance().register(handler, Constant.GROUP_CREATE_SECCESS,
+				Contants.METHOD_GROUP_CREATE);
+		MessageHandlerManager.getInstance().register(handler, Constant.GROUP_CREATE_FAIL,
+				Contants.METHOD_GROUP_CREATE);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		MessageHandlerManager.getInstance().unregister(Constant.GROUP_CREATE_SECCESS,
+				Contants.METHOD_GROUP_CREATE);
+		MessageHandlerManager.getInstance().unregister(Constant.GROUP_CREATE_FAIL,
+				Contants.METHOD_GROUP_CREATE);
 	}
 
 	// actionbar初始化
@@ -184,9 +219,30 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 					break;
 
 				case 2: // 发起消息
-					intent = new Intent(ContactSelect.this, ChatDetail.class);
-					intent.putExtra("entrance_type", 1); // 消息详情界面入口
-					intent.putExtra("data", (Serializable) selectedPerson);
+					if (selectedPerson.size() > 1) {
+						showAlterDialog("创建自定义群组", "是否创建自定义群组？", null, "确定", new OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								List<GroupUpdateQueryRequestIds> rids = new ArrayList<GroupUpdateQueryRequestIds>();
+								for (Node item : selectedPerson) {
+									rids.add(new GroupUpdateQueryRequestIds(item.getId().substring(1)));
+								}
+								rids.add(new GroupUpdateQueryRequestIds(getUserId()));
+								WebRequestManager manager = new WebRequestManager(AppApplication
+										.getInstance(), ContactSelect.this);
+								manager.createGroup("2", dao.getCustomer().getN() + "创建的群组",
+										System.currentTimeMillis() + "",
+										System.currentTimeMillis() + "", rids);
+							}
+						}, "取消", null);
+					} else {
+						intent = new Intent(ContactSelect.this, ChatDetail.class);
+						intent.putExtra("entrance_type", 1); // 消息详情界面入口
+						intent.putExtra("data", (Serializable) selectedPerson);
+						startActivity(intent);
+						this.finish();
+					}
 					// // 2014-7-15 WeiHao
 					// if (id.contains("Group")) {
 					// intent.putExtra("selected_id",
@@ -194,8 +250,7 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 					// } else {
 					// intent.putExtra("selected_id", Integer.parseInt(id));
 					// }
-					startActivity(intent);
-					this.finish();
+
 					break;
 				case 3: // 发起会议 参与者选择
 					intent = new Intent();

@@ -14,7 +14,10 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.wxapp.service.dao.DAOFactory;
+import android.wxapp.service.dao.GroupDao;
 import android.wxapp.service.dao.PersonDao;
+import android.wxapp.service.jerry.model.group.GroupUpdateQueryRequestGroups;
+import android.wxapp.service.jerry.model.group.GroupUpdateQueryRequestIds;
 import android.wxapp.service.jerry.model.person.Contacts;
 import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.jerry.model.person.Contacts.CONTACT_ITEM;
@@ -37,6 +40,7 @@ public class ContactDetail extends BaseActivity {
 	// 本地数据请求入口
 	private static DAOFactory daoFactory = DAOFactory.getInstance();
 	private PersonDao personDao = null;
+	private GroupDao groupDao;
 	// 控件
 	private TextView name;
 	private TextView orgDesc;// 机构节点名称
@@ -62,7 +66,7 @@ public class ContactDetail extends BaseActivity {
 	public static final String TAG = "ContactDetail";
 	private SuperTreeViewAdapter superTree;
 	public TreeViewAdapter treeViewAdapter;
-	private ArrayList<StructuredStaffModel> memberSSMList;
+	// private ArrayList<StructuredStaffModel> memberSSMList;
 
 	private String IMSI = "";
 
@@ -78,6 +82,7 @@ public class ContactDetail extends BaseActivity {
 		if (getIntent().getExtras().getInt("IS_GROUP") == 1) { // 是群组点击
 			isGroup = true;
 			orgCode = getIntent().getExtras().getString("CONTACT_ID");
+			groupDao = new GroupDao(this);
 		} else {
 			isGroup = false;
 			contactID = getIntent().getExtras().getString("CONTACT_ID");
@@ -131,6 +136,7 @@ public class ContactDetail extends BaseActivity {
 					// 与orgID对应的群组发起一个群聊
 					Intent intent = new Intent(ContactDetail.this, ChatDetail.class);
 					intent.putExtra("entrance_type", 1);
+					intent.putExtra("isGroup", true);
 					intent.putExtra("selected_id", Integer.parseInt(orgCode));
 					intent.putExtra("selected_name", orgName);
 					startActivity(intent);
@@ -203,29 +209,34 @@ public class ContactDetail extends BaseActivity {
 		personDao = daoFactory.getPersonDao(ContactDetail.this);
 
 		if (isGroup) {
-			orgName = personDao.getOrgNodeByOrgID(orgCode).getDescription();
-			memberSSMList = personDao.getSSMFromOrgCode(orgCode);
-			if (memberSSMList.size() > 0) {
-				groupOrgTv.setText(memberSSMList.get(0).getOrgDescription());
-				name.setText(memberSSMList.get(0).getOrgDescription() + "群");
-
-				String memberNameString = "";
-				StructuredStaffModel memberSSM;
-				for (int i = 0; i < memberSSMList.size(); i++) {
-					memberSSM = memberSSMList.get(i);
-					if (i != memberSSMList.size() - 1) { // 非最后一项
-						// if (i % 2 != 0) { // 偶数项时（i为奇）加换行，保证每行显示两项
-						// memberNameString += memberSSM.getName() + ";"
-						// + "\n";
-						// } else { // 奇数项时
-						memberNameString += memberSSM.getName() + " ; ";
-						// }
-					} else { // 最后一项，不显示分号
-						memberNameString += memberSSM.getName();
-					}
-				}
-				groupPersonsTv.setText(memberNameString);
+			GroupUpdateQueryRequestGroups group = groupDao.queryGroupById(orgCode);
+			orgName = group.getN();
+			name.setText(group.getN());
+			groupOrgTv.setText("???这里应该填啥???");
+			String memberNameString = "";
+			for (GroupUpdateQueryRequestIds item : group.getRids()) {
+				memberNameString += (personDao.getPersonInfo(item.getRid()).getN() + "/");
 			}
+			groupPersonsTv.setText(memberNameString);
+
+			// if (memberSSMList.size() > 0) {
+			// String memberNameString = "";
+			// StructuredStaffModel memberSSM;
+			// for (int i = 0; i < memberSSMList.size(); i++) {
+			// memberSSM = memberSSMList.get(i);
+			// if (i != memberSSMList.size() - 1) { // 非最后一项
+			// // if (i % 2 != 0) { // 偶数项时（i为奇）加换行，保证每行显示两项
+			// // memberNameString += memberSSM.getName() + ";"
+			// // + "\n";
+			// // } else { // 奇数项时
+			// memberNameString += memberSSM.getName() + " ; ";
+			// // }
+			// } else { // 最后一项，不显示分号
+			// memberNameString += memberSSM.getName();
+			// }
+			// }
+			// groupPersonsTv.setText(memberNameString);
+			// }
 
 		} else {
 			GetPersonInfoResponse personInfo = personDao.getPersonInfo(contactID);

@@ -31,7 +31,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
         <activity
-            android:name="nercms.schedule.activity.Login"
+            android:name=".activity.Login"
             android:theme="@style/Theme.Schedule" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -50,79 +50,85 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="nercms.schedule.activity.Main"
+            android:name=".activity.Main"
             android:theme="@style/Theme.Schedule" >
         </activity>
         <activity
-            android:name="nercms.schedule.activity.Profile"
+            android:name=".activity.Profile"
             android:theme="@style/Theme.Schedule" >
         </activity>
         <activity
-            android:name="nercms.schedule.activity.TaskList"
+            android:name=".activity.TaskList"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.TaskDetail"
+            android:name=".activity.TaskDetail"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.TaskAdd"
+            android:name=".activity.TaskAdd"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.ChatDetail"
+            android:name=".activity.ChatDetail"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.ContactDetail"
+            android:name=".activity.ContactDetail"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.CustomerDetail"
+            android:name=".activity.CustomerDetail"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.ContactSelect"
+            android:name=".activity.ContactSelect"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.ContactAdd"
+            android:name=".activity.ContactAdd"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.PhoneDetail"
+            android:name=".activity.PhoneDetail"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.MeetingDetail"
+            android:name=".activity.MeetingDetail"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.MeetingAdd"
+            android:name=".activity.MeetingAdd"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.VoiceCall"
+            android:name=".activity.VoiceCall"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.VoiceMeeting"
+            android:name=".activity.VoiceMeeting"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Schedule" />
         <activity
-            android:name="nercms.schedule.activity.Setting"
-            android:theme="@android:style/Theme.Holo.Light" />
+            android:name=".activity.Setting"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Schedule" />
+        <activity
+            android:name="nercms.schedule.activity.SearchActivity"
+            android:label="@string/title_activity_search"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Schedule" >
+        </activity>
 
         <!-- 注册服务 -->
-        <service android:name="nercms.schedule.utils.SDCardService" >
+        <service android:name=".utils.SDCardService" >
             <intent-filter>
                 <action android:name="nercms.schedule.sdcardservice.action" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
-        
-        <service android:name="nercms.schedule.service.UpdateService" >
+        <service android:name=".service.UpdateService" >
         </service>
     </application>
 

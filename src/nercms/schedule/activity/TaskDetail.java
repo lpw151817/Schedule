@@ -60,6 +60,7 @@ import android.wxapp.service.handler.MessageHandlerManager;
 import android.wxapp.service.jerry.model.affair.CreateTaskRequestAttachment;
 import android.wxapp.service.jerry.model.affair.CreateTaskRequestIds;
 import android.wxapp.service.jerry.model.affair.QueryAffairInfoResponse;
+import android.wxapp.service.jerry.model.normal.NormalServerResponse;
 import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
 import android.wxapp.service.model.AffairAttachModel;
 import android.wxapp.service.model.AffairModel;
@@ -181,13 +182,60 @@ public class TaskDetail extends BaseActivity {
 				.build();// 构建完成
 
 		userID = MySharedPreference.get(TaskDetail.this, MySharedPreference.USER_ID, "");
-
-		// 根据任务界面传来的任务类型和任务状态初始化入口变量，任务ID
-		entranceType = getIntent().getIntExtra("type", -1);
-		entranceStatus = getIntent().getIntExtra("status", -1);
-		taskID = getIntent().getExtras().getString("id");
-
 		webRequestManager = new WebRequestManager(AppApplication.getInstance(), TaskDetail.this);
+
+		// 判断是否是从通知栏点击进来的
+		if (getIntent().getBooleanExtra("isNotice", false)) {
+			int aid = getIntent().getIntExtra("aid", -1);
+			QueryAffairInfoResponse data = new AffairDao(TaskDetail.this).getAffairInfoByAid(aid + "");
+			// 如果本地数据库没有
+			if (data != null) {
+				iniLocalParams(data);
+			}
+			// 本地数据库中有的话
+			else {
+				showProgressDialog("loading...");
+				webRequestManager.getAffair(aid + "");
+			}
+
+		} else {
+			// 根据任务界面传来的任务类型和任务状态初始化入口变量，任务ID
+			// 入口类型：1-发起任务；2-接收任务
+			entranceType = getIntent().getIntExtra("type", -1);
+			// 入口状态： 1-进行中（未完成）；2-已完成；3-已延迟
+			entranceStatus = getIntent().getIntExtra("status", -1);
+			taskID = getIntent().getExtras().getString("id");
+
+			// 准备数据
+			initData();
+			initActionBar();
+			// 初始化控件
+			initView();
+
+			// TODO
+			initHandler();
+		}
+
+	}
+
+	private void iniLocalParams(QueryAffairInfoResponse info) {
+		// 入口类型：1-发起任务；2-接收任务
+		if (info.getPod().contains(new CreateTaskRequestIds(getUserId()))) {
+			entranceType = 1;
+		} else
+			entranceType = 2;
+
+		// 当没有完成时间
+		if (info.getCt() == null) {
+			// 结束时间小于当前时间,任务已经延迟
+			if (info.getEt().compareTo(System.currentTimeMillis() + "") < 0) {
+				entranceStatus = 3;
+			} else
+				entranceStatus = 1;
+		} else {
+			entranceStatus = 2;
+		}
+		taskID = info.getAid();
 
 		// 准备数据
 		initData();
@@ -197,7 +245,6 @@ public class TaskDetail extends BaseActivity {
 
 		// TODO
 		initHandler();
-
 	}
 
 	private void initActionBar() {
@@ -206,7 +253,7 @@ public class TaskDetail extends BaseActivity {
 		getSupportActionBar().setDisplayShowTitleEnabled(true);
 		getSupportActionBar().setDisplayShowHomeEnabled(true);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		getSupportActionBar().setTitle("任务详情"); 
+		getSupportActionBar().setTitle("任务详情");
 	}
 
 	@Override
@@ -339,6 +386,15 @@ public class TaskDetail extends BaseActivity {
 					end_time.setTextColor(getResources().getColor(R.color.red));
 					Utils.showShortToast(TaskDetail.this, "任务截止时间已修改");
 					break;
+				case Constant.QUERY_TASK_INFO_REQUEST_SUCCESS:
+					dismissProgressDialog();
+					iniLocalParams((QueryAffairInfoResponse) msg.obj);
+					break;
+				case Constant.QUERY_TASK_INFO_REQUEST_FAIL:
+					dismissProgressDialog();
+					showLongToast("错误代码：" + ((NormalServerResponse) msg.obj).getEc());
+					Log.e(getClass().getName(), "错误代码：" + ((NormalServerResponse) msg.obj).getEc());
+					break;
 				default:
 					break;
 				}
@@ -354,6 +410,10 @@ public class TaskDetail extends BaseActivity {
 				"TaskDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.END_TASK_REQUEST_SUCCESS,
 				Contants.METHOD_AFFAIRS_END_TASK);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_TASK_INFO_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_QUERY_INFO);
+		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_TASK_INFO_REQUEST_FAIL,
+				Contants.METHOD_AFFAIRS_QUERY_INFO);
 	}
 
 	private void initView() {
@@ -644,6 +704,10 @@ public class TaskDetail extends BaseActivity {
 				"TaskDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS,
 				Contants.METHOD_AFFAIRS_END_TASK);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_TASK_INFO_REQUEST_SUCCESS,
+				Contants.METHOD_AFFAIRS_QUERY_INFO);
+		MessageHandlerManager.getInstance().unregister(Constant.QUERY_TASK_INFO_REQUEST_FAIL,
+				Contants.METHOD_AFFAIRS_QUERY_INFO);
 		freeBitmap();
 		super.onDestroy();
 	}

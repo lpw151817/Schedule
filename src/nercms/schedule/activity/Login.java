@@ -49,12 +49,13 @@ import android.wxapp.service.thread.SaveMessageUpdateThread;
 import android.wxapp.service.thread.SaveOrgCodePersonThread;
 import android.wxapp.service.thread.SaveOrgCodeThread;
 import android.wxapp.service.util.Constant;
-import android.wxapp.service.util.MQTT;
 import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.nercms.ICallBacks;
+import com.nercms.Push;
 
 /**
  * @author jiaocuina@gmail.com
@@ -73,6 +74,8 @@ public class Login extends BaseActivity {
 
 	private EditText etUserName; // 用户名编辑框
 	private EditText etPassword; // 密码编辑框
+	String un = "fm";
+	String pwd = "123456";
 
 	private Button btnLogin;// 登录按钮
 
@@ -90,30 +93,32 @@ public class Login extends BaseActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.login);
 
-		 // 用户测试使用，直接跳过本Activity
-		 startActivity(Main.class);
-		 return;
+		// // 用户测试使用，直接跳过本Activity
+		// startActivity(Main.class);
+		// return;
 
-//		Log.v("Login", "Login onCreate");
-//		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
-//
-//		initActionBar();
-//
-//		etUserName = (EditText) findViewById(R.id.login_user_edit);
-//		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
-//
-//		// 默认显示上次登录的用户ID
-//		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
-//
-//		btnLogin = (Button) findViewById(R.id.login_login_btn);
-//		btnLogin.setOnClickListener(new OnClickListener() {
-//
-//			@Override
-//			public void onClick(View arg0) {
-//				MyLog.i(TAG, "登录按钮点击");
-//				login_mainschedule();
-//			}
-//		});
+		Log.v("Login", "Login onCreate");
+		webRequestManager = new WebRequestManager(AppApplication.getInstance(), Login.this);
+
+		initActionBar();
+
+		etUserName = (EditText) findViewById(R.id.login_user_edit);
+		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
+		etUserName.setText(un);
+		etPassword.setText(pwd);
+
+		// 默认显示上次登录的用户ID
+		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
+
+		btnLogin = (Button) findViewById(R.id.login_login_btn);
+		btnLogin.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				MyLog.i(TAG, "登录按钮点击");
+				login_mainschedule();
+			}
+		});
 
 	}
 
@@ -173,19 +178,10 @@ public class Login extends BaseActivity {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							// 2014-6-24 WeiHao
-							// 2.mqtt订阅
-							try {
-								Log.v("Login", "id:" + getUserId());
-								// 订阅mqtt消息
-								MQTT.CLIENT_ID = "m_" + getUserId();
-								MQTT mqtt = MQTT.get_instance();
-								mqtt.publish_message(MQTT.SUBSCRIBE_TOPIC_PREFIX + MQTT.CLIENT_ID,
-										"Registration", 0);
-							} catch (Exception e) {
-								e.printStackTrace();
-								showLongToast("MQTT连接失败");
-							}
+
+							Push.PERSON_ID = getUserId();
+							Push.get_instance(Login.this).ini();
+
 						}
 					}).start();
 

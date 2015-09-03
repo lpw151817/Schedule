@@ -37,13 +37,13 @@ import android.wxapp.service.model.StructuredStaffModel;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.Constant;
-import android.wxapp.service.util.MQTT;
 import android.wxapp.service.util.MyNotification;
 import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.SubMenu;
+import com.nercms.Push;
 import com.viewpagerindicator.TabPageIndicator;
 
 /**
@@ -223,9 +223,10 @@ public class Main extends SherlockFragmentActivity {
 
 				case Constant.LOGOUT_REQUEST_SUCCESS:
 					// 注销mqtt
-					MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID, "");
+					Push.get_instance(Main.this).PERSON_ID = MySharedPreference.get(Main.this,
+							MySharedPreference.USER_ID, "");
 					try {
-						MQTT.get_instance().close();
+						Push.get_instance(Main.this).release();
 					} catch (Exception e) {
 						e.printStackTrace();
 						Toast.makeText(getApplicationContext(), "MQTT连接失败", Toast.LENGTH_LONG).show();
@@ -317,7 +318,7 @@ public class Main extends SherlockFragmentActivity {
 		// createSearchItem(menu);
 
 		// 搜索按钮
-		MenuItem search = menu.add("search");
+		MenuItem search = menu.add(0, -1, 0, "search");
 		search.setIcon(R.drawable.abs__ic_search);
 		search.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
@@ -360,14 +361,16 @@ public class Main extends SherlockFragmentActivity {
 		} else {
 
 			switch (item.getItemId()) {
+			// 搜索
+			case -1:
+				Intent intent = new Intent(Main.this, SearchActivity.class);
+				Main.this.startActivity(intent);
+				break;
 			case 1:
 				// 发起任务
 				Intent intent1 = new Intent(this, TaskAdd.class);
-
 				intent1.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);// 再次点击主菜单时将会清除该进程空间的所有子菜单Activity。
-
 				startActivity(intent1);
-
 				return true;
 			case 2:
 				// 发起消息
@@ -486,10 +489,10 @@ public class Main extends SherlockFragmentActivity {
 					@Override
 					public void onClick(DialogInterface arg0, int arg1) {
 						// 注销mqtt
-						MQTT.CLIENT_ID = MySharedPreference.get(Main.this, MySharedPreference.USER_ID,
-								"");
+						Push.get_instance(Main.this).PERSON_ID = MySharedPreference.get(Main.this,
+								MySharedPreference.USER_ID, "");
 						try {
-							MQTT.get_instance().close();
+							Push.get_instance(Main.this).release();
 						} catch (Exception e) {
 							e.printStackTrace();
 							Toast.makeText(getApplicationContext(), "MQTT连接失败", Toast.LENGTH_LONG)

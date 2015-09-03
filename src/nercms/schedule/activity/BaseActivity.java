@@ -63,9 +63,9 @@ public class BaseActivity extends SherlockActivity {
 			builder.setMessage(content);
 		if (icon != null)
 			builder.setIcon(icon);
-		if (pB != null && pbListener != null)
+		if (pB != null)
 			builder.setPositiveButton(pB, pbListener);
-		if (nB != null && nbListener != null)
+		if (nB != null)
 			builder.setNegativeButton(nB, nbListener);
 		builder.create().show();
 	}

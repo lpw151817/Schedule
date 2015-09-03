@@ -83,8 +83,6 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 	private Handler handler;
 	private DAOFactory daoFactory = DAOFactory.getInstance();
-	private FeedbackDao fbDao;
-	private AttachmentDao attachDao;
 	private FeedbackListAdapter fbAdapter = null;
 	// private ArrayList<FeedbackModel> fbList = new ArrayList<FeedbackModel>();
 	private List<ReceiveMessageResponse> fbList = new ArrayList<ReceiveMessageResponse>();
@@ -174,6 +172,9 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			} else {
 				personID = getIntent().getExtras().getInt("selected_id") + "";
 				personName = getIntent().getExtras().getString("selected_name");
+				if (getIntent().getExtras().getBoolean("isGroup", false)) {
+					isGroup = 1;
+				}
 			}
 		}
 		initData();
@@ -213,7 +214,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		case android.R.id.home:
 			// 返回时将所有与该对象的消息标记为已读
 			if (entranceType == 1) {
-				msgDao.updateMessageIsRead(userID, String.valueOf(personID));
+				// msgDao.updateMessageIsRead(userID, String.valueOf(personID));
 			}
 			this.finish();
 			break;
@@ -262,6 +263,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	 * 初始化要显示的数据
 	 */
 	public void initData() {
+		getSupportActionBar().setTitle(personName);
 		if (entranceType == 2) { // 反馈
 			getSupportActionBar().setTitle("任务反馈");
 
@@ -292,22 +294,23 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 			mListView.setAdapter(fbAdapter);
 
 		} else { // 消息
+			msgDao = daoFactory.getMessageDao(ChatDetail.this);
 			if (isGroup == 0) {
-				getSupportActionBar().setTitle(personName);
-				msgDao = daoFactory.getMessageDao(ChatDetail.this);
 				msgList = msgDao.getMessageBySidAndRid(userID, personID, "0");
 
-				msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
-				mListView.setAdapter(msgAdapter);
-				mListView.setSelection(mListView.getCount() - 1);
+			} else {
+				msgList = msgDao.getMessageBySidAndRid(userID, personID,
+						groupDao.queryGroupById(personID).getT());
 			}
+			msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
+			mListView.setAdapter(msgAdapter);
+			mListView.setSelection(mListView.getCount() - 1);
 		}
 	}
 
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
-
 		case R.id.btn_send:
 			if (mEditTextContent.getText().toString().length() > 0) {
 				if (entranceType == 1) {
@@ -569,12 +572,26 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	// 发送消息
 	private void sendMessage() {
 		String contString = mEditTextContent.getText().toString();
-		tempMsg = new ReceiveMessageResponse("", "0", userID, personID, System.currentTimeMillis() + "",
-				contString, "1", "", "", "");
-
+		// TODO
+		if (isGroup == 0) {
+			// 私聊
+			tempMsg = new ReceiveMessageResponse("", "0", userID, personID, System.currentTimeMillis()
+					+ "", contString, "1", "", "", "");
+		} else if (isGroup == 1) {
+			String groupTyep = groupDao.queryGroupById(personID).getT();
+			// 非基本群组
+			if (groupTyep.equals("2")) {
+				tempMsg = new ReceiveMessageResponse("", "2", userID, personID,
+						System.currentTimeMillis() + "", contString, "1", "", "", "");
+			}
+			// 基本群组
+			else if (groupTyep.equals("1")) {
+				tempMsg = new ReceiveMessageResponse("", "1", userID, personID,
+						System.currentTimeMillis() + "", contString, "1", "", "", "");
+			}
+		}
 		// 发送消息到服务器
 		sendMsg(tempMsg);
-
 	}
 
 	@SuppressLint("HandlerLeak")
