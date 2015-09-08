@@ -33,9 +33,11 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Bitmap.Config;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
@@ -57,6 +59,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.wxapp.service.AppApplication;
+import android.wxapp.service.dao.AffairDao;
 import android.wxapp.service.dao.DAOFactory;
 import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
@@ -74,13 +77,21 @@ import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.thread.SaveAffairThread;
 import android.wxapp.service.thread.ThreadManager;
 import android.wxapp.service.util.Constant;
+import android.wxapp.service.util.HttpDownloadTask;
 import android.wxapp.service.util.HttpUploadTask;
 import android.wxapp.service.util.MySharedPreference;
 
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.imooc.treeview.utils.Node;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
+import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 public class TaskAdd extends BaseActivity {
 
@@ -103,13 +114,11 @@ public class TaskAdd extends BaseActivity {
 	private EditText etTitle; // 任务主题
 	private EditText etSponsor; // 发起人
 	private EditText etPod; // 责任人
-	private EditText etCc; // 抄送人
 	private EditText etEndTime; // 截止时间
 	private EditText etContent; // 任务内容
 	private ImageButton btnPodPicker; // 责任人选取按钮
 	private List<Node> lsSelectedPod;
 	private List<Node> lsSelectedReceiver;
-	private ImageButton btnCCPicker; // 抄送选取按钮
 	private EditText etReceiver;
 	private ImageButton btnReceiverPicker;
 
@@ -170,10 +179,14 @@ public class TaskAdd extends BaseActivity {
 	// 保存mediaIndex与layout地址的映射
 	// private HashMap<Integer, RelativeLayout> index_layout_Map = new
 	// HashMap<Integer, RelativeLayout>();
+	QueryAffairInfoResponse data;
+	DisplayImageOptions options;
 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.task_add);
+
+		data = (QueryAffairInfoResponse) getIntent().getSerializableExtra("data");
 
 		webRequestManager = new WebRequestManager(AppApplication.getInstance(), this);
 
@@ -194,21 +207,19 @@ public class TaskAdd extends BaseActivity {
 		etTitle = (EditText) findViewById(R.id.task_title);
 		etSponsor = (EditText) findViewById(R.id.task_starter);
 		etPod = (EditText) findViewById(R.id.task_participator);
-
-		etCc = (EditText) findViewById(R.id.task_participator_cc);
 		etEndTime = (EditText) findViewById(R.id.task_deadline);
 		etEndTime.setEnabled(false);// 时间不可编辑
 		etContent = (EditText) findViewById(R.id.task_content);
 		btnPodPicker = (ImageButton) findViewById(R.id.btn_pod_picker);
-		btnCCPicker = (ImageButton) findViewById(R.id.btn_cc_picker);
 		btn_calendar = (ImageButton) findViewById(R.id.select_time);
 		etReceiver = (EditText) findViewById(R.id.task_receiver_et);
 		btnReceiverPicker = (ImageButton) findViewById(R.id.btn_receiver_picker);
 
 		tvUploadStatus = (TextView) findViewById(R.id.upload_status_textview);
+
 		// 发起人显示
 		etSponsor.setEnabled(false);
-		etSponsor.setText(personDao.getCustomer().getUn());
+		etSponsor.setText(personDao.getCustomer().getN());
 
 		btnReceiverPicker.setOnClickListener(new OnClickListener() {
 
@@ -260,13 +271,179 @@ public class TaskAdd extends BaseActivity {
 		showAttachLayout.setVisibility(View.GONE);
 
 		// 图片容器初始化
-		imageContainer = (nercms.schedule.layout.FixedGridLayout) findViewById(R.id.attachContainer);
+		imageContainer = (nercms.schedule.layout.FixedGridLayout) findViewById(
+				R.id.attachContainer);
 		imageContainer.setCellWidth(IMG_WIDTH);
 		imageContainer.setCellHeight(IMG_HEIGHT);
 		imageContainer.setNumPerRow(NUMPERROW);
 
 		attachPickLayout = (LinearLayout) findViewById(R.id.task_add_attach_pick_ll);
 		attachPickLayout.setVisibility(View.VISIBLE);
+
+		// 如果有历史数据，则说明是来修改任务信息的，所以加载原来的任务信息
+		if (data != null) {
+			loadHistory();
+		}
+
+	}
+
+	private void loadHistory() {
+
+		etTitle.setText(data.getTopic());
+		String sPod = "";
+		for (CreateTaskRequestIds item : data.getPod()) {
+			sPod += (personDao.getPersonInfo(item.getRid()).getN() + "/");
+		}
+		etPod.setText(sPod);
+		String sReceiver = "";
+		for (CreateTaskRequestIds item : data.getRids()) {
+			sReceiver += (personDao.getPersonInfo(item.getRid()).getN() + "/");
+		}
+		etReceiver.setText(sReceiver);
+		etEndTime.setText(Utils.formatDateMs(data.getEt()));
+		etContent.setText(data.getD());
+		// 如果有附件的话
+		if (data.getAtt() != null && data.getAtt().size() > 0) {
+			File sdcardDir = Environment.getExternalStorageDirectory();
+			String path = sdcardDir.getPath() + "/nercms-Schedule/Attachments/";
+			String videoThumbnailDir = sdcardDir.getPath() + "/nercms-Schedule/Thumbnail/";
+			String mediaName;
+			int mediaType;
+			// 附件显示图片容器的集合
+			ArrayList<ImageView> imageViewList = new ArrayList<ImageView>();
+			options = new DisplayImageOptions.Builder().showImageOnLoading(R.drawable.no_picture) // 设置图片在下载期间显示的图片
+					.showImageForEmptyUri(R.drawable.no_picture)// 设置图片Uri为空或是错误的时候显示的图片
+					.showImageOnFail(R.drawable.no_picture) // 设置图片加载/解码过程中错误时候显示的图片
+					.cacheInMemory(true)// 设置下载的图片是否缓存在内存中
+					.cacheOnDisc(true)// 设置下载的图片是否缓存在SD卡中
+					.considerExifParams(true) // 是否考虑JPEG图像EXIF参数（旋转，翻转）
+					.imageScaleType(ImageScaleType.EXACTLY_STRETCHED)// 设置图片以如何的编码方式显示
+					.bitmapConfig(Bitmap.Config.RGB_565)// 设置图片的解码类型//
+					// .delayBeforeLoading(int delayInMillis)//int
+					// delayInMillis为你设置的下载前的延迟时间
+					// 设置图片加入缓存前，对bitmap进行设置
+					// .preProcessor(BitmapProcessor preProcessor)
+					.resetViewBeforeLoading(true)// 设置图片在下载前是否重置，复位
+					.displayer(new RoundedBitmapDisplayer(20))// 是否设置为圆角，弧度为多少
+					.displayer(new FadeInBitmapDisplayer(100))// 是否图片加载好后渐入的动画时间
+					.build();// 构建完成;
+
+			// 遍历每一个附件，将其显示出来
+			for (CreateTaskRequestAttachment item : data.getAtt()) {
+
+				mediaName = item.getU();
+				mediaName = mediaName.substring(mediaName.lastIndexOf("/") + 1);
+				mediaType = Integer.parseInt(item.getAt());
+				final String mediaPath = path.toString() + mediaName;
+				if (mediaPath != null && !mediaPath.equalsIgnoreCase("")) {
+
+					// 2014-6-24 WeiHao 新增，异步图片下载，加载
+					final ImageView imageView = new RoundAngleImageView(this);
+					// 将图片加入附件显示图片的集合
+					imageView.setTag(mediaName);
+					imageViewList.add(imageView);
+					addImage(imageView, mediaPath, false);
+					if (mediaType == Utils.MEDIA_TYPE_IMAGE) {
+
+						// 设置图片缩略图点击事件
+						imageView.setOnClickListener(new OnClickListener() {
+							@Override
+							public void onClick(View arg0) {
+								Intent intent = new Intent(Intent.ACTION_VIEW);
+								intent.setDataAndType(Uri.parse("file://" + mediaPath), "image/*");
+								startActivity(intent);
+							}
+						});
+
+						if (!new File(mediaPath).exists()) {
+							String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+									+ mediaName;
+							// 请求网络图片
+							ImageRequest imageRequest = new ImageRequest(downUrl,
+									new Response.Listener<Bitmap>() {
+
+										@Override
+										public void onResponse(Bitmap response) {
+											// 图片保存到本地
+											Utils.saveBitmap(response, mediaPath);
+											addImage(imageView, mediaPath, true);
+										}
+									}, 0, 0, Config.RGB_565, new Response.ErrorListener() {
+										@Override
+										public void onErrorResponse(VolleyError error) {
+										}
+									});
+							// 加入请求队列
+							AppApplication.getInstance().myQueue.add(imageRequest);
+						} else {
+							addImage(imageView, mediaPath, true);
+						}
+					} else if (mediaType == Utils.MEDIA_TYPE_VIDEO) {
+						// 设置视频缩略图点击事件
+						imageView.setOnClickListener(new OnClickListener() {
+							@Override
+							public void onClick(View arg0) {
+								Intent intent = new Intent(Intent.ACTION_VIEW);
+								intent.setDataAndType(Uri.parse("file://" + mediaPath), "video/*");
+								startActivity(intent);
+							}
+						});
+						if (!new File(mediaPath).exists()) {
+							String downUrl = LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+									+ mediaName;
+							new HttpDownloadTask(TaskAdd.this).execute(downUrl,
+									"/nercms-Schedule/Attachments/", mediaName);
+						} else {
+
+							// 判断视频缩略图是否存在，不存在则生成缩略图
+							String thumbnailPath = videoThumbnailDir
+									+ mediaName.substring(0, mediaName.indexOf(".")) + ".jpg";
+							if (!new File(thumbnailPath).exists()) {
+								Utils.saveBitmap(ThumbnailUtils.createVideoThumbnail(mediaPath,
+										Thumbnails.MINI_KIND), thumbnailPath);
+							}
+							addImage(imageView, thumbnailPath, true);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void addImage(final ImageView imageView, final String path, boolean isDone) {
+		// 加载图片的ImageView
+		// final ImageView imageView = new RoundAngleImageView(this);
+		imageView.setPadding(2, 2, 2, 2);
+		// 为imageView设置标志，以便下载完成后更新
+		// imageView.setTag(path);
+		// 初始化图片显示布局
+		LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(IMG_WIDTH,
+				IMG_HEIGHT);
+		layoutParams.setMargins(0, 10, 0, 10);
+		// 设置图片显示格式
+		imageView.setLayoutParams(layoutParams);
+		imageView.setScaleType(ScaleType.FIT_XY);
+
+		if (isDone) {
+			// 为图片设置单击事件
+			// imageView.setOnClickListener(new OnClickListener() {
+			// public void onClick(View v) {
+			// // 单击事件触发后，单击事件失效
+			// // imageView.setEnabled(false);
+			// // 点击显示大图
+			// // showImageDialog(imageView, path);
+			//
+			// }
+			// });
+			// 异步加载本地图片
+			com.nostra13.universalimageloader.core.ImageLoader.getInstance()
+					.displayImage("file://" + path, imageView, options);
+		} else {
+			// 将图片添加入图片列表
+			imageContainer.addView(imageView);
+			// 设置背景为灰色
+			imageView.setBackgroundResource(R.drawable.no_picture);
+		}
 
 	}
 
@@ -276,7 +453,10 @@ public class TaskAdd extends BaseActivity {
 		getSupportActionBar().setDisplayShowTitleEnabled(true);
 		getSupportActionBar().setDisplayShowHomeEnabled(true);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		getSupportActionBar().setTitle("发起新任务");
+		if (data != null)
+			getSupportActionBar().setTitle("修改任务");
+		else
+			getSupportActionBar().setTitle("发起新任务");
 	}
 
 	@Override
@@ -306,16 +486,25 @@ public class TaskAdd extends BaseActivity {
 			String time = etEndTime.getText().toString();
 			if (title.isEmpty() || taskContent.isEmpty() || pod.isEmpty() || r.isEmpty()
 					|| time.isEmpty()) {
-				new AlertDialog.Builder(TaskAdd.this).setTitle("请填写完整信息").setPositiveButton("确定", null)
-						.show();
+				new AlertDialog.Builder(TaskAdd.this).setTitle("请填写完整信息")
+						.setPositiveButton("确定", null).show();
 			} else {
-
-				if (mediaList.size() == 0)
-					createTask();
-				else {
-					// 首先上传附件
-					attachmentUploadRequest();
+				// 如果是修改affair的话
+				if (data != null) {
+					// 调用修改接口
+					if (mediaList.size() == 0)
+						modifyTask();
+					else
+						attachmentUploadRequest();
+				} else {
+					if (mediaList.size() == 0)
+						createTask();
+					else {
+						// 首先上传附件
+						attachmentUploadRequest();
+					}
 				}
+
 			}
 
 			break;
@@ -358,7 +547,6 @@ public class TaskAdd extends BaseActivity {
 	private void createTask() {
 		showProgressDialog("loading...");
 		String title = etTitle.getText().toString();
-		int sponsorID = Integer.parseInt(userID);
 		// PersonOnDutyModel pod = new PersonOnDutyModel(taskID, getUserId());
 		String endTime = etEndTime.getText().toString();
 		String taskContent = etContent.getText().toString();
@@ -387,22 +575,62 @@ public class TaskAdd extends BaseActivity {
 		List<CreateTaskRequestAttachment> tempAttachments = new ArrayList<CreateTaskRequestAttachment>();
 		for (Media item : mediaList) {
 			tempAttachmentTypes.add(item.getMediaType() + "");
-			tempAttachmentUrls.add(LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
-					+ item.getMediaName());
-			tempAttachments.add(new CreateTaskRequestAttachment(item.getMediaType() + "", item
-					.getMediaUrl()));
+			tempAttachmentUrls.add(
+					LocalConstant.FILE_SERVER_ATTACH_URL + File.separator + item.getMediaName());
+			tempAttachments.add(
+					new CreateTaskRequestAttachment(item.getMediaType() + "", item.getMediaUrl()));
 		}
 		String tempNow = System.currentTimeMillis() + "";
 		// 进行网络请求
-		webRequestManager.sendAffair("1", taskContent, title, tempNow, Utils.parseDateInFormat(endTime),
-				"", "1", tempNow, "", tempAttachmentTypes, tempAttachmentUrls, tempReiceverIds,
-				tempPodIds);
+		webRequestManager.sendAffair("1", taskContent, title, tempNow,
+				Utils.parseDateInFormat(endTime), "", "1", tempNow, "", tempAttachmentTypes,
+				tempAttachmentUrls, tempReiceverIds, tempPodIds);
 
 		// tempSave = new QueryAffairInfoResponse("", "", "1", getUserId(),
 		// taskContent, title, tempNow,
 		// Utils.parseDateInFormat(endTime), tempNow, "1", tempNow, "",
 		// tempAttachments,
 		// tempRids, tempPods);
+	}
+
+	private void modifyTask() {
+		showProgressDialog("loading...");
+
+		List<CreateTaskRequestIds> tempPods = new ArrayList<CreateTaskRequestIds>();
+
+		// 获取修改后的负责人
+		if (lsSelectedPod != null && lsSelectedPod.size() > 0) {
+			for (Node item : lsSelectedPod) {
+				tempPods.add(new CreateTaskRequestIds(item.getId().substring(1)));
+			}
+		}
+
+		// 获取修改后的抄送人
+		List<CreateTaskRequestIds> tempRids = new ArrayList<CreateTaskRequestIds>();
+		if (lsSelectedReceiver != null && lsSelectedReceiver.size() > 0) {
+			for (Node item : lsSelectedReceiver) {
+				tempRids.add(new CreateTaskRequestIds(item.getId().substring(1)));
+			}
+		}
+
+		// 获取修改后的附件列表
+		List<CreateTaskRequestAttachment> tempAtts = new ArrayList<CreateTaskRequestAttachment>();
+		if (mediaList != null && mediaList.size() > 0) {
+			List<String> tempAttachmentTypes = new ArrayList<String>();
+			List<String> tempAttachmentUrls = new ArrayList<String>();
+			for (Media item : mediaList) {
+				tempAttachmentTypes.add(item.getMediaType() + "");
+				tempAttachmentUrls.add(LocalConstant.FILE_SERVER_ATTACH_URL + File.separator
+						+ item.getMediaName());
+				// TODO 待测试，此url表示的是什么
+				tempAtts.add(new CreateTaskRequestAttachment(item.getMediaType() + "",
+						item.getMediaUrl()));
+			}
+		}
+
+		webRequestManager.modifyAffair(data.getAid(), tempPods, tempRids,
+				etContent.getText().toString(), etTitle.getText().toString(),
+				Utils.parseDateInFormat(etEndTime.getText().toString()), tempAtts);
 	}
 
 	private void attachmentUploadRequest() {
@@ -443,11 +671,11 @@ public class TaskAdd extends BaseActivity {
 					new AlertDialog.Builder(TaskAdd.this).setTitle("新建任务失败").setMessage("是否重新发送?")
 							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									createTask();
-								}
-							}).setNegativeButton("取消", null).create().show();
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							createTask();
+						}
+					}).setNegativeButton("取消", null).create().show();
 
 					NormalServerResponse failedMsg = (NormalServerResponse) msg.obj;
 					Log.e("TaskAdd", "新建任务失败：" + failedMsg.getEc());
@@ -457,14 +685,24 @@ public class TaskAdd extends BaseActivity {
 					successCounter++;
 					if (successCounter == mediaIndex) {
 						// 附件全部上传成功，联网发送任务到服务器
-						createTask();
+						if (data == null)
+							createTask();
+						else
+							modifyTask();
 					}
 					break;
 				case Constant.FILE_UPLOAD_FAIL:
 					successCounter = 0; // 计数器归零
 					Utils.showShortToast(TaskAdd.this, "附件上传失败，任务无法发送\n请检查网络连接是否正常");
 					break;
-
+				case Constant.UPDATE_TASK_INFO_SUCCESS:
+					dismissProgressDialog();
+					Utils.showShortToast(TaskAdd.this, "修改成功");
+					Intent intent = new Intent();
+					intent.putExtra("aid", data.getAid());
+					setResult(RESULT_OK, intent);
+					TaskAdd.this.finish();
+					break;
 				default:
 					break;
 				}
@@ -472,13 +710,15 @@ public class TaskAdd extends BaseActivity {
 
 		};
 
-		MessageHandlerManager.getInstance().register(handler, Constant.CREATE_AFFAIR_REQUEST_SUCCESS,
-				Contants.METHOD_AFFAIRS_ADDAFFAIR);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.CREATE_AFFAIR_REQUEST_SUCCESS, Contants.METHOD_AFFAIRS_ADDAFFAIR);
 		MessageHandlerManager.getInstance().register(handler, Constant.CREATE_AFFAIR_REQUEST_FAIL,
 				Contants.METHOD_AFFAIRS_ADDAFFAIR);
 		MessageHandlerManager.getInstance().register(handler, Constant.FILE_UPLOAD_FAIL, "TaskAdd");
-		MessageHandlerManager.getInstance().register(handler, Constant.FILE_UPLOAD_SUCCESS, "TaskAdd");
-
+		MessageHandlerManager.getInstance().register(handler, Constant.FILE_UPLOAD_SUCCESS,
+				"TaskAdd");
+		MessageHandlerManager.getInstance().register(handler, Constant.UPDATE_TASK_INFO_SUCCESS,
+				Contants.METHOD_AFFAIRS_UPDATE_INFO);
 	}
 
 	// 2014-5-16 WeiHao 新增 返回处理
@@ -603,7 +843,8 @@ public class TaskAdd extends BaseActivity {
 				// 显示所选择照片
 				Uri thumbUri = Uri.fromFile(thumbFile);
 				int mediaID1 = mediaIndex++;
-				loadMedia(imageContainer, mediaID1, getThumbnailFromUri(thumbUri), thumbUri, TYPE_IMAGE);
+				loadMedia(imageContainer, mediaID1, getThumbnailFromUri(thumbUri), thumbUri,
+						TYPE_IMAGE);
 				// 存储mediaId与imageOriginPath的映射
 				index_originalPath_Map.put(mediaID1, originalUri);
 				// 存储mediaId与thumbnailUri的映射
@@ -657,7 +898,8 @@ public class TaskAdd extends BaseActivity {
 							// 开启Pictures画面Type设定为image
 							getAlbum.setType("image/*");
 							// getAlbum.setAction(Intent.ACTION_GET_CONTENT);
-							startActivityForResult(getAlbum, LocalConstant.SELECT_IMAGE_REQUEST_CODE);
+							startActivityForResult(getAlbum,
+									LocalConstant.SELECT_IMAGE_REQUEST_CODE);
 							break;
 						case 1:
 							Utils.showShortToast(TaskAdd.this, "拍照");
@@ -668,7 +910,8 @@ public class TaskAdd extends BaseActivity {
 							Uri imageUri = Uri.fromFile(new File(imagePath));
 							// 指定照片储存路径
 							imageIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-							startActivityForResult(imageIntent, LocalConstant.CAPTURE_IMAGE_REQUEST_CODE);
+							startActivityForResult(imageIntent,
+									LocalConstant.CAPTURE_IMAGE_REQUEST_CODE);
 							break;
 						case 2:
 							Utils.showShortToast(TaskAdd.this, "摄像");
@@ -681,7 +924,8 @@ public class TaskAdd extends BaseActivity {
 							videoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoUri);
 							// 指定视频的时长限制（30s）
 							videoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30000);
-							startActivityForResult(videoIntent, LocalConstant.CAPTURE_VIDEO_REQUEST_CODE);
+							startActivityForResult(videoIntent,
+									LocalConstant.CAPTURE_VIDEO_REQUEST_CODE);
 
 							break;
 
@@ -746,7 +990,8 @@ public class TaskAdd extends BaseActivity {
 		// com.nercms.workoa.layout.FixedGridLayout.LayoutParams params = new
 		// com.nercms.workoa.layout.FixedGridLayout.LayoutParams(width,
 		// height);
-		rl.setLayoutParams(new nercms.schedule.layout.FixedGridLayout.LayoutParams(IMG_WIDTH, IMG_HEIGHT));
+		rl.setLayoutParams(
+				new nercms.schedule.layout.FixedGridLayout.LayoutParams(IMG_WIDTH, IMG_HEIGHT));
 		rl.setPadding(2, 2, 2, 2);
 		// rl.setBackgroundResource(color.white);
 		RelativeLayout.LayoutParams lp1 = new RelativeLayout.LayoutParams(
@@ -835,7 +1080,8 @@ public class TaskAdd extends BaseActivity {
 	 * @param uri
 	 * @param imageView
 	 */
-	public void setImageviewListener(final Uri uri, final ImageView imageView, final int MediaType) {
+	public void setImageviewListener(final Uri uri, final ImageView imageView,
+			final int MediaType) {
 		// 为图片设置触摸事件
 		imageView.setOnTouchListener(new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
@@ -1084,7 +1330,8 @@ public class TaskAdd extends BaseActivity {
 				} else if (list_little.contains(String.valueOf(month_num))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
+					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0
+							&& (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
 							|| (wv_year.getCurrentItem() + START_YEAR) % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else

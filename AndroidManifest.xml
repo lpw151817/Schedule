@@ -67,7 +67,6 @@
             android:theme="@style/Theme.Schedule" />
         <activity
             android:name=".activity.TaskAdd"
-            android:launchMode="singleTask"
             android:theme="@style/Theme.Schedule" />
         <activity
             android:name=".activity.ChatDetail"

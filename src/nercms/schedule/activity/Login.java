@@ -21,6 +21,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -120,6 +121,9 @@ public class Login extends BaseActivity {
 			}
 		});
 
+		// 注册或者重新注册Handler
+		initHandler();
+		Log.v("Login", "OnResume,注册或者重新注册Handler");
 	}
 
 	private void initActionBar() {
@@ -170,20 +174,20 @@ public class Login extends BaseActivity {
 					// 保存用户id
 					MySharedPreference.save(Login.this, MySharedPreference.USER_ID, userID);
 					// 保存用户的登录名
-					MySharedPreference.save(Login.this, MySharedPreference.USER_NAME, inputUserName);
+					MySharedPreference.save(Login.this, MySharedPreference.USER_NAME,
+							inputUserName);
 					// 保存用户密码
 					MySharedPreference.save(Login.this, MySharedPreference.USER_IC, inputPassword);
 
-					// 新建线程去进行MQTT连接
-					new Thread(new Runnable() {
-						@Override
-						public void run() {
-
-							Push.PERSON_ID = getUserId();
-							Push.get_instance(Login.this).ini();
-
-						}
-					}).start();
+					// // 新建线程去进行MQTT连接
+					// new Thread(new Runnable() {
+					// @Override
+					// public void run() {
+					// Looper.prepare();
+					Push.PERSON_ID = getUserId();
+					Push.get_instance(Login.this).ini();
+					// }
+					// }).start();
 
 					// 写一个Timer定时请求服务器是否有更新数据
 					getOrgInfoUpdate();
@@ -212,8 +216,8 @@ public class Login extends BaseActivity {
 					MyLog.i(TAG, "登录失败");
 					dismissProgressDialog();
 					String errorCode = ((NormalServerResponse) msg.obj).getEc();
-					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode), R.drawable.login_error_icon,
-							"确定", null);
+					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode),
+							R.drawable.login_error_icon, "确定", null);
 					break;
 				// 保存orgcode失败
 				case Constant.SAVE_ORG_CODE_FAIL:
@@ -274,7 +278,8 @@ public class Login extends BaseActivity {
 					break;
 				case Constant.CONFERENCE_SAVE_FAIL:
 					dismissProgressDialog();
-					Toast.makeText(Login.this, "Conference Update Failed", Toast.LENGTH_LONG).show();
+					Toast.makeText(Login.this, "Conference Update Failed", Toast.LENGTH_LONG)
+							.show();
 					break;
 				case Constant.GROUP_SAVE_SECCESS:
 					isGetGroup = true;
@@ -325,7 +330,8 @@ public class Login extends BaseActivity {
 	boolean isGetGps = true;
 
 	private void getGpsUpdate() {
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_GPS_TIMESTAMP, null) == null) {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_GPS_TIMESTAMP,
+				null) == null) {
 			webRequestManager.getGpsUpdateRequest("1");
 		} else {
 			isGetGroup = true;
@@ -334,7 +340,8 @@ public class Login extends BaseActivity {
 	}
 
 	private void getGroupUpdate() {
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_GROUP_TIMESTAMP, null) == null)
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_GROUP_TIMESTAMP,
+				null) == null)
 			webRequestManager.getGroupUpdateRequest("1");
 		else {
 			isGetGroup = true;
@@ -344,14 +351,16 @@ public class Login extends BaseActivity {
 
 	// 获取组织相关信息并存入数据库
 	private void getOrgInfoUpdate() {
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGCODE_TIMESTAMP, null) == null)
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGCODE_TIMESTAMP,
+				null) == null)
 			webRequestManager.getOrgCodeUpdate();
 		else {
 
 			isGetOrgCode = true;
 			startInMain();
 		}
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGPERSON_TIMESTAMP, null) == null)
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_ORGPERSON_TIMESTAMP,
+				null) == null)
 			webRequestManager.getOrgPersonUpdate();
 		else {
 			isGetOrgPerson = true;
@@ -360,7 +369,8 @@ public class Login extends BaseActivity {
 	}
 
 	private void getAffairUpdate() {
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_TASK_TIMESTAMP, null) == null) {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_TASK_TIMESTAMP,
+				null) == null) {
 			// 获取全部数据
 			webRequestManager.getAffairUpdate("1");
 		} else {
@@ -370,7 +380,8 @@ public class Login extends BaseActivity {
 	}
 
 	private void getMessageUpdate() {
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_MESSAGE_TIMESTAMP, null) == null)
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_MESSAGE_TIMESTAMP,
+				null) == null)
 			// 获取全部数据
 			webRequestManager.getMessageUpdate("1");
 		else {
@@ -380,7 +391,8 @@ public class Login extends BaseActivity {
 	}
 
 	private void getConferenceUpdate() {
-		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_CONFERENCE_TIMESTAMP, null) == null) {
+		if (MySharedPreference.get(this, MySharedPreference.LAST_UPDATE_CONFERENCE_TIMESTAMP,
+				null) == null) {
 			webRequestManager.updateConference("1");
 		} else {
 			isGetConference = true;
@@ -397,7 +409,8 @@ public class Login extends BaseActivity {
 		mProgressDialog.setCanceledOnTouchOutside(false);
 		showProgressDialog("正在登录", "努力加载数据中...请稍后~");
 		// 隐藏软键盘
-		InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(
+				Context.INPUT_METHOD_SERVICE);
 		mInputMethodManager.hideSoftInputFromWindow(etPassword.getWindowToken(), 0);
 
 		if (!checkInternet()) {
@@ -417,8 +430,8 @@ public class Login extends BaseActivity {
 				|| inputPassword.equals("")) {
 			dismissProgressDialog();
 			new AlertDialog.Builder(Login.this)
-					.setIcon(getResources().getDrawable(R.drawable.login_error_icon)).setTitle("登录错误")
-					.setMessage("帐号或者密码不能为空，\n请输入后再登录！").create().show();
+					.setIcon(getResources().getDrawable(R.drawable.login_error_icon))
+					.setTitle("登录错误").setMessage("帐号或者密码不能为空，\n请输入后再登录！").create().show();
 			return;
 		}
 		// 请求服务器进行登录验证
@@ -428,9 +441,7 @@ public class Login extends BaseActivity {
 
 	@Override
 	protected void onResume() {
-		// 注册或者重新注册Handler
-		initHandler();
-		Log.v("Login", "OnResume,注册或者重新注册Handler");
+
 		super.onResume();
 	}
 
@@ -561,8 +572,8 @@ public class Login extends BaseActivity {
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ALL_PERSON_SUCCESS,
 				Contants.METHOD_PERSON_LOGIN);
 
-		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_NODE_REQUEST_SUCCESS,
-				Contants.METHOD_PERSON_GET_ORG_CODE);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.QUERY_ORG_NODE_REQUEST_SUCCESS, Contants.METHOD_PERSON_GET_ORG_CODE);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_CODE_SUCCESS,
 				SaveOrgCodeThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_CODE_FAIL,
@@ -570,16 +581,16 @@ public class Login extends BaseActivity {
 		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_NODE_REQUEST_FAIL,
 				Contants.METHOD_PERSON_GET_ORG_CODE);
 
-		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_PERSON_REQUEST_SUCCESS,
-				Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.QUERY_ORG_PERSON_REQUEST_SUCCESS, Contants.METHOD_PERSON_GET_ORG_PERSON);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_PERSON_SUCCESS,
 				SaveOrgCodePersonThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_ORG_PERSON_FAIL,
 				SaveOrgCodePersonThread.TAG);
-		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_ORG_PERSON_REQUEST_FAIL,
-				Contants.METHOD_PERSON_GET_ORG_PERSON);
-		MessageHandlerManager.getInstance().register(handler, Constant.UPDATE_TASK_LIST_REQUEST_SUCCESS,
-				Contants.METHOD_AFFAIRS_UPDATE_LIST);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.QUERY_ORG_PERSON_REQUEST_FAIL, Contants.METHOD_PERSON_GET_ORG_PERSON);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.UPDATE_TASK_LIST_REQUEST_SUCCESS, Contants.METHOD_AFFAIRS_UPDATE_LIST);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_TASK_SUCCESS,
 				SaveAffairUpdateThread.TAG);
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS,

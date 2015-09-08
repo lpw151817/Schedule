@@ -52,32 +52,17 @@ public class MeetingDetail extends BaseActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.meeting_detail);
-		
+
 		personDao = new PersonDao(MeetingDetail.this);
 		conferenceDao = new ConferenceDao(MeetingDetail.this);
 
 		conferenceID = getIntent().getExtras().getString("conference_id");
 
-		// 如果是从通知栏点击进来
-		if (getIntent().getBooleanExtra("isNotice", false)) {
-			data = conferenceDao.getConferenceByCid(conferenceID);
-			// 如果本地没有数据
-			if (data == null) {
-				showProgressDialog("loading...");
-				iniHandler();
-				manager = new WebRequestManager(AppApplication.getInstance(), MeetingDetail.this);
-				manager.getConference(conferenceID);
-			} else {
-				iniParams();
-			}
-		} else {
-			iniParams();
-		}
+		iniParams();
 
 	}
 
 	void iniParams() {
-
 		initView();
 		initData();
 		initActionBar();
@@ -113,7 +98,6 @@ public class MeetingDetail extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-
 		super.onDestroy();
 		MessageHandlerManager.getInstance().unregister(Constant.CONFERENCE_QUERY_SECCUESS,
 				Contants.METHOD_CONFERENCE_QUERY);
@@ -122,7 +106,6 @@ public class MeetingDetail extends BaseActivity {
 	}
 
 	private void initView() {
-
 		iconIv = (ImageView) findViewById(R.id.meeting_detail_icon_iv);
 		titleTv = (TextView) findViewById(R.id.meeting_detail_title_tv);
 		sponsorTv = (TextView) findViewById(R.id.meeting_detail_sponsor_tv);
@@ -131,11 +114,10 @@ public class MeetingDetail extends BaseActivity {
 		timeTv = (TextView) findViewById(R.id.meeting_detail_time_tv);
 		participatorTv = (TextView) findViewById(R.id.meeting_detail_participator_tv);
 		speakerTv = (TextView) findViewById(R.id.meeting_detail_speaker_tv);
-
 	}
 
 	private void initData() {
-		
+
 		data = conferenceDao.getConferenceByCid(conferenceID);
 
 		// 发起人姓名

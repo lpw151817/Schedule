@@ -153,7 +153,8 @@ public class Main extends SherlockFragmentActivity {
 					isRestricted = true;
 					break;
 				case LocalConstant.NET_AVAILABLE:
-					Toast.makeText(Main.this, "当前网络：" + msg.obj.toString(), Toast.LENGTH_SHORT).show();
+					Toast.makeText(Main.this, "当前网络：" + msg.obj.toString(), Toast.LENGTH_SHORT)
+							.show();
 					// ping应用服务器
 					// if (Utils.serverPing()) {
 					// netStatusTv.setText("");
@@ -229,7 +230,8 @@ public class Main extends SherlockFragmentActivity {
 						Push.get_instance(Main.this).release();
 					} catch (Exception e) {
 						e.printStackTrace();
-						Toast.makeText(getApplicationContext(), "MQTT连接失败", Toast.LENGTH_LONG).show();
+						Toast.makeText(getApplicationContext(), "MQTT连接失败", Toast.LENGTH_LONG)
+								.show();
 					}
 					// 停止服务
 					stopService(new Intent(Main.this, SDCardService.class));
@@ -317,10 +319,10 @@ public class Main extends SherlockFragmentActivity {
 		// 搜索按钮核心算法
 		// createSearchItem(menu);
 
-		// 搜索按钮
-		MenuItem search = menu.add(0, -1, 0, "search");
-		search.setIcon(R.drawable.abs__ic_search);
-		search.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+		// // 搜索按钮 隐藏
+		// MenuItem search = menu.add(0, -1, 0, "search");
+		// search.setIcon(R.drawable.abs__ic_search);
+		// search.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
 		// 子菜单 ：发起任务，消息，会议，视频直播，智能调度，添加客户
 		SubMenu addMenu = menu.addSubMenu("add item");
@@ -347,7 +349,8 @@ public class Main extends SherlockFragmentActivity {
 
 		MenuItem menuItem = subMenu.getItem();
 		menuItem.setIcon(R.drawable.ic_action_overflow);
-		menuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
+		menuItem.setShowAsAction(
+				MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_WITH_TEXT);
 
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -435,15 +438,15 @@ public class Main extends SherlockFragmentActivity {
 			case 11:
 				// 2014-8-5
 				// 2014-8-7
-				ArrayList<String> speakerIDList = new ArrayList<String>(Arrays.asList("100011",
-						"100013", "100015", "100016"));
-				ArrayList<String> speakerNameList = new ArrayList<String>(Arrays.asList("自动一", "自动三",
-						"自动五", "自动六"));
-				ArrayList<String> participatorIDList = new ArrayList<String>(Arrays.asList("100012",
-						"100014"));
-				ArrayList<String> participatorNameList = new ArrayList<String>(Arrays.asList("自动二",
-						"自动四", "自动七", "自动八", "自动九", "自动十", "自动11", "自动12", "自动13", "自动13", "自动13",
-						"自动13", "自动13", "自动13", "自动13", "自动13"));
+				ArrayList<String> speakerIDList = new ArrayList<String>(
+						Arrays.asList("100011", "100013", "100015", "100016"));
+				ArrayList<String> speakerNameList = new ArrayList<String>(
+						Arrays.asList("自动一", "自动三", "自动五", "自动六"));
+				ArrayList<String> participatorIDList = new ArrayList<String>(
+						Arrays.asList("100012", "100014"));
+				ArrayList<String> participatorNameList = new ArrayList<String>(
+						Arrays.asList("自动二", "自动四", "自动七", "自动八", "自动九", "自动十", "自动11", "自动12",
+								"自动13", "自动13", "自动13", "自动13", "自动13", "自动13", "自动13", "自动13"));
 				// ArrayList<String> participatorNameList = new
 				// ArrayList<String>(
 				// Arrays.asList("自动懂"));
@@ -554,25 +557,25 @@ public class Main extends SherlockFragmentActivity {
 	 * MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
 	 * searchItem.setActionView(searchView); }
 	 *//***
-	 * implements SearchView.OnQueryTextListener
-	 */
+		 * implements SearchView.OnQueryTextListener
+		 */
 	/*
 	 * public boolean onQueryTextSubmit(String query) {
 	 * ToastUtil.showShortToast(this, "You searched for: " + query); return
 	 * true; }
 	 *//***
-	 * implements SearchView.OnQueryTextListener
-	 */
+		 * implements SearchView.OnQueryTextListener
+		 */
 	/*
 	 * public boolean onQueryTextChange(String newText) { return false; }
 	 *//**
-	 * implements SearchView.OnSuggestionListener
-	 */
+		 * implements SearchView.OnSuggestionListener
+		 */
 	/*
 	 * public boolean onSuggestionSelect(int position) { return false; }
 	 *//**
-	 * implements SearchView.OnSuggestionListener
-	 */
+		 * implements SearchView.OnSuggestionListener
+		 */
 	/*
 	 * public boolean onSuggestionClick(int position) { Cursor c = (Cursor)
 	 * mSuggestionsAdapter.getItem(position); String query =

@@ -24,6 +24,7 @@ import nercms.schedule.layout.FixedGridLayout;
 import nercms.schedule.layout.RoundAngleImageView;
 import nercms.schedule.utils.LocalConstant;
 import nercms.schedule.utils.Utils;
+import android.R.anim;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -184,58 +185,12 @@ public class TaskDetail extends BaseActivity {
 		userID = MySharedPreference.get(TaskDetail.this, MySharedPreference.USER_ID, "");
 		webRequestManager = new WebRequestManager(AppApplication.getInstance(), TaskDetail.this);
 
-		// 判断是否是从通知栏点击进来的
-		if (getIntent().getBooleanExtra("isNotice", false)) {
-			int aid = getIntent().getIntExtra("aid", -1);
-			QueryAffairInfoResponse data = new AffairDao(TaskDetail.this).getAffairInfoByAid(aid + "");
-			// 如果本地数据库没有
-			if (data != null) {
-				iniLocalParams(data);
-			}
-			// 本地数据库中有的话
-			else {
-				showProgressDialog("loading...");
-				webRequestManager.getAffair(aid + "");
-			}
-
-		} else {
-			// 根据任务界面传来的任务类型和任务状态初始化入口变量，任务ID
-			// 入口类型：1-发起任务；2-接收任务
-			entranceType = getIntent().getIntExtra("type", -1);
-			// 入口状态： 1-进行中（未完成）；2-已完成；3-已延迟
-			entranceStatus = getIntent().getIntExtra("status", -1);
-			taskID = getIntent().getExtras().getString("id");
-
-			// 准备数据
-			initData();
-			initActionBar();
-			// 初始化控件
-			initView();
-
-			// TODO
-			initHandler();
-		}
-
-	}
-
-	private void iniLocalParams(QueryAffairInfoResponse info) {
+		// 根据任务界面传来的任务类型和任务状态初始化入口变量，任务ID
 		// 入口类型：1-发起任务；2-接收任务
-		if (info.getPod().contains(new CreateTaskRequestIds(getUserId()))) {
-			entranceType = 1;
-		} else
-			entranceType = 2;
-
-		// 当没有完成时间
-		if (info.getCt() == null) {
-			// 结束时间小于当前时间,任务已经延迟
-			if (info.getEt().compareTo(System.currentTimeMillis() + "") < 0) {
-				entranceStatus = 3;
-			} else
-				entranceStatus = 1;
-		} else {
-			entranceStatus = 2;
-		}
-		taskID = info.getAid();
+		entranceType = getIntent().getIntExtra("type", -1);
+		// 入口状态： 1-进行中（未完成）；2-已完成；3-已延迟
+		entranceStatus = getIntent().getIntExtra("status", -1);
+		taskID = getIntent().getExtras().getString("id");
 
 		// 准备数据
 		initData();
@@ -245,6 +200,7 @@ public class TaskDetail extends BaseActivity {
 
 		// TODO
 		initHandler();
+
 	}
 
 	private void initActionBar() {
@@ -283,6 +239,8 @@ public class TaskDetail extends BaseActivity {
 			// subMenu.add(0, 2, 0,
 			// "截止时间修改").setIcon(R.drawable.ofm_task_modify);
 			subMenu.add(0, 3, 0, "任务置完成").setIcon(R.drawable.ofm_task_end);
+			if (entranceType == 1 && entranceStatus == 1)
+				subMenu.add(0, 4, 0, "修改任务信息").setIcon(android.R.drawable.ic_menu_edit);
 
 			menuItem = subMenu.getItem();
 			menuItem.setIcon(R.drawable.ic_action_overflow);
@@ -323,11 +281,36 @@ public class TaskDetail extends BaseActivity {
 						}
 					}).setNegativeButton("取消", null).create().show();
 			break;
+		// 修改任务信息
+		case 4:
+			Intent intent2 = new Intent(TaskDetail.this, TaskAdd.class);
+			intent2.putExtra("data", affairDao.getAffairInfoByAid(taskID));
+			TaskDetail.this.startActivityForResult(intent2, REQUESTCODE);
+			break;
 
 		default:
 			break;
 		}
-		return super.onOptionsItemSelected(item);
+		return true;
+	}
+
+	private final int REQUESTCODE = 100;
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode == RESULT_OK) {
+			switch (requestCode) {
+			case REQUESTCODE:
+				// 准备数据
+				initData();
+				// 初始化控件
+				initView();
+				break;
+
+			default:
+				break;
+			}
+		}
 	}
 
 	private void initData() {
@@ -353,7 +336,7 @@ public class TaskDetail extends BaseActivity {
 		List<CreateTaskRequestIds> rids = ids.get("2");
 		// TODO 对抄送人数据进行生成并显示
 
-		sponsorName = personDao.getPersonInfo(task.getSid()).getUn();
+		sponsorName = personDao.getPersonInfo(task.getSid()).getN();
 		taskAttackList = task.getAtt();
 		// 判断是否是已完成的任务和已延误任务
 		if (task.getCt() != null && !task.getCt().isEmpty()) {
@@ -386,10 +369,6 @@ public class TaskDetail extends BaseActivity {
 					end_time.setTextColor(getResources().getColor(R.color.red));
 					Utils.showShortToast(TaskDetail.this, "任务截止时间已修改");
 					break;
-				case Constant.QUERY_TASK_INFO_REQUEST_SUCCESS:
-					dismissProgressDialog();
-					iniLocalParams((QueryAffairInfoResponse) msg.obj);
-					break;
 				case Constant.QUERY_TASK_INFO_REQUEST_FAIL:
 					dismissProgressDialog();
 					showLongToast("错误代码：" + ((NormalServerResponse) msg.obj).getEc());
@@ -410,8 +389,8 @@ public class TaskDetail extends BaseActivity {
 				"TaskDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.END_TASK_REQUEST_SUCCESS,
 				Contants.METHOD_AFFAIRS_END_TASK);
-		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_TASK_INFO_REQUEST_SUCCESS,
-				Contants.METHOD_AFFAIRS_QUERY_INFO);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.QUERY_TASK_INFO_REQUEST_SUCCESS, Contants.METHOD_AFFAIRS_QUERY_INFO);
 		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_TASK_INFO_REQUEST_FAIL,
 				Contants.METHOD_AFFAIRS_QUERY_INFO);
 	}
@@ -430,7 +409,6 @@ public class TaskDetail extends BaseActivity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				// TaskAdd.showDateTimePicker();
 			}
 		});
@@ -545,9 +523,8 @@ public class TaskDetail extends BaseActivity {
 						String thumbnailPath = videoThumbnailDir
 								+ mediaName.substring(0, mediaName.indexOf(".")) + ".jpg";
 						if (!new File(thumbnailPath).exists()) {
-							Utils.saveBitmap(
-									ThumbnailUtils.createVideoThumbnail(mediaPath, Thumbnails.MINI_KIND),
-									thumbnailPath);
+							Utils.saveBitmap(ThumbnailUtils.createVideoThumbnail(mediaPath,
+									Thumbnails.MINI_KIND), thumbnailPath);
 						}
 						addImage(imageView, thumbnailPath, true);
 					}
@@ -581,10 +558,10 @@ public class TaskDetail extends BaseActivity {
 					String thumbnailPath = videoThumbnailDir
 							+ mediaName.substring(0, mediaName.indexOf(".")) + ".jpg";
 					Log.v("updateVideo", "生成视频缩略图");
-					Utils.saveBitmap(ThumbnailUtils.createVideoThumbnail(Environment
-							.getExternalStorageDirectory().getPath()
-							+ "/nercms-Schedule/Attachments/"
-							+ mediaName, Thumbnails.MINI_KIND), thumbnailPath);
+					Utils.saveBitmap(ThumbnailUtils.createVideoThumbnail(
+							Environment.getExternalStorageDirectory().getPath()
+									+ "/nercms-Schedule/Attachments/" + mediaName,
+							Thumbnails.MINI_KIND), thumbnailPath);
 
 					addImage(imageView, thumbnailPath, true);
 				}
@@ -615,8 +592,8 @@ public class TaskDetail extends BaseActivity {
 			// }
 			// });
 			// 异步加载本地图片
-			com.nostra13.universalimageloader.core.ImageLoader.getInstance().displayImage(
-					"file://" + path, imageView, options);
+			com.nostra13.universalimageloader.core.ImageLoader.getInstance()
+					.displayImage("file://" + path, imageView, options);
 		} else {
 			// 将图片添加入图片列表
 			mediaContainer.addView(imageView);
@@ -698,8 +675,10 @@ public class TaskDetail extends BaseActivity {
 
 	@Override
 	protected void onDestroy() {
-		MessageHandlerManager.getInstance().unregister(Constant.FILE_DOWNLOAD_SUCCESS, "TaskDetail");
-		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS, "TaskDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.FILE_DOWNLOAD_SUCCESS,
+				"TaskDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS,
+				"TaskDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.MODIFY_TASK_REQUEST_SUCCESS,
 				"TaskDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.END_TASK_REQUEST_SUCCESS,
@@ -803,7 +782,8 @@ public class TaskDetail extends BaseActivity {
 				} else if (list_little.contains(String.valueOf(month_num))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
+					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0
+							&& (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
 							|| (wv_year.getCurrentItem() + START_YEAR) % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else
@@ -857,22 +837,20 @@ public class TaskDetail extends BaseActivity {
 					Toast.makeText(TaskDetail.this, "选择时间小于当前时间，请重新选择", Toast.LENGTH_SHORT).show();
 				} else {
 					dialog.dismiss();
-					new AlertDialog.Builder(TaskDetail.this)
-							.setTitle("修改提醒")
-							.setMessage(
-									"确定将任务的截止时间从 " + end_time.getText().toString() + " 修改为 "
-											+ currentSelectTime + " 吗？")
+					new AlertDialog.Builder(TaskDetail.this).setTitle("修改提醒")
+							.setMessage("确定将任务的截止时间从 " + end_time.getText().toString() + " 修改为 "
+									+ currentSelectTime + " 吗？")
 							.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
-								@Override
-								public void onClick(DialogInterface arg0, int arg1) {
+						@Override
+						public void onClick(DialogInterface arg0, int arg1) {
 
-									// 向服务器发出修改请求
-									// //////////TODO
-									webRequestManager.modifyAffairEndTime("", taskID, currentSelectTime);
-								}
+							// 向服务器发出修改请求
+							// //////////TODO
+							webRequestManager.modifyAffairEndTime("", taskID, currentSelectTime);
+						}
 
-							}).setNegativeButton("取消", null).create().show();
+					}).setNegativeButton("取消", null).create().show();
 
 				}
 			}

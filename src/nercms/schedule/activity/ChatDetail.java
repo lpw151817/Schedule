@@ -145,7 +145,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 		if (entranceType == 2) { // 判断为反馈
 			taskID = getIntent().getExtras().getString("task_id");
-			taskStatus = getIntent().getExtras().getInt("task_status");
+			taskStatus = getIntent().getExtras().getInt("task_status", -1);
 		} else if (entranceType == 1) {// 判断为消息
 
 			selectedPerson = (List<Node>) getIntent().getExtras().get("data");
@@ -292,7 +292,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 			fbAdapter = new FeedbackListAdapter(ChatDetail.this, fbList);
 			mListView.setAdapter(fbAdapter);
-
+			mListView.setSelection(mListView.getCount() - 1);
 		} else { // 消息
 			msgDao = daoFactory.getMessageDao(ChatDetail.this);
 			if (isGroup == 0) {
@@ -344,7 +344,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, msgID, ChatDetail.this);
 			} else {
 				feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, feedbackID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, feedbackID,
+						ChatDetail.this);
 			}
 			startActivityForResult(getAlbum, LocalConstant.SELECT_IMAGE_REQUEST_CODE);
 
@@ -359,7 +360,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, msgID, ChatDetail.this);
 			} else {
 				feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, feedbackID, ChatDetail.this);
+				imagePath = Utils.produceAttachDir(Utils.MEDIA_TYPE_IMAGE, feedbackID,
+						ChatDetail.this);
 			}
 
 			Uri imageUri = Uri.fromFile(new File(imagePath));
@@ -379,7 +381,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO, msgID, ChatDetail.this);
 			} else {
 				feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
-				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO, feedbackID, ChatDetail.this);
+				videoPath = Utils.produceAttachDir(Utils.MEDIA_TYPE_VIDEO, feedbackID,
+						ChatDetail.this);
 			}
 
 			Uri videoUri = Uri.fromFile(new File(videoPath));
@@ -421,20 +424,22 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				// 以下对全局变量进行赋值
 				// 收到附件上传成功的handler通知后再在Handler中处理，再发送消息或者反馈内容到服务器，以及保存到本地
 				if (entranceType == 1) { // 消息（附件）
-					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
-							.currentTimeMillis()));
+					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+							.format(new Date(System.currentTimeMillis()));
 					String imageName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID), Integer.parseInt(personID),
-							sendTime, null, LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
+					msg = new MessageModel(msgID, Integer.parseInt(userID),
+							Integer.parseInt(personID), sendTime, null, LocalConstant.IAMGE_TYPE,
+							imageName, isGroup, Constant.READ);
 
 				} else { // 反馈（附件）
-					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
-							System.currentTimeMillis()));
+					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+							.format(new Date(System.currentTimeMillis()));
 
-					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID), feedbackTime,
-							"", Constant.READ);
+					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID),
+							feedbackTime, "", Constant.READ);
 					String imageName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
-					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.IAMGE_TYPE, imageName);
+					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.IAMGE_TYPE,
+							imageName);
 					fb.setAttachment(fbAttach);
 				}
 
@@ -457,19 +462,21 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				// 收到附件上传成功message后再在Handler中处理，再发送消息或者反馈内容到服务器，以及保存到本地
 
 				if (entranceType == 1) { // 消息（附件）
-					String sendTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
-							System.currentTimeMillis()));
+					String sendTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+							.format(new Date(System.currentTimeMillis()));
 					String videoName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID), Integer.parseInt(personID),
-							sendTime1, null, LocalConstant.VIDEO_TYPE, videoName, isGroup, Constant.READ);
+					msg = new MessageModel(msgID, Integer.parseInt(userID),
+							Integer.parseInt(personID), sendTime1, null, LocalConstant.VIDEO_TYPE,
+							videoName, isGroup, Constant.READ);
 				} else {
-					String feedbackTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
-							System.currentTimeMillis()));
+					String feedbackTime1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+							.format(new Date(System.currentTimeMillis()));
 
-					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID), feedbackTime1,
-							null, Constant.READ);
+					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID),
+							feedbackTime1, null, Constant.READ);
 					String videoName = originalUri.substring(originalUri.lastIndexOf("/") + 1);
-					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.VIDEO_TYPE, videoName);
+					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.VIDEO_TYPE,
+							videoName);
 					fb.setAttachment(fbAttach);
 				}
 				// 开启上传
@@ -513,19 +520,21 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				// 收到附件上传成功message后再在Handler中处理，再发送消息或者反馈内容到服务器，以及保存到本地
 
 				if (entranceType == 1) { // 消息（附件）
-					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System
-							.currentTimeMillis()));
+					String sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+							.format(new Date(System.currentTimeMillis()));
 					String imageName = imagePath.substring(imagePath.lastIndexOf("/") + 1);
-					msg = new MessageModel(msgID, Integer.parseInt(userID), Integer.parseInt(personID),
-							sendTime, null, LocalConstant.IAMGE_TYPE, imageName, isGroup, Constant.READ);
+					msg = new MessageModel(msgID, Integer.parseInt(userID),
+							Integer.parseInt(personID), sendTime, null, LocalConstant.IAMGE_TYPE,
+							imageName, isGroup, Constant.READ);
 				} else {
-					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
-							System.currentTimeMillis()));
+					String feedbackTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+							.format(new Date(System.currentTimeMillis()));
 
-					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID), feedbackTime,
-							"", Constant.UNREAD);
+					fb = new FeedbackModel(feedbackID, taskID, Integer.parseInt(userID),
+							feedbackTime, "", Constant.UNREAD);
 					String imageName = imagePath.substring(imagePath.lastIndexOf("/") + 1);
-					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.IAMGE_TYPE, imageName);
+					fbAttach = new FeedbackAttachModel(feedbackID, LocalConstant.IAMGE_TYPE,
+							imageName);
 					fb.setAttachment(fbAttach);
 				}
 				// 开启上传
@@ -545,15 +554,15 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		if (!contString.isEmpty()) { // 文本反馈
 			feedbackID = Utils.produceFeedbackID(String.valueOf(userID));
 
-			tempMsg = new ReceiveMessageResponse("", "4", userID, taskID, System.currentTimeMillis()
-					+ "", contString, "1", "", "", "");
+			tempMsg = new ReceiveMessageResponse("", feedbackID, "4", userID, taskID,
+					System.currentTimeMillis() + "", contString, "1", "", "", "");
 
 			// 发送到服务器
 			sendFb(tempMsg);
 
 		} else { // 空消息发送提示
-			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白反馈").setPositiveButton("确定", null)
-					.create().show();
+			new AlertDialog.Builder(ChatDetail.this).setTitle("不能发送空白反馈")
+					.setPositiveButton("确定", null).create().show();
 		}
 	}
 
@@ -563,8 +572,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 	}
 
 	private void sendMsg(ReceiveMessageResponse data) {
-		webRequestManager.sendMessage(data.getT(), data.getSid(), personID, data.getSt(), data.getC(),
-				data.getAt(), data.getAu(), data.getUt());
+		webRequestManager.sendMessage(data.getT(), data.getSid(), personID, data.getSt(),
+				data.getC(), data.getAt(), data.getAu(), data.getUt());
 	}
 
 	ReceiveMessageResponse tempMsg;
@@ -575,18 +584,18 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		// TODO
 		if (isGroup == 0) {
 			// 私聊
-			tempMsg = new ReceiveMessageResponse("", "0", userID, personID, System.currentTimeMillis()
-					+ "", contString, "1", "", "", "");
+			tempMsg = new ReceiveMessageResponse("", "", "0", userID, personID,
+					System.currentTimeMillis() + "", contString, "1", "", "", "");
 		} else if (isGroup == 1) {
 			String groupTyep = groupDao.queryGroupById(personID).getT();
 			// 非基本群组
 			if (groupTyep.equals("2")) {
-				tempMsg = new ReceiveMessageResponse("", "2", userID, personID,
+				tempMsg = new ReceiveMessageResponse("", "", "2", userID, personID,
 						System.currentTimeMillis() + "", contString, "1", "", "", "");
 			}
 			// 基本群组
 			else if (groupTyep.equals("1")) {
-				tempMsg = new ReceiveMessageResponse("", "1", userID, personID,
+				tempMsg = new ReceiveMessageResponse("", "", "1", userID, personID,
 						System.currentTimeMillis() + "", contString, "1", "", "", "");
 			}
 		}
@@ -679,16 +688,16 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 		};
 
-		MessageHandlerManager.getInstance()
-				.register(handler, Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().register(handler, Constant.FILE_UPLOAD_SUCCESS,
+				"ChatDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_MESSAGE_SUCCESS,
 				"ChatDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.SAVE_FEEDBACK_SUCCESS,
 				"ChatDetail");
 		MessageHandlerManager.getInstance().register(handler, Constant.SEND_MESSAGE_REQUEST_SUCCESS,
 				Contants.METHOD_MESSAGE_SEND);
-		MessageHandlerManager.getInstance().register(handler, Constant.SEND_FEEDBACK_REQUEST_SUCCESS,
-				Contants.METHOD_FEEDBACK_SEND);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.SEND_FEEDBACK_REQUEST_SUCCESS, Contants.METHOD_FEEDBACK_SEND);
 	}
 
 	private String getDate() {
@@ -715,7 +724,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 		// 参考http://blog.sina.com.cn/s/blog_4e1e357d01012mkx.html
 		mEditTextContent.clearFocus();
 		// 隐藏软键盘
-		InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(
+				Context.INPUT_METHOD_SERVICE);
 		mInputMethodManager.hideSoftInputFromWindow(mEditTextContent.getWindowToken(), 0);
 	}
 
@@ -726,7 +736,8 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				"ChatDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.FILE_UPLOAD_SUCCESS, "ChatDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.SAVE_MESSAGE_SUCCESS, "ChatDetail");
-		MessageHandlerManager.getInstance().unregister(Constant.SAVE_FEEDBACK_SUCCESS, "ChatDetail");
+		MessageHandlerManager.getInstance().unregister(Constant.SAVE_FEEDBACK_SUCCESS,
+				"ChatDetail");
 		MessageHandlerManager.getInstance().unregister(Constant.SEND_MESSAGE_REQUEST_SUCCESS,
 				Contants.METHOD_MESSAGE_SEND);
 		MessageHandlerManager.getInstance().unregister(Constant.SEND_FEEDBACK_REQUEST_SUCCESS,

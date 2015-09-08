@@ -90,7 +90,8 @@ public class Contact extends SherlockFragment {
 	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
 		userID = MySharedPreference.get(getActivity(), MySharedPreference.USER_ID, null);
 		View view = inflater.inflate(R.layout.contact_fragment, null);
 		dao = new PersonDao(getActivity().getApplicationContext());
@@ -102,8 +103,8 @@ public class Contact extends SherlockFragment {
 		// view.findViewById(R.id.expandablelistview);
 		personalBtn.setOnClickListener(listener);
 		enterpriseBtn.setOnClickListener(listener);
-		// 默认选中 企业
-		enterpriseBtn.performClick();
+//		// 默认选中 企业
+//		enterpriseBtn.performClick();
 
 		initHandler();
 
@@ -146,16 +147,16 @@ public class Contact extends SherlockFragment {
 				} else {
 					while (cursor.moveToNext()) {
 						// 本地通讯录 联系人ID
-						String _id = cursor.getString(cursor
-								.getColumnIndex(ContactsContract.Contacts._ID));
+						String _id = cursor
+								.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 						// 本地通讯录 联系人姓名
-						String _name_ = cursor.getString(cursor
-								.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+						String _name_ = cursor.getString(
+								cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
 						data.add(new Org("p" + _id, 1 + "", _name_));
 					}
 				}
-				SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(listView,
-						getActivity().getApplicationContext(), data, 0);
+				SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(
+						listView, getActivity().getApplicationContext(), data, 0);
 				listView.setAdapter(adapter);
 				adapter.setOnTreeNodeClickListener(new OnTreeNodeClickListener() {
 
@@ -164,8 +165,8 @@ public class Contact extends SherlockFragment {
 						if (node.isLeaf()) {
 							String tempId = node.getId();
 							String id = tempId.substring(1, tempId.length());
-							Intent intent = new Intent(Intent.ACTION_VIEW, Uri
-									.parse("content://contacts/people/" + id));
+							Intent intent = new Intent(Intent.ACTION_VIEW,
+									Uri.parse("content://contacts/people/" + id));
 							intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 							getActivity().getApplicationContext().startActivity(intent);
 						}
@@ -206,13 +207,15 @@ public class Contact extends SherlockFragment {
 
 				@Override
 				public void onClick(Node node, int position) {
-					if (node.isLeaf() && (node.getId().startsWith("p") || node.getId().startsWith("g"))) {
+					if (node.isLeaf()
+							&& (node.getId().startsWith("p") || node.getId().startsWith("g"))) {
 						if (node.getId().substring(1).equals(userID)) {
 							Toast.makeText(getActivity(), "不能跟自己聊天！", Toast.LENGTH_LONG).show();
 						} else {
 							List<Node> temp = new ArrayList<Node>();
 							temp.add(node);
-							Intent intent = new Intent(Contact.this.getActivity(), ChatDetail.class);
+							Intent intent = new Intent(Contact.this.getActivity(),
+									ChatDetail.class);
 							Bundle bundle = new Bundle();
 							bundle.putInt("entrance_type", 1);
 							bundle.putSerializable("data", (Serializable) temp);
@@ -232,19 +235,19 @@ public class Contact extends SherlockFragment {
 							new AlertDialog.Builder(getActivity()).setTitle("是否进入基本群组聊天?")
 									.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											// 跳转聊天
-											Intent intent = new Intent(getActivity(), ChatDetail.class);
-											Bundle bundle = new Bundle();
-											// 标志为消息
-											bundle.putInt("entrance_type", 1);
-											List<Node> tempData = new ArrayList<Node>();
-											tempData.add(node);
-											bundle.putSerializable("data", (Serializable) tempData);
-											getActivity().startActivity(intent);
-										}
-									}).setNegativeButton("取消", null).create().show();
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									// 跳转聊天
+									Intent intent = new Intent(getActivity(), ChatDetail.class);
+									Bundle bundle = new Bundle();
+									// 标志为消息
+									bundle.putInt("entrance_type", 1);
+									List<Node> tempData = new ArrayList<Node>();
+									tempData.add(node);
+									bundle.putSerializable("data", (Serializable) tempData);
+									getActivity().startActivity(intent);
+								}
+							}).setNegativeButton("取消", null).create().show();
 
 						}
 					}
@@ -269,7 +272,7 @@ public class Contact extends SherlockFragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		// enterpriseBtn.performClick();
+		enterpriseBtn.performClick();
 	}
 
 	private void initHandler() {
@@ -294,12 +297,12 @@ public class Contact extends SherlockFragment {
 				}
 			}
 		};
-		MessageHandlerManager.getInstance().register(handler, Constant.CREATE_CUSTOMER_REQUEST_SUCCESS,
-				"Main");
-		MessageHandlerManager.getInstance().register(handler, Constant.MODIFY_CUSTOMER_REQUEST_SUCCESS,
-				"Main");
-		MessageHandlerManager.getInstance().register(handler, Constant.DELETE_CUSTOMER_REQUEST_SUCCESS,
-				"Main");
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.CREATE_CUSTOMER_REQUEST_SUCCESS, "Main");
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.MODIFY_CUSTOMER_REQUEST_SUCCESS, "Main");
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.DELETE_CUSTOMER_REQUEST_SUCCESS, "Main");
 	}
 
 	@Override
