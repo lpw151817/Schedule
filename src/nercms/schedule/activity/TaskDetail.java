@@ -103,6 +103,7 @@ public class TaskDetail extends BaseActivity {
 	private EditText task_title;// 任务主题
 	private EditText starter;// 发起人
 	private EditText participator;// 责任人
+	private EditText chaosongren;
 	private ImageButton btn_calendar;
 	private EditText end_time; // 截止时间（可修改）
 	private EditText content;// 任务内容
@@ -138,6 +139,7 @@ public class TaskDetail extends BaseActivity {
 	private String taskID;
 	// 责任人姓名
 	private String podName = "";
+	private String chaosongName = "";
 	// 发起人姓名
 	private String sponsorName;
 	// 本人ID
@@ -334,7 +336,14 @@ public class TaskDetail extends BaseActivity {
 		}
 		// 抄送人数据
 		List<CreateTaskRequestIds> rids = ids.get("2");
-		// TODO 对抄送人数据进行生成并显示
+		// 对抄送人数据进行生成并显示
+		for (CreateTaskRequestIds createTaskRequestIds : rids) {
+			GetPersonInfoResponse temp = personDao.getPersonInfo(createTaskRequestIds.getRid());
+			if (temp != null)
+				chaosongName += personDao.getPersonInfo(createTaskRequestIds.getRid()).getN() + "/";
+			else
+				continue;
+		}
 
 		sponsorName = personDao.getPersonInfo(task.getSid()).getN();
 		taskAttackList = task.getAtt();
@@ -402,6 +411,8 @@ public class TaskDetail extends BaseActivity {
 		starter.setText(sponsorName);
 		participator = (EditText) findViewById(R.id.td_participator);
 		participator.setText(podName);
+		chaosongren = (EditText) findViewById(R.id.td_participator_cc);
+		chaosongren.setText(chaosongName);
 		end_time = (EditText) findViewById(R.id.td_deadline);
 		end_time.setText(Utils.formatDateMs(task.getEt()));
 		btn_calendar = (ImageButton) findViewById(R.id.td_btn_deadline);

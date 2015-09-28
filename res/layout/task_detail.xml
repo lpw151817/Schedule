@@ -119,13 +119,12 @@
                 android:background="@drawable/mm_listitem_grey_normal"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:padding="5dip"
-                android:visibility="gone" >
+                android:padding="5dip" >
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="抄  送  人:"
+                    android:text="抄 送 人:"
                     android:textColor="@android:color/black"
                     android:textSize="17.0dip" />
 
