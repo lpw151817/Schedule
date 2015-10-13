@@ -51,7 +51,7 @@ public class Push {
 
 	private final String TAG = getClass().getName();
 
-	public static String SERVER_URL = "202.114.66.77";
+	public static String SERVER_URL = Contants.SERVER;
 	private static final int PORT = 1883;
 	private final String TOPIC_HEADER = "nercms/schedule/";
 	public static String PERSON_ID = "";// personid

@@ -215,9 +215,14 @@ public class Login extends BaseActivity {
 				case Constant.LOGIN_REQUEST_FAIL:
 					MyLog.i(TAG, "登录失败");
 					dismissProgressDialog();
-					String errorCode = ((NormalServerResponse) msg.obj).getEc();
-					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode),
-							R.drawable.login_error_icon, "确定", null);
+					if (msg.obj != null) {
+						String errorCode = ((NormalServerResponse) msg.obj).getEc();
+						showAlterDialog("登录失败", Utils.getErrorMsg(errorCode),
+								R.drawable.login_error_icon, "确定", null);
+					} else {
+						showAlterDialog("登录失败", "请检查是否与服务器连接正常", R.drawable.login_error_icon, "确定",
+								null);
+					}
 					break;
 				// 保存orgcode失败
 				case Constant.SAVE_ORG_CODE_FAIL:
