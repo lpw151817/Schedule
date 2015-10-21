@@ -3,6 +3,7 @@ package nercms.schedule.activity;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -221,6 +222,7 @@ public class TaskAdd extends BaseActivity {
 		etSponsor.setEnabled(false);
 		etSponsor.setText(personDao.getCustomer().getN());
 
+		// 抄送人选择
 		btnReceiverPicker.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -229,11 +231,14 @@ public class TaskAdd extends BaseActivity {
 				intent.setClass(TaskAdd.this, ContactSelect.class);
 				intent.putExtra("entrance_flag", 1);
 				intent.putExtra("type", 2);
+				intent.putExtra("pod", (Serializable) lsSelectedPod);
+				intent.putExtra("receiver", (Serializable) lsSelectedReceiver);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				startActivityForResult(intent, LocalConstant.TASK_POD_SELECT_REQUEST_CODE);
 			}
 		});
 
+		// TODO 责任人选择
 		btnPodPicker.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -242,6 +247,8 @@ public class TaskAdd extends BaseActivity {
 				intent.putExtra("entrance_flag", 1);
 				intent.putExtra("type", 1);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+				intent.putExtra("pod", (Serializable) lsSelectedPod);
+				intent.putExtra("receiver", (Serializable) lsSelectedReceiver);
 				startActivityForResult(intent, LocalConstant.TASK_POD_SELECT_REQUEST_CODE);
 			}
 		});
@@ -858,8 +865,13 @@ public class TaskAdd extends BaseActivity {
 				int type = data.getExtras().getInt("type");
 				List<Node> selectedPerson = (List<Node>) data.getSerializableExtra("data");
 				String name = "";
-				for (Node node : selectedPerson) {
-					name += node.getName() + "/";
+				if (selectedPerson == null || selectedPerson.size() == 0) {
+					showLongToast("未选中任何人");
+				}
+				if (selectedPerson != null && selectedPerson.size() > 0) {
+					for (Node node : selectedPerson) {
+						name += node.getName() + "/";
+					}
 				}
 				// pod
 				if (type == 1) {

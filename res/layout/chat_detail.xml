@@ -21,7 +21,8 @@
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:layout_marginLeft="5dp"
-            android:background="@drawable/ic_chat_add_attach" />
+            android:background="@drawable/ic_chat_add_attach"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btn_send"

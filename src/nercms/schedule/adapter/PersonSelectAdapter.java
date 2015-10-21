@@ -35,9 +35,24 @@ public class PersonSelectAdapter<T> extends TreeListViewAdapter<T> {
 		return this.selected;
 	}
 
-	public PersonSelectAdapter(ListView tree, Context context, List<T> datas, int defaultExpandLevel)
-			throws IllegalArgumentException, IllegalAccessException {
+	// public PersonSelectAdapter(ListView tree, Context context, List<T> datas,
+	// int defaultExpandLevel) throws IllegalArgumentException,
+	// IllegalAccessException {
+	// super(tree, context, datas, defaultExpandLevel);
+	// }
+
+	private List<Node> lsSelectedPod;
+	private List<Node> lsSelectedReceiver;
+	int entranceFlag, type;
+
+	public PersonSelectAdapter(ListView tree, Context context, List<T> datas,
+			int defaultExpandLevel, List<Node> lsPod, List<Node> lsReceiver, int entranceFlag,
+			int type) throws IllegalArgumentException, IllegalAccessException {
 		super(tree, context, datas, defaultExpandLevel);
+		this.lsSelectedPod = lsPod;
+		this.lsSelectedReceiver = lsReceiver;
+		this.entranceFlag = entranceFlag;
+		this.type = type;
 	}
 
 	@Override
@@ -56,6 +71,55 @@ public class PersonSelectAdapter<T> extends TreeListViewAdapter<T> {
 				holder.mCb.setChecked(true);
 			else
 				holder.mCb.setChecked(false);
+
+			// 发起任务里的标志位
+			if (entranceFlag == 1) {
+				// 责任人
+				if (type == 1) {
+					if (lsSelectedPod != null && lsSelectedPod.contains(node)) {
+						holder.mCb.setChecked(true);
+						if (!selected.contains(node))
+							selected.add(node);
+					}
+					if (lsSelectedReceiver != null && lsSelectedReceiver.contains(node)) {
+						holder.mCb.setEnabled(false);
+					}
+				}
+				// 抄送人
+				else if (type == 2) {
+					if (lsSelectedPod != null && lsSelectedPod.contains(node)) {
+						holder.mCb.setEnabled(false);
+					}
+					if (lsSelectedReceiver != null && lsSelectedReceiver.contains(node)) {
+						holder.mCb.setChecked(true);
+						if (!selected.contains(node))
+							selected.add(node);
+					}
+				}
+			}
+			// 发起会议参与者选择
+			else if (entranceFlag == 3) {
+				if (lsSelectedPod != null && lsSelectedPod.contains(node)) {
+					holder.mCb.setEnabled(false);
+				}
+				if (lsSelectedReceiver != null && lsSelectedReceiver.contains(node)) {
+					holder.mCb.setChecked(true);
+					if (!selected.contains(node))
+						selected.add(node);
+				}
+			}
+			// 发起会议发言人选择
+			else if (entranceFlag == 4) {
+				if (lsSelectedPod != null && lsSelectedPod.contains(node)) {
+					holder.mCb.setChecked(true);
+					if (!selected.contains(node))
+						selected.add(node);
+				}
+				if (lsSelectedReceiver != null && lsSelectedReceiver.contains(node)) {
+					holder.mCb.setEnabled(false);
+				}
+			}
+
 			holder.mCb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {

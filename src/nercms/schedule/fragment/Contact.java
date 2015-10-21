@@ -103,8 +103,8 @@ public class Contact extends SherlockFragment {
 		// view.findViewById(R.id.expandablelistview);
 		personalBtn.setOnClickListener(listener);
 		enterpriseBtn.setOnClickListener(listener);
-//		// 默认选中 企业
-//		enterpriseBtn.performClick();
+		// // 默认选中 企业
+		// enterpriseBtn.performClick();
 
 		initHandler();
 
@@ -156,7 +156,7 @@ public class Contact extends SherlockFragment {
 					}
 				}
 				SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(
-						listView, getActivity().getApplicationContext(), data, 0);
+						listView, getActivity().getApplicationContext(), data, 1);
 				listView.setAdapter(adapter);
 				adapter.setOnTreeNodeClickListener(new OnTreeNodeClickListener() {
 
@@ -201,7 +201,7 @@ public class Contact extends SherlockFragment {
 			data.addAll(groupDao.queryMyAllGroups2("", userID));
 
 			SimpleTreeListViewAdapter<Org> adapter = new SimpleTreeListViewAdapter<Org>(listView,
-					getActivity().getApplicationContext(), data, 0);
+					getActivity().getApplicationContext(), data, 1);
 			listView.setAdapter(adapter);
 			adapter.setOnTreeNodeClickListener(new OnTreeNodeClickListener() {
 
@@ -245,6 +245,7 @@ public class Contact extends SherlockFragment {
 									List<Node> tempData = new ArrayList<Node>();
 									tempData.add(node);
 									bundle.putSerializable("data", (Serializable) tempData);
+									intent.putExtras(bundle);
 									getActivity().startActivity(intent);
 								}
 							}).setNegativeButton("取消", null).create().show();

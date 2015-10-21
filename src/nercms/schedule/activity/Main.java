@@ -4,13 +4,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import nercms.schedule.R;
-import nercms.schedule.adapter.MainFragmentAdapter;
-import nercms.schedule.utils.LocalConstant;
-import nercms.schedule.utils.SDCardService;
-import nercms.schedule.utils.Utils;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
+import com.actionbarsherlock.view.SubMenu;
+import com.nercms.Push;
+import com.viewpagerindicator.TabPageIndicator;
+
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -27,24 +27,16 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.wxapp.service.AppApplication;
-import android.wxapp.service.dao.DAOFactory;
-import android.wxapp.service.dao.PersonDao;
 import android.wxapp.service.handler.MessageHandlerManager;
-import android.wxapp.service.model.AffairModel;
-import android.wxapp.service.model.FeedbackModel;
-import android.wxapp.service.model.MessageModel;
-import android.wxapp.service.model.StructuredStaffModel;
 import android.wxapp.service.request.Contants;
 import android.wxapp.service.request.WebRequestManager;
 import android.wxapp.service.util.Constant;
-import android.wxapp.service.util.MyNotification;
 import android.wxapp.service.util.MySharedPreference;
-
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.view.SubMenu;
-import com.nercms.Push;
-import com.viewpagerindicator.TabPageIndicator;
+import nercms.schedule.R;
+import nercms.schedule.adapter.MainFragmentAdapter;
+import nercms.schedule.utils.LocalConstant;
+import nercms.schedule.utils.SDCardService;
+import nercms.schedule.utils.Utils;
 
 /**
  * @author jiaocuina@gmail.com
@@ -330,9 +322,9 @@ public class Main extends SherlockFragmentActivity {
 		addMenu.add(0, 1, 0, "发起任务").setIcon(R.drawable.ofm_task_icon);
 		addMenu.add(0, 2, 0, "发起消息").setIcon(R.drawable.ofm_group_chat_icon);
 		addMenu.add(0, 3, 0, "发起会议").setIcon(R.drawable.ofm_meeting_icon);
-		addMenu.add(0, 4, 0, "视频直播").setIcon(R.drawable.ofm_broadcast_icon);
-		addMenu.add(0, 5, 0, "智能调度").setIcon(R.drawable.ofm_schedule_icon);
-		addMenu.add(0, 6, 0, "添加客户").setIcon(R.drawable.ofm_add_icon);
+		// addMenu.add(0, 4, 0, "视频直播").setIcon(R.drawable.ofm_broadcast_icon);
+		// addMenu.add(0, 5, 0, "智能调度").setIcon(R.drawable.ofm_schedule_icon);
+		// addMenu.add(0, 6, 0, "添加客户").setIcon(R.drawable.ofm_add_icon);
 
 		MenuItem addItem = addMenu.getItem();
 		addItem.setIcon(R.drawable.ic_action_new);
@@ -345,7 +337,7 @@ public class Main extends SherlockFragmentActivity {
 		subMenu.add(0, 8, 0, "设置").setIcon(R.drawable.ofm_setting_icon);
 		subMenu.add(0, 9, 0, "注销").setIcon(R.drawable.ofm_log_off_icon);
 		subMenu.add(0, 10, 0, "退出").setIcon(R.drawable.ofm_log_out_icon);
-		subMenu.add(0, 11, 1, "Call").setIcon(R.drawable.ofm_task_icon);
+		// subMenu.add(0, 11, 1, "Call").setIcon(R.drawable.ofm_task_icon);
 
 		MenuItem menuItem = subMenu.getItem();
 		menuItem.setIcon(R.drawable.ic_action_overflow);

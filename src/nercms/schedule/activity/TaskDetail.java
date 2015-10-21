@@ -102,7 +102,8 @@ public class TaskDetail extends BaseActivity {
 	// 控件
 	private EditText task_title;// 任务主题
 	private EditText starter;// 发起人
-	private EditText participator;// 责任人
+	private EditText participator;// 抄送人
+	private EditText personOnDuty;// 责任人
 	private ImageButton btn_calendar;
 	private EditText end_time; // 截止时间（可修改）
 	private EditText content;// 任务内容
@@ -138,6 +139,8 @@ public class TaskDetail extends BaseActivity {
 	private String taskID;
 	// 责任人姓名
 	private String podName = "";
+	// 抄送人姓名
+	private String pName = "";
 	// 发起人姓名
 	private String sponsorName;
 	// 本人ID
@@ -334,8 +337,14 @@ public class TaskDetail extends BaseActivity {
 		}
 		// 抄送人数据
 		List<CreateTaskRequestIds> rids = ids.get("2");
-		// TODO 对抄送人数据进行生成并显示
-
+		// 对抄送人数据进行生成并显示
+		for (CreateTaskRequestIds createTaskRequestIds : rids) {
+			GetPersonInfoResponse temp = personDao.getPersonInfo(createTaskRequestIds.getRid());
+			if (temp != null)
+				pName += personDao.getPersonInfo(createTaskRequestIds.getRid()).getN() + "/";
+			else
+				continue;
+		}
 		sponsorName = personDao.getPersonInfo(task.getSid()).getN();
 		taskAttackList = task.getAtt();
 		// 判断是否是已完成的任务和已延误任务
@@ -400,8 +409,10 @@ public class TaskDetail extends BaseActivity {
 		task_title.setText(task.getTopic());
 		starter = (EditText) findViewById(R.id.td_starter);
 		starter.setText(sponsorName);
+		personOnDuty = (EditText) findViewById(R.id.personOnDuty);
+		personOnDuty.setText(podName);
 		participator = (EditText) findViewById(R.id.td_participator);
-		participator.setText(podName);
+		participator.setText(pName);
 		end_time = (EditText) findViewById(R.id.td_deadline);
 		end_time.setText(Utils.formatDateMs(task.getEt()));
 		btn_calendar = (ImageButton) findViewById(R.id.td_btn_deadline);

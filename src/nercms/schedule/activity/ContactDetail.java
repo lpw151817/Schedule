@@ -20,6 +20,7 @@ import android.wxapp.service.jerry.model.group.GroupUpdateQueryRequestGroups;
 import android.wxapp.service.jerry.model.group.GroupUpdateQueryRequestIds;
 import android.wxapp.service.jerry.model.person.Contacts;
 import android.wxapp.service.jerry.model.person.GetPersonInfoResponse;
+import android.wxapp.service.jerry.model.person.OrgPersonInfo;
 import android.wxapp.service.jerry.model.person.Contacts.CONTACT_ITEM;
 import android.wxapp.service.model.ContactModel;
 import android.wxapp.service.model.StructuredStaffModel;
@@ -209,14 +210,22 @@ public class ContactDetail extends BaseActivity {
 		personDao = daoFactory.getPersonDao(ContactDetail.this);
 
 		if (isGroup) {
-			GroupUpdateQueryRequestGroups group = groupDao.queryGroupById(orgCode);
-			orgName = group.getN();
-			name.setText(group.getN());
-			groupOrgTv.setText("???这里应该填啥???");
 			String memberNameString = "";
-			for (GroupUpdateQueryRequestIds item : group.getRids()) {
-				memberNameString += (personDao.getPersonInfo(item.getRid()).getN() + "/");
+			if (orgCode.startsWith("g")) {
+				GroupUpdateQueryRequestGroups group = groupDao.queryGroupById(orgCode.substring(1));
+				orgName = group.getN();
+				name.setText(group.getN());
+				for (GroupUpdateQueryRequestIds item : group.getRids()) {
+					memberNameString += (personDao.getPersonInfo(item.getRid()).getN() + "/");
+				}
+			} else if (orgCode.startsWith("o")) {
+				name.setText(personDao.getOrgDes(orgCode.substring(1)));
+				for (OrgPersonInfo item : personDao.getOrgPersonInfos(orgCode.substring(1))) {
+					memberNameString += item.getN() + "/";
+				}
 			}
+
+			groupOrgTv.setText("???这里应该填啥???");
 			groupPersonsTv.setText(memberNameString);
 
 			// if (memberSSMList.size() > 0) {

@@ -295,7 +295,7 @@
 
             <Button
                 android:id="@+id/btn_start_chat"
-               android:layout_width="fill_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="55dp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
@@ -304,7 +304,8 @@
                 android:clickable="true"
                 android:text="发  消  息"
                 android:textColor="#fff"
-                android:textSize="18sp" />
+                android:textSize="18sp"
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/btn_start_phone"

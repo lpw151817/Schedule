@@ -58,6 +58,8 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 	PersonSelectAdapter<Org> adapter;
 
 	List<Node> selectedPerson;
+	private List<Node> lsSelectedPod = new ArrayList<Node>();
+	private List<Node> lsSelectedReceiver = new ArrayList<Node>();
 
 	private static DAOFactory daoFactory = DAOFactory.getInstance();
 	private PersonDao dao;
@@ -67,9 +69,9 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 	private ArrayList<String[]> check_contact_id_list = new ArrayList<String[]>(0);
 	private MenuItem select_ok;
 	private String userID;// 本人ID
-	// 联系人选择入口：1-发起任务中责任人选择；2-发起会话;3-发起会议参与者选择（多个）；4-发起会议发言人选择（多个）
+	// 联系人选择入口：1-发起任务；2-发起会话;3-发起会议参与者选择；4-发起会议发言人选择
 	private int entranceFlag;
-
+	// 1-发起任务中的责任人 2-发起任务中的抄送人
 	private int type = -1;
 
 	public void onCreate(Bundle savedInstanceState) {
@@ -83,6 +85,10 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 
 		entranceFlag = getIntent().getExtras().getInt("entrance_flag");
 		type = getIntent().getExtras().getInt("type");
+
+		lsSelectedPod = (List<Node>) getIntent().getExtras().getSerializable("pod");
+		lsSelectedReceiver = (List<Node>) getIntent().getExtras().getSerializable("receiver");
+
 		initActionBar();
 		// 组织机构树数据准备
 		dao = daoFactory.getPersonDao(ContactSelect.this);
@@ -90,7 +96,8 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 		try {
 			List<Org> data = new ArrayList<Org>();
 			data = dao.getOrg2();
-			adapter = new PersonSelectAdapter<Org>(listView, this, data, 0);
+			adapter = new PersonSelectAdapter<Org>(listView, this, data, 1, lsSelectedPod,
+					lsSelectedReceiver, entranceFlag, type);
 			listView.setAdapter(adapter);
 			adapter.setDataChangedListener(this);
 		} catch (IllegalArgumentException e) {
@@ -172,12 +179,20 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 		select_ok.setTitle("确定(" + size + ")");
 	}
 
+	int size = 0;
+
 	// 右侧按钮
 	public boolean onCreateOptionsMenu(Menu menu) {
 
 		// 确定按钮
 		select_ok = menu.add(0, 1, 0, "确定");
-		select_ok.setTitle("确定(0)");
+		if (lsSelectedPod != null && (entranceFlag == 4 || (entranceFlag == 1 && type == 1)))
+			size = lsSelectedPod.size();
+		else if (lsSelectedReceiver != null
+				&& (entranceFlag == 3 || (entranceFlag == 1 && type == 2))) {
+			size = lsSelectedReceiver.size();
+		}
+		select_ok.setTitle("确定(" + size + ")");
 		select_ok.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -197,13 +212,14 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 			// 2014-7-31 WeiHao 加入容错
 			// String name = "";
 			// String id = "";
-			if (selectedPerson.size() == 0) {
-				Utils.showShortToast(ContactSelect.this, "未选中任何人");
-				// 返回上层
-				setResult(RESULT_CANCELED);
-				finish();
-				break;
-			} else {
+			
+//			if (selectedPerson.size() == 0) {
+//				Utils.showShortToast(ContactSelect.this, "未选中任何人");
+//				// 返回上层
+//				setResult(RESULT_CANCELED);
+//				finish();
+//				break;
+//			} else {
 				// 如果选择了人员并点击确定
 				Intent intent = null;
 
@@ -226,11 +242,12 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 							public void onClick(DialogInterface dialog, int which) {
 								List<GroupUpdateQueryRequestIds> rids = new ArrayList<GroupUpdateQueryRequestIds>();
 								for (Node item : selectedPerson) {
-									rids.add(new GroupUpdateQueryRequestIds(item.getId().substring(1)));
+									rids.add(new GroupUpdateQueryRequestIds(
+											item.getId().substring(1)));
 								}
 								rids.add(new GroupUpdateQueryRequestIds(getUserId()));
-								WebRequestManager manager = new WebRequestManager(AppApplication
-										.getInstance(), ContactSelect.this);
+								WebRequestManager manager = new WebRequestManager(
+										AppApplication.getInstance(), ContactSelect.this);
 								manager.createGroup("2", dao.getCustomer().getN() + "创建的群组",
 										System.currentTimeMillis() + "",
 										System.currentTimeMillis() + "", rids);
@@ -269,7 +286,7 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 				default:
 					break;
 				}
-			}
+//			}
 
 			break;
 		default:
@@ -286,8 +303,8 @@ public class ContactSelect extends BaseActivity implements DataChanged {
 		public boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
 				int childPosition, long id) {
 
-			Toast.makeText(ContactSelect.this, groupPosition + ";" + childPosition, Toast.LENGTH_SHORT)
-					.show();
+			Toast.makeText(ContactSelect.this, groupPosition + ";" + childPosition,
+					Toast.LENGTH_SHORT).show();
 			return false;
 		}
 	};

@@ -1,5 +1,6 @@
 package nercms.schedule.activity;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -145,15 +146,18 @@ public class MeetingAdd extends BaseActivity {
 		// }
 		// }
 		// });
-		// 监听 责任人选择
+		// 监听 参与人选择
 		select_participator.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent();
 				intent.setClass(MeetingAdd.this, ContactSelect.class);
 				intent.putExtra("entrance_flag", 3);
+				intent.putExtra("pod", (Serializable) speaker);
+				intent.putExtra("receiver", (Serializable) participator);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-				startActivityForResult(intent, LocalConstant.MEETING_PARTICIPATOR_SELECT_REQUEST_CODE);
+				startActivityForResult(intent,
+						LocalConstant.MEETING_PARTICIPATOR_SELECT_REQUEST_CODE);
 			}
 		});
 		// 监听 时间选择
@@ -172,6 +176,8 @@ public class MeetingAdd extends BaseActivity {
 				Intent intent = new Intent();
 				intent.setClass(MeetingAdd.this, ContactSelect.class);
 				intent.putExtra("entrance_flag", 4);
+				intent.putExtra("pod", (Serializable) speaker);
+				intent.putExtra("receiver", (Serializable) participator);
 				intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				startActivityForResult(intent, LocalConstant.MEETING_SPEAKER_SELECT_REQUEST_CODE);
 			}
@@ -195,8 +201,8 @@ public class MeetingAdd extends BaseActivity {
 				// 创建会议失败
 				case Constant.CONFERENCE_CREATE_FAIL:
 					String errorCode = ((NormalServerResponse) msg.obj).getEc();
-					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode), R.drawable.login_error_icon,
-							"确定", null);
+					showAlterDialog("登录失败", Utils.getErrorMsg(errorCode),
+							R.drawable.login_error_icon, "确定", null);
 					break;
 				default:
 					break;
@@ -270,10 +276,12 @@ public class MeetingAdd extends BaseActivity {
 		List<ConferenceUpdateQueryResponseRids> rids = new ArrayList<ConferenceUpdateQueryResponseRids>();
 
 		for (int i = 0; i < participator.size(); i++) {
-			rids.add(new ConferenceUpdateQueryResponseRids(participator.get(i).getId().substring(1), "2"));
+			rids.add(new ConferenceUpdateQueryResponseRids(participator.get(i).getId().substring(1),
+					"2"));
 		}
 		for (int i = 0; i < speaker.size(); i++) {
-			rids.add(new ConferenceUpdateQueryResponseRids(speaker.get(i).getId().substring(1), "1"));
+			rids.add(new ConferenceUpdateQueryResponseRids(speaker.get(i).getId().substring(1),
+					"1"));
 		}
 
 		// 输入检测
@@ -284,8 +292,8 @@ public class MeetingAdd extends BaseActivity {
 			return;
 		}
 
-		webRequestManager.createConference(_title, getUserId(), Utils.parseDateInFormat(_reservedTime),
-				"4", "", "", rids);
+		webRequestManager.createConference(_title, getUserId(),
+				Utils.parseDateInFormat(_reservedTime), "4", "", "", rids);
 	}
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -408,7 +416,8 @@ public class MeetingAdd extends BaseActivity {
 				} else if (list_little.contains(String.valueOf(month_num))) {
 					wv_day.setAdapter(new NumericWheelAdapter(1, 30));
 				} else {
-					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0 && (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
+					if (((wv_year.getCurrentItem() + START_YEAR) % 4 == 0
+							&& (wv_year.getCurrentItem() + START_YEAR) % 100 != 0)
 							|| (wv_year.getCurrentItem() + START_YEAR) % 400 == 0)
 						wv_day.setAdapter(new NumericWheelAdapter(1, 29));
 					else

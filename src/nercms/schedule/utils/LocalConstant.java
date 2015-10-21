@@ -1,6 +1,7 @@
 package nercms.schedule.utils;
 
 import android.R.integer;
+import android.wxapp.service.request.Contants;
 
 public class LocalConstant {
 
@@ -41,11 +42,12 @@ public class LocalConstant {
 	// 应用服务器地址
 	// public static final String APP_SERVER_IP = "202.114.117.234";
 	// public static final String APP_SERVER_IP = "192.168.1.100";
-	public static final String APP_SERVER_IP = "http://202.114.66.77:8080";
+	public static final String APP_SERVER_IP = "http://" + Contants.SERVER + ":8080";
 
 	// 附件的服务器地址
 	// public static final String FILE_SERVER_ATTACH_URL =
 	// "http://192.168.1.100:15005/HFSFileServer";
-	public static final String FILE_SERVER_ATTACH_URL = "http://202.114.66.77:3000/ScheduleFileServer";
+	public static final String FILE_SERVER_ATTACH_URL = "http://" + Contants.SERVER
+			+ ":3000/ScheduleFileServer";
 
 }

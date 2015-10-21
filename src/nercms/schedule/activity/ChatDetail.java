@@ -156,8 +156,15 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 					if (selectedPerson.get(0).getId().startsWith("o")
 							|| selectedPerson.get(0).getId().startsWith("g")) {
 						isGroup = 1;
-						// personName 赋值
-						personName = groupDao.queryGroupById(personID).getN();
+						// 基本群组
+						if (selectedPerson.get(0).getId().startsWith("o")) {
+							personName = personDao.getOrgDes(personID);
+						}
+						// 非基本群组
+						else if (selectedPerson.get(0).getId().startsWith("g")) {
+							// personName 赋值
+							personName = groupDao.queryGroupById(personID).getN();
+						}
 					}
 					// 私聊
 					else if (selectedPerson.get(0).getId().startsWith("p")) {
@@ -224,7 +231,7 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 
 				// 2014-7-30 WeiHao 修改
 				intent.putExtra("IS_GROUP", isGroup);
-				intent.putExtra("CONTACT_ID", String.valueOf(personID));
+				intent.putExtra("CONTACT_ID", selectedPerson.get(0).getId());
 				startActivity(intent);
 			}
 			break;
@@ -299,8 +306,13 @@ public class ChatDetail extends BaseActivity implements OnClickListener {
 				msgList = msgDao.getMessageBySidAndRid(userID, personID, "0");
 
 			} else {
-				msgList = msgDao.getMessageBySidAndRid(userID, personID,
-						groupDao.queryGroupById(personID).getT());
+				String type;
+				if (selectedPerson.get(0).getId().startsWith("o"))
+					type = "1";
+				else {
+					type = "2";
+				}
+				msgList = msgDao.getMessageBySidAndRid(userID, personID, type);
 			}
 			msgAdapter = new MessageListAdapter(ChatDetail.this, msgList);
 			mListView.setAdapter(msgAdapter);
