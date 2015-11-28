@@ -96,9 +96,9 @@ public class Profile extends BaseActivity {
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuItem modify = menu.add(0, 1, 0, "修改密码");
-		modify.setIcon(R.drawable.ic_action_modify);
-		modify.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+//		MenuItem modify = menu.add(0, 1, 0, "修改密码");
+//		modify.setIcon(R.drawable.ic_action_modify);
+//		modify.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -148,7 +148,7 @@ public class Profile extends BaseActivity {
 
 	private void initData() {
 		// 先从数据库中读取数据
-		mPersonInfo = DAOFactory.getInstance().getPersonDao(this).getCustomer();
+		mPersonInfo = DAOFactory.getInstance().getPersonDao(this).getPersonInfo(getUserId());
 		// 如果没有数据，则先进行网络请求
 		if (mPersonInfo == null) {
 			showProgressDialog("loading...");
@@ -246,8 +246,8 @@ public class Profile extends BaseActivity {
 		};
 		MessageHandlerManager.getInstance().register(handler,
 				Constant.QUERY_PERSON_INFO_REQUEST_SUCCESS, Contants.METHOD_PERSON_GET_PERSON_INFO);
-		MessageHandlerManager.getInstance().register(handler, Constant.QUERY_PERSON_INFO_REQUEST_FAIL,
-				Contants.METHOD_PERSON_GET_PERSON_INFO);
+		MessageHandlerManager.getInstance().register(handler,
+				Constant.QUERY_PERSON_INFO_REQUEST_FAIL, Contants.METHOD_PERSON_GET_PERSON_INFO);
 		// MessageHandlerManager.getInstance().register(handler,
 		// Constant.CHANGE_PASSWORD_REQUEST_SUCCESS,
 		// "Profile");

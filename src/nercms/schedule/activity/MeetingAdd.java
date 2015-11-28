@@ -184,7 +184,7 @@ public class MeetingAdd extends BaseActivity {
 		});
 
 		meeting_starter.setEnabled(false);// 会议发起人 不可编辑
-		meeting_starter.setText(personDao.getCustomer().getN());
+		meeting_starter.setText(personDao.getPersonInfo(userID).getN());
 		meeting_time.setEnabled(false);// 预约会议时间默认显示为当前系统时间
 		meeting_time.setTextColor(Color.BLACK);
 

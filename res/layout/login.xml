@@ -5,8 +5,8 @@
     android:background="@android:color/white"
     android:gravity="center_horizontal"
     android:orientation="vertical" >
-    
-	<ImageView
+
+    <ImageView
         android:id="@+id/login_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,26 +15,30 @@
         android:layout_marginTop="30dp"
         android:src="@drawable/login_logo" />
 
-	<EditText
+    <EditText
         android:id="@+id/login_user_edit"
         android:layout_width="fill_parent"
         android:layout_height="60dp"
         android:layout_below="@+id/login_icon"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
+        android:layout_marginTop="10dp"
         android:background="@drawable/login_editbox"
         android:ems="10"
         android:hint="用户名"
         android:singleLine="true"
         android:textColor="#000"
-        android:textSize="17sp" />
-	    <EditText
+        android:textSize="17sp" >
+
+        <requestFocus />
+    </EditText>
+
+    <EditText
         android:id="@+id/login_passwd_edit"
         android:layout_width="fill_parent"
         android:layout_height="60dp"
-        android:layout_below="@+id/login_user_edit"
         android:layout_alignLeft="@+id/login_user_edit"
+        android:layout_below="@+id/login_user_edit"
         android:layout_marginRight="8dp"
         android:background="@drawable/login_editbox"
         android:ems="10"
@@ -43,11 +47,7 @@
         android:singleLine="true"
         android:textColor="#000"
         android:textSize="17sp" >
-
-        <requestFocus />
     </EditText>
-
-    
 
     <Button
         android:id="@+id/login_login_btn"
@@ -55,8 +55,8 @@
         android:layout_height="60dp"
         android:layout_alignLeft="@+id/login_user_edit"
         android:layout_below="@+id/login_passwd_edit"
-        android:layout_marginTop="30dp"
         android:layout_marginRight="8dp"
+        android:layout_marginTop="30dp"
         android:background="@drawable/btn_style_green"
         android:text="登   录"
         android:textColor="#ffffff"

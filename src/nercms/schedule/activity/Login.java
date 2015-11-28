@@ -23,6 +23,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -75,8 +76,8 @@ public class Login extends BaseActivity {
 
 	private EditText etUserName; // 用户名编辑框
 	private EditText etPassword; // 密码编辑框
-	String un = "fm";
-	String pwd = "123456";
+	// String un = "fm";
+	// String pwd = "123456";
 
 	private Button btnLogin;// 登录按钮
 
@@ -105,11 +106,18 @@ public class Login extends BaseActivity {
 
 		etUserName = (EditText) findViewById(R.id.login_user_edit);
 		etPassword = (EditText) findViewById(R.id.login_passwd_edit);
-		etUserName.setText(un);
-		etPassword.setText(pwd);
+		// etUserName.setText(un);
+		// etPassword.setText(pwd);
 
 		// 默认显示上次登录的用户ID
 		etUserName.setText(MySharedPreference.get(Login.this, MySharedPreference.USER_NAME, ""));
+
+		// 如果用户名为空，则聚焦用户名，否则聚焦密码
+		if (TextUtils.isEmpty(etUserName.getText().toString())) {
+			etUserName.requestFocus();
+		} else {
+			etPassword.requestFocus();
+		}
 
 		btnLogin = (Button) findViewById(R.id.login_login_btn);
 		btnLogin.setOnClickListener(new OnClickListener() {

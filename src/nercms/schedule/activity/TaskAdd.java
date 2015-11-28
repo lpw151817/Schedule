@@ -220,7 +220,7 @@ public class TaskAdd extends BaseActivity {
 
 		// 发起人显示
 		etSponsor.setEnabled(false);
-		etSponsor.setText(personDao.getCustomer().getN());
+		etSponsor.setText(personDao.getPersonInfo(userID).getN());
 
 		// 抄送人选择
 		btnReceiverPicker.setOnClickListener(new OnClickListener() {
@@ -897,7 +897,7 @@ public class TaskAdd extends BaseActivity {
 	private void initAttachPickBtn() {
 		successCounter = 0;
 		AlertDialog.Builder builder = new AlertDialog.Builder(TaskAdd.this);
-		builder.setTitle("选择附件类型").setItems(new String[] { "图库", "拍照", "摄像" },
+		builder.setTitle("选择附件类型").setItems(new String[] { "图库", "拍照"/* , "摄像" */ },
 				new DialogInterface.OnClickListener() {
 
 					@Override
